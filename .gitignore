@@ -1,0 +1,52 @@
+# Testbestanden #
+_*
+
+# Compiled source #
+###################
+#*.com
+#*.class
+#*.dll
+#*.exe
+#*.o
+#*.so
+
+# Temporary files #
+###################
+#*.swp
+#*.swo
+*~
+*.lock
+
+# Packages #
+############
+#*.7z
+#*.dmg
+#*.gz
+#*.iso
+#*.jar
+#*.rar
+#*.tar
+#*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Netbeans #
+nbproject/
+
+# Composer #
+vendor/
+
+debug.sh
+config/
+!/composer.lock

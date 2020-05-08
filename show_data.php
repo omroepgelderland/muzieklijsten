@@ -19,7 +19,6 @@ function is_captcha_ok() {
 }
 
 function is_max_stemmen_per_ip_bereikt( $db, $lijst_id ) {
-	return false;
 	$sql = sprintf(
 		'SELECT l.stemmen_per_ip IS NOT NULL AND COUNT(DISTINCT stemmers.id) >= l.stemmen_per_ip FROM muzieklijst_stemmers stemmers JOIN muzieklijst_stemmen stemmen ON stemmen.stemmer_id = stemmers.id JOIN muzieklijst_lijsten l ON l.id = %d AND stemmen.lijst_id = l.id WHERE stemmers.ip = "%s"',
 		$lijst_id,
@@ -89,25 +88,25 @@ if ($_POST['session']) {
 			$last_id = $link->insert_id;
 			$stemmer = new Stemmer($last_id);
 			
-			// Invoer van extra velden
-			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
-				if ( !array_key_exists($extra_veld->get_html_id(), $_POST) ) {
-					if ( $extra_veld->is_verplicht() ) {
-						throw new Muzieklijsten_Exception(sprintf(
-							'Veld %s is verplicht voor de lijst %s',
-							$extra_veld->get_label(),
-							$muzieklijst->get_naam()
-						));
-					} else {
-						continue;
-					}
-					Muzieklijsten_Database::insertMulti('muzieklijst_stemmers_extra_velden', [
-						'stemmer_id' => $stemmer->get_id(),
-						'extra_veld_id' => $extra_veld->get_id(),
-						'waarde' => $_POST[$extra_veld->get_html_id()]
-					]);
-				}
-			}
+//			// Invoer van extra velden
+//			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
+//				if ( !array_key_exists($extra_veld->get_html_id(), $_POST) ) {
+//					if ( $extra_veld->is_verplicht() ) {
+//						throw new Muzieklijsten_Exception(sprintf(
+//							'Veld %s is verplicht voor de lijst %s',
+//							$extra_veld->get_label(),
+//							$muzieklijst->get_naam()
+//						));
+//					} else {
+//						continue;
+//					}
+//					Muzieklijsten_Database::insertMulti('muzieklijst_stemmers_extra_velden', [
+//						'stemmer_id' => $stemmer->get_id(),
+//						'extra_veld_id' => $extra_veld->get_id(),
+//						'waarde' => $_POST[$extra_veld->get_html_id()]
+//					]);
+//				}
+//			}
 
 			$mailcontent = "Ontvangen van:\n\n";
 			$mailcontent .= "Naam: " . $_POST["naam"] . "\n";
@@ -124,16 +123,16 @@ if ($_POST['session']) {
 				$mailcontent .= "Vrije keuze: " . $_POST["veld_vrijekeus"] . "\n";
 			$mailcontent .= "\n";
 			
-			// Extra velden
-			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
-				try {
-					$mailcontent .= sprintf(
-						"%s: %s\n",
-						$extra_veld->get_label(),
-						$extra_veld->get_stemmer_waarde($stemmer)
-					);
-				} catch ( Muzieklijsten_Exception $e ) {}
-			}
+//			// Extra velden
+//			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
+//				try {
+//					$mailcontent .= sprintf(
+//						"%s: %s\n",
+//						$extra_veld->get_label(),
+//						$extra_veld->get_stemmer_waarde($stemmer)
+//					);
+//				} catch ( Muzieklijsten_Exception $e ) {}
+//			}
 
 			if ( is_array($_POST["id"]) ) {
 				foreach ( $_POST["id"] as $key => $value ) {

@@ -140,6 +140,7 @@ class Extra_Veld {
 				$this->get_id()
 			), $e->getCode(), $e);
 		}
+		return $waarde;
 	}
 	
 	/**

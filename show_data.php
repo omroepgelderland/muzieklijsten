@@ -96,13 +96,14 @@ if ($_POST['session']) {
 					} else {
 						continue;
 					}
-					Muzieklijsten_Database::insertMulti('muzieklijst_stemmers_extra_velden', [
-						'stemmer_id' => $stemmer->get_id(),
-						'extra_veld_id' => $extra_veld->get_id(),
-						'waarde' => $_POST[$extra_veld->get_html_id()]
-					]);
 				}
+				Muzieklijsten_Database::insertMulti('muzieklijst_stemmers_extra_velden', [
+					'stemmer_id' => $stemmer->get_id(),
+					'extra_veld_id' => $extra_veld->get_id(),
+					'waarde' => $_POST[$extra_veld->get_html_id()]
+				]);
 			}
+			$mailcontent = "\n";
 
 			$mailcontent = "Ontvangen van:\n\n";
 			$mailcontent .= "Naam: " . $_POST["naam"] . "\n";

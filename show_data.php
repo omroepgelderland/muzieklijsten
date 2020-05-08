@@ -123,16 +123,16 @@ if ($_POST['session']) {
 				$mailcontent .= "Vrije keuze: " . $_POST["veld_vrijekeus"] . "\n";
 			$mailcontent .= "\n";
 			
-//			// Extra velden
-//			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
-//				try {
-//					$mailcontent .= sprintf(
-//						"%s: %s\n",
-//						$extra_veld->get_label(),
-//						$extra_veld->get_stemmer_waarde($stemmer)
-//					);
-//				} catch ( Muzieklijsten_Exception $e ) {}
-//			}
+			// Extra velden
+			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
+				try {
+					$mailcontent .= sprintf(
+						"%s: %s\n",
+						$extra_veld->get_label(),
+						$extra_veld->get_stemmer_waarde($stemmer)
+					);
+				} catch ( Muzieklijsten_Exception $e ) {}
+			}
 
 			if ( is_array($_POST["id"]) ) {
 				foreach ( $_POST["id"] as $key => $value ) {

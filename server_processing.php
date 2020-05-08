@@ -14,6 +14,8 @@
  * @license MIT - http://datatables.net/license_mit
  */
  
+require_once __DIR__.'/include/include.php';
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Easy set variables
  */
@@ -38,12 +40,21 @@ $columns = array(
 );
  
 // SQL server connection information
-$sql_details = array(
-    'user' => 'w3omrpg',
-    'pass' => 'H@l*lOah',
-    'db'   => 'rtvgelderland',
-    'host' => 'localhost'
-);
+if ( is_dev() ) {
+	$sql_details = array(
+		'user' => 'remy',
+		'pass' => 'TxpJOe5MV0y4vP6t',
+		'db'   => 'remy_muzieklijsten',
+		'host' => 'localhost'
+	);
+} else {
+	$sql_details = array(
+		'user' => 'w3omrpg',
+		'pass' => 'H@l*lOah',
+		'db'   => 'rtvgelderland',
+		'host' => 'localhost'
+	);
+}
  
  
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -57,5 +68,3 @@ require( 'ssp.class.php' );
 echo json_encode(
     SSP::simple( $_GET, $sql_details, $table, $primaryKey, $columns )
 );
-
-?>

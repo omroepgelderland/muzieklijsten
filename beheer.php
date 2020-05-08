@@ -1,31 +1,26 @@
 <?php
 
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
-    header('WWW-Authenticate: Basic realm="Inloggen"');
-    header('HTTP/1.0 401 Unauthorized');
-    echo 'Je moet inloggen om deze pagina te kunnen zien.';
-    exit;
-} else {
-	if (($_SERVER['PHP_AUTH_USER'] == "gld") AND ($_SERVER["PHP_AUTH_PW"] = "muziek=fijn")) {
-	
-	function makezero($val) {
-		if ($val) {
-			return $val;
-		} else {
-			return 0;
-		}
+require_once __DIR__.'/include/include.php';
+
+function makezero($val) {
+	if ($val) {
+		return $val;
+	} else {
+		return 0;
 	}
-	
-	function makenull($val) {
-		if ($val) {
-			return $val;
-		} else {
-			return 'NULL';
-		}
+}
+
+function makenull($val) {
+	if ($val) {
+		return $val;
+	} else {
+		return 'NULL';
 	}
-	
-	
-$link = mysqli_connect("localhost","w3omrpg","H@l*lOah","rtvgelderland") or die("Error " . mysqli_error($link));
+}
+
+login();
+
+$link = Muzieklijsten_Database::getDB();
 $result = $link->query("SET NAMES 'utf8'");
 
 $lijst = (int)$_POST['lijst'];
@@ -157,7 +152,7 @@ if ( $lijst != 0 ) {
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="naam">Naam lijst:</label>
 		<div class="col-sm-10">	
- 			<input type="text" class="form-control" id="naam" name="naam" value="<?php echo $naam;?>">
+ 			<input type="text" class="form-control" id="naam" name="naam" value="<?php echo $naam; ?>">
 		</div>
 	</div>
 	
@@ -166,7 +161,7 @@ if ( $lijst != 0 ) {
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="email">E-mailadres voor reacties: <span class="glyphicon glyphicon-info-sign" title="Meerdere e-mailadressen scheiden door een komma ( , )" style="cursor:pointer;"></span></label>
 		<div class="col-sm-10">
- 			<input type="email" class="form-control" id="email" name="email" value="<?php echo $email;?>">
+ 			<input type="email" class="form-control" id="email" name="email" value="<?php echo $email; ?>">
 		</div>
 	</div>
 	
@@ -175,13 +170,13 @@ if ( $lijst != 0 ) {
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="velden">Velden tonen:</label>
 		<div class="col-sm-10">
-			<input type="checkbox" id="veld_telefoonnummer" value="1" name="veld_telefoonnummer"<?php if ($veld_telefoonnummer == 1) echo " checked";?>> Telefoonnummer <br />
- 			<input type="checkbox" id="veld_email" value="1" name="veld_email"<?php if ($veld_email == 1) echo " checked";?>> E-mailadres <br />
-			<input type="checkbox" id="veld_woonplaats" value="1" name="veld_woonplaats"<?php if ($veld_woonplaats == 1) echo " checked";?>> Woonplaats <br />
-			<input type="checkbox" id="veld_adres" value="1" name="veld_adres"<?php if ($veld_adres == 1) echo " checked";?>> Adres <br />
-			<input type="checkbox" id="veld_uitzenddatum" value="1" name="veld_uitzenddatum"<?php if ($veld_uitzenddatum == 1) echo " checked";?>> Uitzend datum <br />
-			<input type="checkbox" id="veld_vrijekeus" value="1" name="veld_vrijekeus"<?php if ($veld_vrijekeus == 1) echo " checked";?>> Vrije keuze <br />
-			<input type="checkbox" id="recaptcha" value="1" name="recaptcha"<?php if ($recaptcha == 1) echo " checked";?>> Re-Captcha <br />
+			<input type="checkbox" id="veld_telefoonnummer" value="1" name="veld_telefoonnummer"<?php if ($veld_telefoonnummer == 1) echo " checked"; ?>> Telefoonnummer <br>
+ 			<input type="checkbox" id="veld_email" value="1" name="veld_email"<?php if ($veld_email == 1) echo " checked"; ?>> E-mailadres <br>
+			<input type="checkbox" id="veld_woonplaats" value="1" name="veld_woonplaats"<?php if ($veld_woonplaats == 1) echo " checked"; ?>> Woonplaats <br>
+			<input type="checkbox" id="veld_adres" value="1" name="veld_adres"<?php if ($veld_adres == 1) echo " checked"; ?>> Adres <br>
+			<input type="checkbox" id="veld_uitzenddatum" value="1" name="veld_uitzenddatum"<?php if ($veld_uitzenddatum == 1) echo " checked"; ?>> Uitzend datum <br>
+			<input type="checkbox" id="veld_vrijekeus" value="1" name="veld_vrijekeus"<?php if ($veld_vrijekeus == 1) echo " checked"; ?>> Vrije keuze <br>
+			<input type="checkbox" id="recaptcha" value="1" name="recaptcha"<?php if ($recaptcha == 1) echo " checked"; ?>> Re-Captcha <br>
 		</div>
 	</div>
 
@@ -190,10 +185,10 @@ if ( $lijst != 0 ) {
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="velden">Opties:</label>
 		<div class="col-sm-10">
- 			Minimaal aantal keuzes <input type="text" class="form-control" id="minkeuzes" name="minkeuzes" value="<?php echo $minkeuzes;?>"><br />
-			Maximaaal aantal keuzes <input type="text" class="form-control" id="maxkeuzes" name="maxkeuzes" value="<?php echo $maxkeuzes;?>"><br />
-			Aantal stemmen per IP <input type="text" class="form-control" id="stemmen_per_ip" name="stemmen_per_ip" value="<?php echo $stemmen_per_ip;?>"><br />
-			<input type="checkbox" id="artiest_eenmalig" value="1" name="artiest_eenmalig"<?php if ($artiest_eenmalig == 1) echo " checked";?>> Artiesten eenmalig te selecteren <br />
+ 			Minimaal aantal keuzes <input type="text" class="form-control" id="minkeuzes" name="minkeuzes" value="<?php echo $minkeuzes; ?>"><br>
+			Maximaaal aantal keuzes <input type="text" class="form-control" id="maxkeuzes" name="maxkeuzes" value="<?php echo $maxkeuzes; ?>"><br>
+			Aantal stemmen per IP <input type="text" class="form-control" id="stemmen_per_ip" name="stemmen_per_ip" value="<?php echo $stemmen_per_ip; ?>"><br>
+			<input type="checkbox" id="artiest_eenmalig" value="1" name="artiest_eenmalig"<?php if ($artiest_eenmalig == 1) echo " checked"; ?>> Artiesten eenmalig te selecteren <br>
 			
 		</div>
 	</div>
@@ -252,9 +247,3 @@ function delete_list(id) {
 	});
 }
 </script>
-
-
-<?php
-} 
-}
-?>

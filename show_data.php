@@ -1,10 +1,14 @@
 <?php
 
+require_once __DIR__.'/include/include.php';
+
+include 'Mail.php';
+include 'Mail/mime.php' ;
+
 function is_captcha_ok() {
 	if ( $_SESSION['captcha'] != 1 ) {
 		return true;
 	}
-	require('recaptcha/src/autoload.php');
 	$recaptcha = new \ReCaptcha\ReCaptcha("6LdH7wsTAAAAADDnMKZ4g-c6f125Ftr0JQR-BDQp");
 	$resp = $recaptcha->verify($_POST['g-recaptcha-response'], $_SERVER['REMOTE_ADDR']);
 	return $resp->isSuccess();
@@ -20,14 +24,12 @@ function is_max_stemmen_per_ip_bereikt( $db, $lijst_id ) {
 	return ( $res == 1 );
 }
 
-$link = mysqli_connect("localhost","w3omrpg","H@l*lOah","rtvgelderland") or die("Error " . mysqli_error($link));
+$link = Muzieklijsten_Database::getDB();
 $result = $link->query("SET NAMES 'utf8'");
 session_start();
 
-include 'Mail.php';
-include 'Mail/mime.php' ;
-
 $lijst = (int)$_POST['lijst'];
+$muzieklijst = new Muzieklijst($lijst);
 
 if ($_POST['session']) {
 	
@@ -37,9 +39,70 @@ if ($_POST['session']) {
 		// muzieklijst_stemmen.ip
 		// $_SERVER["REMOTE_ADDR"]
 		if ( !is_max_stemmen_per_ip_bereikt($link, $lijst) ) {
-			$sql = "INSERT INTO muzieklijst_stemmers (naam, woonplaats, adres, postcode, telefoonnummer, emailadres, uitzenddatum, vrijekeus, ip) VALUES ('" . addslashes($_POST["naam"]) . "', '" . addslashes($_POST["woonplaats"]) . "', '" . addslashes($_POST["adres"]) . "', '" . addslashes($_POST["postcode"]) . "', '" . addslashes($_POST["telefoonnummer"]) . "', '" . addslashes($_POST["veld_email"]) . "', '" . addslashes($_POST["veld_uitzenddatum"]) . "', '" . addslashes($_POST["veld_vrijekeus"]) . "', '" . $_SERVER["REMOTE_ADDR"] . "')";
+			if ( in_array('naam', $_POST) ) {
+				$naam = addslashes($_POST['naam']);
+			} else {
+				$naam = '';
+			}
+			if ( in_array('woonplaats', $_POST) ) {
+				$woonplaats = addslashes($_POST['woonplaats']);
+			} else {
+				$woonplaats = '';
+			}
+			if ( in_array('adres', $_POST) ) {
+				$adres = addslashes($_POST['adres']);
+			} else {
+				$adres = '';
+			}
+			if ( in_array('postcode', $_POST) ) {
+				$postcode = addslashes($_POST['postcode']);
+			} else {
+				$postcode = '';
+			}
+			if ( in_array('telefoonnummer', $_POST) ) {
+				$telefoonnummer = addslashes($_POST['telefoonnummer']);
+			} else {
+				$telefoonnummer = '';
+			}
+			if ( in_array('veld_email', $_POST) ) {
+				$veld_email = addslashes($_POST['veld_email']);
+			} else {
+				$veld_email = '';
+			}
+			if ( in_array('veld_uitzenddatum', $_POST) ) {
+				$veld_uitzenddatum = addslashes($_POST['veld_uitzenddatum']);
+			} else {
+				$veld_uitzenddatum = '';
+			}
+			if ( in_array('veld_vrijekeus', $_POST) ) {
+				$veld_vrijekeus = addslashes($_POST['veld_vrijekeus']);
+			} else {
+				$veld_vrijekeus = '';
+			}
+			$sql = "INSERT INTO muzieklijst_stemmers (naam, woonplaats, adres, postcode, telefoonnummer, emailadres, uitzenddatum, vrijekeus, ip) VALUES ('" . $naam . "', '" . $woonplaats . "', '" . $adres . "', '" . $postcode . "', '" . $telefoonnummer . "', '" . $veld_email . "', '" . $veld_uitzenddatum . "', '" . $veld_vrijekeus . "', '" . $_SERVER["REMOTE_ADDR"] . "')";
 			$result = $link->query($sql);
 			$last_id = $link->insert_id;
+			$stemmer = new Stemmer($last_id);
+			
+			// Invoer van extra velden
+			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
+				if ( !array_key_exists($extra_veld->get_html_id(), $_POST) ) {
+					if ( $extra_veld->is_verplicht() ) {
+						throw new Muzieklijsten_Exception(sprintf(
+							'Veld %s is verplicht voor de lijst %s',
+							$extra_veld->get_label(),
+							$muzieklijst->get_naam()
+						));
+					} else {
+						continue;
+					}
+					Muzieklijsten_Database::insertMulti('muzieklijst_stemmers_extra_velden', [
+						'stemmer_id' => $stemmer->get_id(),
+						'extra_veld_id' => $extra_veld->get_id(),
+						'waarde' => $_POST[$extra_veld->get_html_id()]
+					]);
+				}
+			}
 
 			$mailcontent = "Ontvangen van:\n\n";
 			$mailcontent .= "Naam: " . $_POST["naam"] . "\n";
@@ -55,6 +118,17 @@ if ($_POST['session']) {
 			if ( $_SESSION["veld_vrijekeus"] == 1 )
 				$mailcontent .= "Vrije keuze: " . $_POST["veld_vrijekeus"] . "\n";
 			$mailcontent .= "\n";
+			
+			// Extra velden
+			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
+				try {
+					$mailcontent .= sprintf(
+						"%s: %s\n",
+						$extra_veld->get_label(),
+						$extra_veld->get_stemmer_waarde($stemmer)
+					);
+				} catch ( Muzieklijsten_Exception $e ) {}
+			}
 
 			if ( is_array($_POST["id"]) ) {
 				foreach ( $_POST["id"] as $key => $value ) {
@@ -119,8 +193,16 @@ if ($_POST['session']) {
 
 		echo '<div class="col-sm-12">';
 		echo '<h4>Bedankt voor uw keuze</h4>';
-		if ($lijst == 31 || $lijst == 201) echo '<div class="fb-share-button" data-href="https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$last_id.'" data-layout="button" data-size="large" data-mobile-iframe="true"><a class="fb-xfbml-parse-ignore" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$last_id.'&amp;src=sdkpreparse">Deel mijn keuze op Facebook</a></div>';
-		
+		if ( $lijst == 31 || $lijst == 201 ) {
+			if ( is_dev() ) {
+				$fbshare_url = 'http://192.168.1.107/~remy/muzieklijsten/fbshare.php?stemmer='.$last_id;
+				$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F192.168.1.107%2F~remy%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$last_id.'&amp;src=sdkpreparse';
+			} else {
+				$fbshare_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$last_id;
+				$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$last_id.'&amp;src=sdkpreparse';
+			}
+			echo '<div class="fb-share-button" data-href="'.$fbshare_url.'" data-layout="button" data-size="large" data-mobile-iframe="true"><a class="fb-xfbml-parse-ignore" target="_blank" href="'.$fb_url.'">Deel mijn keuze op Facebook</a></div>';
+		}
 	}
 	
 	session_unset(); 
@@ -141,7 +223,7 @@ if ($_POST['session']) {
 	foreach ($_POST["id"] as $key => $value) {
 		$value = (int)$value;
 		
-		$sql = "SELECT * FROM ".$prefix."muzieklijst_nummers WHERE id = ".$value;
+		$sql = "SELECT * FROM muzieklijst_nummers WHERE id = ".$value;
 		$result = $link->query($sql);
 		
 		while ($r = mysqli_fetch_array($result)) {

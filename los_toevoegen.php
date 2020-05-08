@@ -1,8 +1,6 @@
 <?php
 
-function is_dev() {
-	return false;
-}
+require_once __DIR__.'/include/include.php';
 
 function verboden( $msg ) {
     header('WWW-Authenticate: Basic realm="Inloggen"');
@@ -61,7 +59,7 @@ function serverError( $json ) {
 
 function logincheck( $loginnaam, $wachtwoord ) {
 	if ( $loginnaam != 'gld' || $wachtwoord != 'muziek=fijn' ) {
-		throw new Exception('De logingegevens zijn incorrect');
+		throw new Muzieklijsten_Exception('De logingegevens zijn incorrect');
 	}
 }
 
@@ -81,7 +79,7 @@ function toevoegen( $db, $nummers, $lijsten ) {
 			);
 			$res = $db->query($sql);
 			if ( $res === false ) {
-				throw new Exception(sprintf(
+				throw new SQLException(sprintf(
 					'SQL query mislukt: "%s"',
 					$sql
 				));
@@ -96,7 +94,7 @@ function toevoegen( $db, $nummers, $lijsten ) {
 				);
 				$res = $db->query($sql);
 				if ( $res === false ) {
-					throw new Exception(sprintf(
+					throw new SQLException(sprintf(
 						'SQL query mislukt: "%s"',
 						$sql
 					));
@@ -111,7 +109,7 @@ function toevoegen( $db, $nummers, $lijsten ) {
 					);
 					$res = $db->query($sql);
 					if ( $res === false ) {
-						throw new Exception(sprintf(
+						throw new SQLException(sprintf(
 							'SQL query mislukt: "%s"',
 							$sql
 						));
@@ -126,7 +124,7 @@ function toevoegen( $db, $nummers, $lijsten ) {
 function getLijsten( $db ) {
 	$res = $db->query('SELECT id, naam FROM muzieklijst_lijsten ORDER BY naam');
 	if ( $res === false ) {
-		throw new Exception(sprintf(
+		throw new SQLException(sprintf(
 			'SQL query mislukt: "%s"',
 			$sql
 		));
@@ -138,23 +136,15 @@ function getLijsten( $db ) {
 	return $json;
 }
 
-/*
-if ( ! isset($_SERVER['PHP_AUTH_USER']) ) {
-	verboden('Je moet inloggen om deze pagina te kunnen zien.');
-} elseif ( $_SERVER['PHP_AUTH_USER'] != 'klipfolio' OR $_SERVER["PHP_AUTH_PW"] != 'evP3Fu9w5G3p') {
-	verboden('Logingegevens incorrect');
-}
-*/
-
 register_shutdown_function('fatal_error_handler');
 if ( ! is_dev() ) {
 	ini_set('display_errors', 'off');
 }
 try {
 	
-	$db = new mysqli('localhost', 'w3omrpg', 'H@l*lOah', 'rtvgelderland');
+	$db = Muzieklijsten_Database::getDB();
 	if ( $db === false ) {
-		throw new Exception('Database verbinding mislukt');
+		throw new SQLException('Database verbinding mislukt');
 	}
 	$db->set_charset('UTF-8');
 	$db->query('SET NAMES utf8');
@@ -170,7 +160,7 @@ try {
 			$json = getLijsten($db);
 			break;
 		default:
-			throw new Exception(sprintf('Query "%s" is onbekend', $params['query']));
+			throw new SQLException(sprintf('Query "%s" is onbekend', $params['query']));
 	}
 	
 	header('Content-Type: application/json');
@@ -178,5 +168,3 @@ try {
 } catch ( Exception $e ) {
 	exception_serverError($e);
 }
-
-?>

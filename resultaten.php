@@ -1,16 +1,28 @@
 <?php
 
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
-    header('WWW-Authenticate: Basic realm="Inloggen"');
-    header('HTTP/1.0 401 Unauthorized');
-    echo 'Je moet inloggen om deze pagina te kunnen zien.';
-    exit;
-} else {
-	if (($_SERVER['PHP_AUTH_USER'] == "gld") AND ($_SERVER["PHP_AUTH_PW"] = "muziek=fijn")) {
-	
+require_once __DIR__.'/include/include.php';
 
+function formatDate($date) {
+	if ($date) {
+		$date_formatted = DateTime::createFromFormat('Y-m-d H:i:s', $date);
+		return $date_formatted->format('d-m-Y H:i:s');
+	}
+}
 
-$link = mysqli_connect("localhost","w3omrpg","H@l*lOah","rtvgelderland") or die("Error " . mysqli_error($link));
+function formatDate2($date) {
+	if ($date) {
+		$date_formatted = DateTime::createFromFormat('d-m-Y', $date);
+		return $date_formatted->format('Y-m-d');
+	}
+}
+
+if ( is_dev() ) {
+	error_reporting(E_ALL & ~E_NOTICE);
+}
+
+login();
+
+$link = Muzieklijsten_Database::getDB();
 $result = $link->query("SET NAMES 'utf8'");
 
 $id = (int)$_POST['id'];
@@ -56,20 +68,6 @@ if ($_POST["delsong"] == "1") {
 	exit();
 }
 
-function formatDate($date) {
-	if ($date) {
-		$date_formatted = DateTime::createFromFormat('Y-m-d H:i:s', $date);
-		return $date_formatted->format('d-m-Y H:i:s');
-	}
-}
-
-function formatDate2($date) {
-	if ($date) {
-		$date_formatted = DateTime::createFromFormat('d-m-Y', $date);
-		return $date_formatted->format('Y-m-d');
-	}
-}
-
 $lijst = (int)$_GET['lijst'];
 
 $sql = "SELECT naam FROM muzieklijst_lijsten WHERE id = ".$lijst;
@@ -98,14 +96,14 @@ $veld_vrijekeus = $result[0];
 
 ?>
 <!DOCTYPE HTML>
-<html>
+<html lang="nl">
 <head>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/r/dt/jq-2.1.4,dt-1.10.8/datatables.min.css">
 	<link rel="stylesheet" type="text/css" href="css/bootstrap-datetimepicker.min.css">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-	<title>Resultaten - <?php echo $naam;?></title>
+	<title>Resultaten - <?php echo $naam; ?></title>
 	
 	<script src="js/jquery-1.11.2.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
@@ -167,10 +165,10 @@ border-color: #d0e3f0;
 	<div class="row">
 	
 		<div class="col-sm-12">
-			<div class="col-sm-7"><?php if ($_GET["admin"] != 1) echo '<h4>Resultaten van de lijst "'.$naam.'"</h4>';?></div>
+			<div class="col-sm-7"><?php if ($_GET["admin"] != 1) echo '<h4>Resultaten van de lijst "'.$naam.'"</h4>'; ?></div>
 			<div class="col-sm-2">
 				<div class='input-group date' id='datetimepicker1'>
-					<input type='text' name="van" class="form-control" placeholder="Datum van" value="<?php echo $_POST["van"]; ?>" />
+					<input type='text' name="van" class="form-control" placeholder="Datum van" value="<?php echo $_POST["van"]; ?>">
 					<span class="input-group-addon">
 						<span class="glyphicon glyphicon-calendar"></span>
 					</span>
@@ -179,7 +177,7 @@ border-color: #d0e3f0;
 			
 			<div class="col-sm-2">
 				<div class='input-group date' id='datetimepicker2'>
-					<input type='text' name="tot" class="form-control" placeholder="Datum tot" value="<?php echo $_POST["tot"]; ?>" />
+					<input type='text' name="tot" class="form-control" placeholder="Datum tot" value="<?php echo $_POST["tot"]; ?>">
 					<span class="input-group-addon">
 						<span class="glyphicon glyphicon-calendar"></span>
 					</span>
@@ -211,7 +209,7 @@ if ($_POST["tot"]) {
 }
 $result = mysqli_fetch_array($link->query($sql));
 echo ' ('.$result[0].')';
-echo '<br />';
+echo '<br>';
 echo 'Aantal stemmers';
 $sql = "SELECT COUNT(DISTINCT(t.id)) FROM muzieklijst_stemmen s, muzieklijst_stemmers t WHERE s.stemmer_id = t.id AND s.lijst_id = ".$lijst;
 if ($_POST["van"]) {
@@ -334,7 +332,7 @@ while ($r = mysqli_fetch_array($result)) {
 	$count++;
 }
 if ($rows < 6) {
-	echo '<tr style="background-color: #fff;"><td><br /><br /><br /><br /><br /><br /><br /><br /></td></tr>'."\n";
+	echo '<tr style="background-color: #fff;"><td><br><br><br><br><br><br><br><br></td></tr>'."\n";
 }
 ?>                                
 				</tbody>
@@ -430,11 +428,5 @@ $(function () {
 
 
 </script>
-
-<?php
-}
-}
-?>
-		
 </body>
 </html>

@@ -1,8 +1,6 @@
 <?php
 
-function is_dev() {
-	return false;
-}
+require_once __DIR__.'/include/include.php';
 
 function fatal_error_handler() {
 	$last_error = error_get_last();
@@ -59,7 +57,7 @@ function getNummers( $db, $stemmer_id ) {
 	);
 	$res = $db->query($sql);
 	if ( $res === false ) {
-		throw new Exception('Query mislukt');
+		throw new SQLException('Query mislukt');
 	}
 	$json = [];
 	foreach( $res as $r ) {
@@ -74,9 +72,9 @@ if ( ! is_dev() ) {
 }
 try {
 	
-	$db = new mysqli('localhost', 'w3omrpg', 'H@l*lOah', 'rtvgelderland');
+	$db = Muzieklijsten_Database::getDB();
 	if ( $db === false ) {
-		throw new Exception('Database verbinding mislukt');
+		throw new SQLException('Database verbinding mislukt');
 	}
 	// Omzetter voor data uit Angular
 	$params = json_decode(file_get_contents('php://input'),true);
@@ -86,7 +84,7 @@ try {
 			$json = getNummers($db, $params['stemmer_id']);
 			break;
 		default:
-			throw new Exception(sprintf('Query "%s" is onbekend', $params['query']));
+			throw new Muzieklijsten_Exception(sprintf('Query "%s" is onbekend', $params['query']));
 	}
 	
 	header('Content-Type: application/json');
@@ -94,5 +92,3 @@ try {
 } catch ( Exception $e ) {
 	exception_serverError($e);
 }
-
-?>

@@ -1,17 +1,22 @@
 <?php
-$link = mysqli_connect("localhost","w3omrpg","H@l*lOah","rtvgelderland") or die("Error " . mysqli_error($link));
+
+require_once __DIR__.'/include/include.php';
+
+$link = Muzieklijsten_Database::getDB();
 session_start();
 
-require_once '/home/web/www/vendor/autoload.php';
+if ( !array_key_exists('lijst', $_GET) ) {
+	throw new Muzieklijsten_Exception('Geef een lijst mee in de URL');
+}
 
 $lijst = (int)$_GET['lijst'];
+$muzieklijst = new Muzieklijst($lijst);
 
 $sql = "SELECT recaptcha FROM muzieklijst_lijsten WHERE id = ".$lijst;
 $result = mysqli_fetch_array($link->query($sql));
 $captcha = $result[0];
 
 if ($captcha == 1) {
-	require('recaptcha/src/autoload.php');
 	$recaptcha = new \ReCaptcha\ReCaptcha("6LdH7wsTAAAAADDnMKZ4g-c6f125Ftr0JQR-BDQp");
 	$_SESSION['captcha'] = 1;
 }
@@ -73,7 +78,7 @@ $_SESSION["veld_vrijekeus"] = $veld_vrijekeus;
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="nl">
 <head>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -185,6 +190,20 @@ if ($veld_uitzenddatum == 1) {
 	}
 <?php
 }
+
+?>
+	var geldig = true;
+	$('input[required]').each(function() {
+		if ( $(this).val() == '' ) {
+			var leeg_feedback = $(this).data('leeg-feedback');
+			alert(leeg_feedback);
+			return geldig = false;
+		}
+	});
+	if ( !geldig ) {
+		return (false);
+	}
+<?php
 
 if ($captcha == 1) {
 ?>
@@ -306,7 +325,7 @@ if ($veld_email == 1) {
 					<input type="text" class="form-control" id="veld_email" name="veld_email">
 				</div>
 			</div>
-<?
+<?php
 }
 
 if ($veld_uitzenddatum == 1) {
@@ -322,7 +341,7 @@ if ($veld_uitzenddatum == 1) {
 			</div>
 				</div>
 			</div>
-<?
+<?php
 }
 
 if ($veld_vrijekeus == 1) {
@@ -333,7 +352,11 @@ if ($veld_vrijekeus == 1) {
 					<input type="text" class="form-control" id="veld_vrijekeus" name="veld_vrijekeus" placeholder="Vul hier uw eigen favoriet in">
 				</div>
 			</div>
-<?
+<?php
+}
+
+foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
+	echo $extra_veld->get_formulier_html();
 }
 
 if ($captcha == 1) {
@@ -345,7 +368,7 @@ if ($captcha == 1) {
 					<script type="text/javascript" src="https://www.google.com/recaptcha/api.js?hl=nl"></script>
 				</div>
 			</div>
-<?
+<?php
 }
 
 if ($actief == 0) {
@@ -378,7 +401,7 @@ if ($actief == 0) {
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="submit"></label>
 				<div class="col-sm-10">
-					Er kon maximaal <?php echo $stemmen_per_ip?> keer worden gestemd vanaf dit IP adres.
+					Er kon maximaal <?php echo $stemmen_per_ip; ?> keer worden gestemd vanaf dit IP adres.
 			</div>
 
 <?php
@@ -624,4 +647,3 @@ $(function () {
 </body>
 
 </html>
-

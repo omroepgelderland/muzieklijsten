@@ -1,8 +1,8 @@
-<?
+<?php
+
+require_once __DIR__.'/include/include.php';
+
 include 'excel_reader.php'; 
-
-$link = mysqli_connect("localhost","w3omrpg","H@l*lOah","rtvgelderland") or die("Error " . mysqli_error($link));
-
 
 function multiKeyExists( Array $array, $key ) {
     if (array_key_exists($key, $array)) {
@@ -19,8 +19,7 @@ function multiKeyExists( Array $array, $key ) {
     return false;
 }
 
-
-
+$link = Muzieklijsten_Database::getDB();
 
 $excel = new PhpExcelReader;
 $excel->read('powergold.xls');
@@ -56,4 +55,3 @@ foreach ($data as $key => $arr) {
 		}
 	}
 }
-?>

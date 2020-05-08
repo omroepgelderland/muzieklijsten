@@ -1,24 +1,21 @@
 <?php
-$link = mysqli_connect("localhost","w3omrpg","H@l*lOah","rtvgelderland") or die("Error " . mysqli_error($link));
+
+require_once __DIR__.'/include/include.php';
+
+$link = Muzieklijsten_Database::getDB();
 
 $lijst = (int)$_GET['lijst'];
 
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
-    header('WWW-Authenticate: Basic realm="Inloggen"');
-    header('HTTP/1.0 401 Unauthorized');
-    echo 'Je moet inloggen om deze pagina te kunnen zien.';
-    exit;
-} else {
-	if (($_SERVER['PHP_AUTH_USER'] == "gld") AND ($_SERVER["PHP_AUTH_PW"] = "muziek=fijn")) {
+login();
 	
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="nl">
 <head>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/r/dt/dt-1.10.9/datatables.min.css"/>
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/r/dt/dt-1.10.9/datatables.min.css">
 
 	
 	<script src="js/jquery-1.11.2.min.js"></script>
@@ -398,8 +395,3 @@ $(document).ready(function (){
 </body>
 
 </html>
-
-<?php
-	}
-}
-?>

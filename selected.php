@@ -1,5 +1,8 @@
 <?php
-$link = mysqli_connect("localhost","w3omrpg","H@l*lOah","rtvgelderland") or die("Error " . mysqli_error($link));
+
+require_once __DIR__.'/include/include.php';
+
+$link = Muzieklijsten_Database::getDB();
 
 $lijst = (int)$_GET['lijst'];
 
@@ -31,4 +34,3 @@ while ($r = mysqli_fetch_array($result)) {
 	echo '</tr>';
 }
 echo '</tbody></table>';
-?>

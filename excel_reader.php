@@ -19,6 +19,8 @@
 * @see        OLE, Spreadsheet_Excel_Writer
 */
 
+require_once __DIR__.'/include/include.php';
+
 
 require_once 'oleread.inc';
 

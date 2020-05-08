@@ -15,12 +15,13 @@
  * @license MIT - http://datatables.net/license_mit
  */
 
+require_once __DIR__.'/include/include.php';
 
-// REMOVE THIS BLOCK - used for DataTables test environment only!
-$file = $_SERVER['DOCUMENT_ROOT'].'/datatables/mysql.php';
-if ( is_file( $file ) ) {
-	include( $file );
-}
+//// REMOVE THIS BLOCK - used for DataTables test environment only!
+//$file = $_SERVER['DOCUMENT_ROOT'].'/datatables/mysql.php';
+//if ( is_file( $file ) ) {
+//	include( $file );
+//}
 
 
 class SSP {
@@ -568,4 +569,3 @@ class SSP {
 		return $a;
 	}
 }
-

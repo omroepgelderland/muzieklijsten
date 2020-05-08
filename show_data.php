@@ -10,7 +10,6 @@ include 'Mail.php';
 include 'Mail/mime.php' ;
 
 function is_captcha_ok() {
-	return true;
 	if ( $_SESSION['captcha'] != 1 ) {
 		return true;
 	}
@@ -20,6 +19,7 @@ function is_captcha_ok() {
 }
 
 function is_max_stemmen_per_ip_bereikt( $db, $lijst_id ) {
+	return false;
 	$sql = sprintf(
 		'SELECT l.stemmen_per_ip IS NOT NULL AND COUNT(DISTINCT stemmers.id) >= l.stemmen_per_ip FROM muzieklijst_stemmers stemmers JOIN muzieklijst_stemmen stemmen ON stemmen.stemmer_id = stemmers.id JOIN muzieklijst_lijsten l ON l.id = %d AND stemmen.lijst_id = l.id WHERE stemmers.ip = "%s"',
 		$lijst_id,

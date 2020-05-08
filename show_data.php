@@ -103,7 +103,6 @@ if ($_POST['session']) {
 					'waarde' => $_POST[$extra_veld->get_html_id()]
 				]);
 			}
-			$mailcontent = "\n";
 
 			$mailcontent = "Ontvangen van:\n\n";
 			$mailcontent .= "Naam: " . $_POST["naam"] . "\n";
@@ -130,6 +129,7 @@ if ($_POST['session']) {
 					);
 				} catch ( Muzieklijsten_Exception $e ) {}
 			}
+			$mailcontent .= "\n";
 
 			if ( is_array($_POST["id"]) ) {
 				foreach ( $_POST["id"] as $key => $value ) {

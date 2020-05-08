@@ -10,6 +10,7 @@ include 'Mail.php';
 include 'Mail/mime.php' ;
 
 function is_captcha_ok() {
+	return true;
 	if ( $_SESSION['captcha'] != 1 ) {
 		return true;
 	}

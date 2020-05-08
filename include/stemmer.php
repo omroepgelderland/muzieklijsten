@@ -36,7 +36,7 @@ class Stemmer {
 	}
 	
 	public function get_id() {
-		return $this->get_id();
+		return $this->id;
 	}
 	
 	/**

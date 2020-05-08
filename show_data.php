@@ -1,9 +1,5 @@
 <?php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__.'/include/include.php';
 
 include 'Mail.php';
@@ -88,25 +84,25 @@ if ($_POST['session']) {
 			$last_id = $link->insert_id;
 			$stemmer = new Stemmer($last_id);
 			
-//			// Invoer van extra velden
-//			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
-//				if ( !array_key_exists($extra_veld->get_html_id(), $_POST) ) {
-//					if ( $extra_veld->is_verplicht() ) {
-//						throw new Muzieklijsten_Exception(sprintf(
-//							'Veld %s is verplicht voor de lijst %s',
-//							$extra_veld->get_label(),
-//							$muzieklijst->get_naam()
-//						));
-//					} else {
-//						continue;
-//					}
-//					Muzieklijsten_Database::insertMulti('muzieklijst_stemmers_extra_velden', [
-//						'stemmer_id' => $stemmer->get_id(),
-//						'extra_veld_id' => $extra_veld->get_id(),
-//						'waarde' => $_POST[$extra_veld->get_html_id()]
-//					]);
-//				}
-//			}
+			// Invoer van extra velden
+			foreach ( $muzieklijst->get_extra_velden() as $extra_veld ) {
+				if ( !array_key_exists($extra_veld->get_html_id(), $_POST) ) {
+					if ( $extra_veld->is_verplicht() ) {
+						throw new Muzieklijsten_Exception(sprintf(
+							'Veld %s is verplicht voor de lijst %s',
+							$extra_veld->get_label(),
+							$muzieklijst->get_naam()
+						));
+					} else {
+						continue;
+					}
+					Muzieklijsten_Database::insertMulti('muzieklijst_stemmers_extra_velden', [
+						'stemmer_id' => $stemmer->get_id(),
+						'extra_veld_id' => $extra_veld->get_id(),
+						'waarde' => $_POST[$extra_veld->get_html_id()]
+					]);
+				}
+			}
 
 			$mailcontent = "Ontvangen van:\n\n";
 			$mailcontent .= "Naam: " . $_POST["naam"] . "\n";

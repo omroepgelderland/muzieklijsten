@@ -34,7 +34,9 @@ class Muzieklijst {
 	private $notificatie_email_adressen;
 	/** @var Extra_Veld[] */
 	private $extra_velden;
-	/** @bar boolean */
+	/** @var Nummer[] */
+	private $nummers;
+	/** @var boolean */
 	private $db_props_set = false;
 	
 	public function __construct( $id ) {
@@ -59,6 +61,114 @@ class Muzieklijst {
 	}
 	
 	/**
+	 * 
+	 * @return int
+	 */
+	public function get_minkeuzes() {
+		$this->set_db_properties();
+		return $this->minkeuzes;
+	}
+	
+	/**
+	 * 
+	 * @return int
+	 */
+	public function get_maxkeuzes() {
+		$this->set_db_properties();
+		return $this->maxkeuzes;
+	}
+	
+	/**
+	 * 
+	 * @return int|null
+	 */
+	public function get_max_stemmen_per_ip() {
+		$this->set_db_properties();
+		return $this->stemmen_per_ip;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function is_artiest_eenmalig() {
+		$this->set_db_properties();
+		return $this->artiest_eenmalig;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function heeft_veld_telefoonnummer() {
+		$this->set_db_properties();
+		return $this->veld_telefoonnummer;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function heeft_veld_email() {
+		$this->set_db_properties();
+		return $this->veld_email;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function heeft_veld_woonplaats() {
+		$this->set_db_properties();
+		return $this->veld_woonplaats;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function heeft_veld_adres() {
+		$this->set_db_properties();
+		return $this->veld_adres;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function heeft_veld_uitzenddatum() {
+		$this->set_db_properties();
+		return $this->veld_uitzenddatum;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function heeft_veld_vrijekeus() {
+		$this->set_db_properties();
+		return $this->veld_vrijekeus;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function heeft_gebruik_recaptcha() {
+		$this->set_db_properties();
+		return $this->recaptcha;
+	}
+	
+	/**
+	 * 
+	 * @return string[]
+	 */
+	public function get_notificatie_email_adressen() {
+		$this->set_db_properties();
+		return $this->notificatie_email_adressen;
+	}
+	
+	/**
 	 * Geeft alle extra velden die bij de lijst horen.
 	 * return Extra_Veld[]
 	 */
@@ -76,6 +186,42 @@ class Muzieklijst {
 			}
 		}
 		return $this->extra_velden;
+	}
+	
+	/**
+	 * Geeft alle nummers van deze lijst
+	 * @return Nummer[]
+	 */
+	public function get_nummers() {
+		if ( $this->nummers === null ) {
+			$this->nummers = [];
+			$sql = sprintf(
+				'SELECT nummer_id FROM muzieklijst_nummers_lijst WHERE lijst_id = %d',
+				$this->get_id()
+			);
+			foreach ( Muzieklijsten_Database::selectSingleColumn($sql) as $nummer_id ) {
+				$this->nummers[] = new Nummer($nummer_id);
+			}
+		}
+		return $this->nummers;
+	}
+	
+	/**
+	 * Geeft de stemmen op een nummer in de lijst
+	 * @param Nummer $nummer
+	 * @return Stem[] Stemmen
+	 */
+	public function get_stemmen( $nummer ) {
+		$res = Muzieklijsten_Database::selectSingleColumn(sprintf(
+			'SELECT id FROM muzieklijst_stemmen WHERE nummer_id = %d AND lijst_id = %d',
+			$nummer->get_id(),
+			$this->get_id()
+		));
+		$stemmen = [];
+		foreach ( $res as $sid ) {
+			$stemmen[] = new Stem($sid);
+		}
+		return $stemmen;
 	}
 	
 	/**

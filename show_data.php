@@ -24,6 +24,10 @@ function is_max_stemmen_per_ip_bereikt( $db, $lijst_id ) {
 	return ( $res == 1 );
 }
 
+if ( is_dev() ) {
+	error_reporting(E_ALL & ~E_NOTICE);
+}
+
 $link = Muzieklijsten_Database::getDB();
 $result = $link->query("SET NAMES 'utf8'");
 session_start();

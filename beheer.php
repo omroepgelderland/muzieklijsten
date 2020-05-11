@@ -18,6 +18,10 @@ function makenull($val) {
 	}
 }
 
+if ( is_dev() ) {
+	error_reporting(E_ALL & ~E_NOTICE);
+}
+
 login();
 
 $link = Muzieklijsten_Database::getDB();

@@ -19,6 +19,10 @@ function multiKeyExists( Array $array, $key ) {
     return false;
 }
 
+if ( is_dev() ) {
+	error_reporting(E_ALL & ~E_NOTICE);
+}
+
 $link = Muzieklijsten_Database::getDB();
 
 $excel = new PhpExcelReader;

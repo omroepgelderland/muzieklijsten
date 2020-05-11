@@ -14,6 +14,8 @@ class Extra_Veld {
 	private $leeg_feedback;
 	/** @var boolean */
 	private $verplicht;
+	/** @var Muzieklijst */
+	private $lijsten;
 	/** @var boolean */
 	private $db_props_set;
 	
@@ -82,6 +84,24 @@ class Extra_Veld {
 			throw new Muzieklijsten_Exception('Niet bekend of dit veld verplicht is.');
 		}
 		return $this->verplicht;
+	}
+	
+	/**
+	 * Geeft alle lijsten waar dit een extra veld is.
+	 * return Muzieklijst[]
+	 */
+	public function get_lijsten() {
+		if ( $this->lijsten === null ) {
+			$this->lijsten = [];
+			$sql = sprintf(
+				'SELECT lijst_id FROM muzieklijst_lijsten_extra_velden WHERE extra_veld_id = %d',
+				$this->get_id()
+			);
+			foreach ( Muzieklijsten_Database::selectSingleColumn($sql) as $lijst_id ) {
+				$this->lijsten[] = new Muzieklijst($lijst_id);
+			}
+		}
+		return $this->lijsten;
 	}
 	
 	/**

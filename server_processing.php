@@ -16,6 +16,10 @@
  
 require_once __DIR__.'/include/include.php';
 
+if ( is_dev() ) {
+	error_reporting(E_ALL & ~E_NOTICE);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Easy set variables
  */

@@ -22,8 +22,8 @@ class Stemmer {
 	private $vrijekeus;
 	/** @var string */
 	private $ip;
-	/** @var int */
-	private $timestamp;
+	/** @var DateTime */
+	private $tijdstip;
 	/** @var boolean */
 	private $db_props_set;
 	
@@ -35,8 +35,102 @@ class Stemmer {
 		$this->id = $id;
 	}
 	
+	/**
+	 * 
+	 * @return int
+	 */
 	public function get_id() {
 		return $this->id;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_naam() {
+		$this->set_db_properties();
+		return $this->naam;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_adres() {
+		$this->set_db_properties();
+		return $this->adres;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_postcode() {
+		$this->set_db_properties();
+		return $this->postcode;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_woonplaats() {
+		$this->set_db_properties();
+		return $this->woonplaats;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_telefoonnummer() {
+		$this->set_db_properties();
+		return $this->telefoonnummer;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_emailadres() {
+		$this->set_db_properties();
+		return $this->emailadres;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_uitzenddatum() {
+		$this->set_db_properties();
+		return $this->uitzenddatum;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_vrijekeus() {
+		$this->set_db_properties();
+		return $this->vrijekeus;
+	}
+	
+	/**
+	 * 
+	 * @return string
+	 */
+	public function get_ip() {
+		$this->set_db_properties();
+		return $this->ip;
+	}
+	
+	/**
+	 * 
+	 * @return DateTime
+	 */
+	public function get_tijdstip() {
+		$this->set_db_properties();
+		return $this->tijdstip;
 	}
 	
 	/**
@@ -57,7 +151,8 @@ class Stemmer {
 			$this->uitzenddatum = $entry['uitzenddatum'];
 			$this->vrijekeus = $entry['vrijekeus'];
 			$this->ip = $entry['ip'];
-			$this->timestamp = $entry['timestamp'];
+			$this->tijdstip = new DateTime();
+			$this->tijdstip->setTimestamp($entry['timestamp']);
 			$this->db_props_set = true;
 		}
 	}

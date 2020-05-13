@@ -4,14 +4,20 @@ class Nummer {
 
 	/** @var int */
 	private $id;
-	/** @var string */
+	/** @var string|null */
 	private $muziek_id;
 	/** @var string */
 	private $titel;
 	/** @var string */
 	private $artiest;
-	/** @var int */
+	/** @var int|null */
 	private $jaar;
+	/** @var string|null */
+	private $categorie;
+	/** @var string|null */
+	private $map;
+	/** @var boolean */
+	private $is_opener;
 	/** @var Muzieklijst[] */
 	private $lijsten;
 	/** @var boolean */
@@ -31,7 +37,7 @@ class Nummer {
 	
 	/**
 	 * 
-	 * @return string
+	 * @return string|null
 	 */
 	public function get_muziek_id() {
 		$this->set_db_properties();
@@ -66,6 +72,33 @@ class Nummer {
 	}
 	
 	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_categorie() {
+		$this->set_db_properties();
+		return $this->categorie;
+	}
+	
+	/**
+	 * 
+	 * @return string|null
+	 */
+	public function get_map() {
+		$this->set_db_properties();
+		return $this->map;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function is_opener() {
+		$this->set_db_properties();
+		return $this->is_opener;
+	}
+	
+	/**
 	 * Geeft alle lijsten waar dit nummer op staat.
 	 * @return Muzieklijst[]
 	 */
@@ -96,6 +129,9 @@ class Nummer {
 			$this->titel = $entry['titel'];
 			$this->artiest = $entry['artiest'];
 			$this->jaar = $entry['jaar'];
+			$this->categorie = $entry['categorie'];
+			$this->map = $entry['map'];
+			$this->is_opener = $entry['opener'] == 1;
 			$this->db_props_set = true;
 		}
 	}

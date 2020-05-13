@@ -12,7 +12,7 @@ $lijst = (int)$_GET['lijst'];
 
 echo '<h4>Geselecteerd';
 if ($lijst) {
-	$sql = "SELECT COUNT(id) as aantal FROM muzieklijst_nummers_lijst WHERE lijst_id = ".$lijst;
+	$sql = "SELECT COUNT(nummer_id) as aantal FROM muzieklijst_nummers_lijst WHERE lijst_id = ".$lijst;
 	$result = mysqli_fetch_array($link->query($sql));
 	echo ' ('.$result[0].')';
 }

@@ -43,42 +43,42 @@ if ($_POST['session']) {
 		// muzieklijst_stemmen.ip
 		// $_SERVER["REMOTE_ADDR"]
 		if ( !is_max_stemmen_per_ip_bereikt($link, $lijst) ) {
-			if ( in_array('naam', $_POST) ) {
+			if (array_key_exists('naam', $_POST)) {
 				$naam = addslashes($_POST['naam']);
 			} else {
 				$naam = '';
 			}
-			if ( in_array('woonplaats', $_POST) ) {
+			if (array_key_exists('woonplaats', $_POST)) {
 				$woonplaats = addslashes($_POST['woonplaats']);
 			} else {
 				$woonplaats = '';
 			}
-			if ( in_array('adres', $_POST) ) {
+			if (array_key_exists('adres', $_POST)) {
 				$adres = addslashes($_POST['adres']);
 			} else {
 				$adres = '';
 			}
-			if ( in_array('postcode', $_POST) ) {
+			if (array_key_exists('postcode', $_POST)) {
 				$postcode = addslashes($_POST['postcode']);
 			} else {
 				$postcode = '';
 			}
-			if ( in_array('telefoonnummer', $_POST) ) {
+			if (array_key_exists('telefoonnummer', $_POST)) {
 				$telefoonnummer = addslashes($_POST['telefoonnummer']);
 			} else {
 				$telefoonnummer = '';
 			}
-			if ( in_array('veld_email', $_POST) ) {
+			if (array_key_exists('veld_email', $_POST)) {
 				$veld_email = addslashes($_POST['veld_email']);
 			} else {
 				$veld_email = '';
 			}
-			if ( in_array('veld_uitzenddatum', $_POST) ) {
+			if (array_key_exists('veld_uitzenddatum', $_POST)) {
 				$veld_uitzenddatum = addslashes($_POST['veld_uitzenddatum']);
 			} else {
 				$veld_uitzenddatum = '';
 			}
-			if ( in_array('veld_vrijekeus', $_POST) ) {
+			if (array_key_exists('veld_vrijekeus', $_POST)) {
 				$veld_vrijekeus = addslashes($_POST['veld_vrijekeus']);
 			} else {
 				$veld_vrijekeus = '';

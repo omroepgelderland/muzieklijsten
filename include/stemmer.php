@@ -139,7 +139,7 @@ class Stemmer {
 	private function set_db_properties() {
 		if ( !$this->db_props_set ) {
 			$entry = Muzieklijsten_Database::selectSingleRow(sprintf(
-				'SELECT * FROM muzieklijst_stemmers WHERE id = %d',
+				'SELECT naam, adres, postcode, woonplaats, telefoonnummer, emailadres, uitzenddatum, vrijekeus, ip, UNIX_TIMESTAMP(timestamp) as timestamp FROM muzieklijst_stemmers WHERE id = %d',
 				$this->get_id()
 			));
 			$this->naam = $entry['naam'];
@@ -151,8 +151,10 @@ class Stemmer {
 			$this->uitzenddatum = $entry['uitzenddatum'];
 			$this->vrijekeus = $entry['vrijekeus'];
 			$this->ip = $entry['ip'];
+			
 			$this->tijdstip = new DateTime();
 			$this->tijdstip->setTimestamp($entry['timestamp']);
+			//$this->tijdstip = $entry[''];
 			$this->db_props_set = true;
 		}
 	}

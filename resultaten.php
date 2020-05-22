@@ -155,6 +155,7 @@ function get_stemmer_html( $stem ) {
 	}
 	$variabele_velden = get_stemmer_html_get_td_velden($stem);
 	$tijd_str = $stem->get_stemmer()->get_tijdstip()->format('d-m-Y H:i:s');
+	//$tijd_str = $stem->get_stemmer()->get_tijdstip();
 	$toelichting = $stem->get_toelichting();
 	return "<tr id=\"row_{$stem_id}\" class=\"{$behandeld_success}\">
 									{$variabele_velden}

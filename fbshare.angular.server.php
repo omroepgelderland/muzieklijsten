@@ -61,7 +61,7 @@ function getNummers( $db, $stemmer_id ) {
 	}
 	$json = [];
 	foreach( $res as $r ) {
-		array_push($json, $r);
+		$json[] = $r;
 	}
 	return $json;
 }

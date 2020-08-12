@@ -46,7 +46,8 @@ nbproject/
 
 # Composer #
 vendor/
+!/composer.lock
 
 debug.sh
 config/
-!/composer.lock
+node_modules

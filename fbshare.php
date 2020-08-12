@@ -35,8 +35,15 @@ foreach( $res as $r ) {
 }
 
 if ( is_dev() ) {
-	$og_url = 'http://192.168.1.107/~remy/muzieklijsten/fbshare.php?stemmer='.$stemmer_id;
-	$og_image = 'http://192.168.1.107/~remy/muzieklijsten/fbshare_top100.jpg';
+	$og_url = sprintf(
+		'http://192.168.1.107/~%s/muzieklijsten/fbshare.php?stemmer=%d',
+		get_developer(),
+		$stemmer_id
+	);
+	$og_image = sprintf(
+		'http://192.168.1.107/~%s/muzieklijsten/fbshare_top100.jpg',
+		get_developer()
+	);
 } else {
 	$og_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$stemmer_id;
 	$og_image = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare_top100.jpg';

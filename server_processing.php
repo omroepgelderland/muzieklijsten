@@ -44,7 +44,7 @@ $columns = array(
 );
  
 // SQL server connection information
-if ( is_dev() ) {
+if ( is_dev() && get_developer() == 'remy' ) {
 	$sql_details = array(
 		'user' => 'remy',
 		'pass' => 'TxpJOe5MV0y4vP6t',

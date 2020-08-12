@@ -9,6 +9,18 @@ function is_dev() {
 }
 
 /**
+ * Geeft de naam van de developer op wiens omgeving het project nu draait.
+ * @throws Muzieklijsten_Exception Als het project niet op een ontwikkelingsomgeving draait.
+ * @return string
+ */
+function get_developer() {
+	if ( !is_dev() ) { throw new Muzieklijsten_Exception(); }
+	$res = preg_match('~^/home/([^/]+)/~i', __DIR__, $m);
+	if ( $res !== 1 ) { throw new Muzieklijsten_Exception(); }
+	return $m[1];
+}
+
+/**
  * Vereist HTTP login voor beheerders
  */
 function login() {

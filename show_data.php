@@ -200,8 +200,12 @@ if ($_POST['session']) {
 		echo '<h4>Bedankt voor uw keuze</h4>';
 		if ( $lijst == 31 || $lijst == 201 ) {
 			if ( is_dev() ) {
-				$fbshare_url = 'http://192.168.1.107/~remy/muzieklijsten/fbshare.php?stemmer='.$last_id;
-				$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F192.168.1.107%2F~remy%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$last_id.'&amp;src=sdkpreparse';
+				$fbshare_url = sprintf(
+					'http://192.168.1.107/~%s/muzieklijsten/fbshare.php?stemmer=%d',
+					get_developer(),
+					$last_id
+				);
+				$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F192.168.1.107%2F~'.get_developer().'%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$last_id.'&amp;src=sdkpreparse';
 			} else {
 				$fbshare_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$last_id;
 				$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$last_id.'&amp;src=sdkpreparse';

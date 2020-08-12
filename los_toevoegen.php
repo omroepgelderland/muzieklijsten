@@ -131,7 +131,7 @@ function getLijsten( $db ) {
 	}
 	$json = [];
 	foreach( $res as $r ) {
-		array_push($json, $r);
+		$json[] = $r;
 	}
 	return $json;
 }

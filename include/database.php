@@ -14,7 +14,7 @@ class Muzieklijsten_Database {
 	 */
 	protected function __construct() {
 		$hostname = 'localhost';
-		if ( is_dev() ) {
+		if ( is_dev() && get_developer() == 'remy' ) {
 			$database = 'remy_muzieklijsten';
 			$user = 'remy';
 			$password = 'TxpJOe5MV0y4vP6t';
@@ -200,7 +200,7 @@ class Muzieklijsten_Database {
 		$type = $res->fetch_field()->type;
 		$ret = [];
 		while ( ( $r = $res->fetch_row() ) !== null ) {
-			array_push($ret, self::typecast($r[0], $type));
+			$ret[] = self::typecast($r[0], $type);
 		}
 		return $ret;
 	}

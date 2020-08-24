@@ -34,30 +34,30 @@ $primaryKey = 'id';
 // The `db` parameter represents the column name in the database, while the `dt`
 // parameter represents the DataTables column identifier. In this case simple
 // indexes
-$columns = array(
+$columns = [
 
-	array( 'db' => 'id',     'dt' => 0 ),
-    array( 'db' => 'titel', 'dt' => 1 ),
-    array( 'db' => 'artiest',  'dt' => 2 ),
-    array( 'db' => 'jaar',   'dt' => 3 )
+	[ 'db' => 'id',     'dt' => 0 ],
+    [ 'db' => 'titel', 'dt' => 1 ],
+    [ 'db' => 'artiest',  'dt' => 2 ],
+    [ 'db' => 'jaar',   'dt' => 3 ]
     
-);
+];
  
 // SQL server connection information
 if ( is_dev() && get_developer() == 'remy' ) {
-	$sql_details = array(
+	$sql_details = [
 		'user' => 'remy',
 		'pass' => 'TxpJOe5MV0y4vP6t',
 		'db'   => 'remy_muzieklijsten',
 		'host' => 'localhost'
-	);
+	];
 } else {
-	$sql_details = array(
+	$sql_details = [
 		'user' => 'w3omrpg',
 		'pass' => 'H@l*lOah',
 		'db'   => 'rtvgelderland',
 		'host' => 'localhost'
-	);
+	];
 }
  
  

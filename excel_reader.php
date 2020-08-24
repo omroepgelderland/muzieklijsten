@@ -70,14 +70,14 @@ class PhpExcelReader {
     /**
      * Array of worksheets found
      */
-    public $boundsheets = array();
+    public $boundsheets = [];
 
     /**
      * Array of format records found
      */
-    public $formatRecords = array();
+    public $formatRecords = [];
 
-    public $sst = array();
+    public $sst = [];
 
     /**
      * Array of worksheets
@@ -91,7 +91,7 @@ class PhpExcelReader {
      *          -->  'cellsInfo' --> row --> column --> 'type' - Can be 'date', 'number', or 'unknown'
      *                                            --> 'raw' - The raw data that Excel stores for that data cell
      */
-    public $sheets = array();
+    public $sheets = [];
 
     /**
      * The string data returned by OLE
@@ -117,7 +117,7 @@ class PhpExcelReader {
      * todo
      * List of formats to use for each column
      */
-    private $_columnsFormat = array();
+    private $_columnsFormat = [];
 
     /**
      * todo
@@ -132,7 +132,7 @@ class PhpExcelReader {
     /**
      * List of default date formats used by Excel
      */
-    public $dateFormats = array (
+    public $dateFormats = [
         0xe => "d/m/Y",
         0xf => "d-M-Y",
         0x10 => "d-M",
@@ -144,12 +144,12 @@ class PhpExcelReader {
         0x16 => "d/m/Y H:i",
         0x2d => "i:s",
         0x2e => "H:i:s",
-        0x2f => "i:s.S");
+        0x2f => "i:s.S"];
 
     /**
      * Default number formats used by Excel
      */
-    public $numberFormats = array(
+    public $numberFormats = [
         0x1 => "%1.0f",     // "0"
         0x2 => "%1.2f",     // "0.00",
         0x3 => "%1.0f",     //"#,##0",
@@ -169,7 +169,7 @@ class PhpExcelReader {
         0x2a => '$%1.0f',   //"$#,##0;($#,##0)",
         0x2b => '%1.2f',    //"#,##0.00;(#,##0.00)",
         0x2c => '$%1.2f',   //"$#,##0.00;($#,##0.00)",
-        0x30 => '%1.0f');   //"##0.0E0";
+        0x30 => '%1.0f'];   //"##0.0E0";
 
     /**
      * Constructor
@@ -434,15 +434,15 @@ class PhpExcelReader {
                         //global $dateFormats, $numberFormats;
                         $indexCode = ord($this->data[$pos+6]) | ord($this->data[$pos+7]) << 8;
                         if (array_key_exists($indexCode, $this->dateFormats)) {
-                            $this->formatRecords['xfrecords'][] = array(
+                            $this->formatRecords['xfrecords'][] = [
                                     'type' => 'date',
                                     'format' => $this->dateFormats[$indexCode]
-                                    );
+                                    ];
                         }elseif (array_key_exists($indexCode, $this->numberFormats)) {
-                            $this->formatRecords['xfrecords'][] = array(
+                            $this->formatRecords['xfrecords'][] = [
                                     'type' => 'number',
                                     'format' => $this->numberFormats[$indexCode]
-                                    );
+                                    ];
                         }else{
                             $isdate = FALSE;
                             if ($indexCode > 0){
@@ -457,16 +457,16 @@ class PhpExcelReader {
                             }
 
                             if ($isdate){
-                                $this->formatRecords['xfrecords'][] = array(
+                                $this->formatRecords['xfrecords'][] = [
                                         'type' => 'date',
                                         'format' => $formatstr,
-                                        );
+                                        ];
                             }else{
-                                $this->formatRecords['xfrecords'][] = array(
+                                $this->formatRecords['xfrecords'][] = [
                                         'type' => 'other',
                                         'format' => '',
                                         'code' => $indexCode
-                                        );
+                                        ];
                             }
                         }
                     break;
@@ -489,8 +489,8 @@ class PhpExcelReader {
                         }elseif ($version == SPREADSHEET_EXCEL_READER_BIFF7){
                                 $rec_name    = substr($this->data, $pos+11, $rec_length);
                         }
-                    $this->boundsheets[] = array('name'=>$rec_name,
-                                                 'offset'=>$rec_offset);
+                    $this->boundsheets[] = ['name'=>$rec_name,
+                                                 'offset'=>$rec_offset];
 
                     break;
 
@@ -563,7 +563,7 @@ class PhpExcelReader {
                         $lr =  ord($this->data[$spos + 8*$i + 4]) | ord($this->data[$spos + 8*$i + 5])<<8;
                         $fc =  ord($this->data[$spos + 8*$i + 6]) | ord($this->data[$spos + 8*$i + 7])<<8;
                         $lc =  ord($this->data[$spos + 8*$i + 8]) | ord($this->data[$spos + 8*$i + 9])<<8;
-                        //$this->sheets[$this->sn]['mergedCells'][] = array($fr + 1, $fc + 1, $lr + 1, $lc + 1);
+                        //$this->sheets[$this->sn]['mergedCells'][] = [$fr + 1, $fc + 1, $lr + 1, $lc + 1];
                         if ($lr - $fr > 0) {
                             $this->sheets[$this->sn]['cellsInfo'][$fr+1][$fc+1]['rowspan'] = $lr - $fr + 1;
                         }
@@ -745,7 +745,7 @@ class PhpExcelReader {
             $string = date ($this->curformat, mktime($hours, $mins, $secs));
         }
 
-        return array($string, $raw);
+        return [$string, $raw];
     }
 
     function createNumber($spos)

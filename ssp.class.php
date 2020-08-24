@@ -34,10 +34,10 @@ class SSP {
 	 */
 	static function data_output ( $columns, $data )
 	{
-		$out = array();
+		$out = [];
 
 		for ( $i=0, $ien=count($data) ; $i<$ien ; $i++ ) {
-			$row = array();
+			$row = [];
 
 			for ( $j=0, $jen=count($columns) ; $j<$jen ; $j++ ) {
 				$column = $columns[$j];
@@ -116,7 +116,7 @@ class SSP {
 		$order = '';
 
 		if ( isset($request['order']) && count($request['order']) ) {
-			$orderBy = array();
+			$orderBy = [];
 			$dtColumns = self::pluck( $columns, 'dt' );
 
 			for ( $i=0, $ien=count($request['order']) ; $i<$ien ; $i++ ) {
@@ -160,8 +160,8 @@ class SSP {
 	 */
 	static function filter ( $request, $columns, &$bindings )
 	{
-		$globalSearch = array();
-		$columnSearch = array();
+		$globalSearch = [];
+		$columnSearch = [];
 		$dtColumns = self::pluck( $columns, 'dt' );
 
 		if ( isset($request['search']) && $request['search']['value'] != '' ) {
@@ -231,7 +231,7 @@ class SSP {
 	 */
 	static function simple ( $request, $conn, $table, $primaryKey, $columns )
 	{
-		$bindings = array();
+		$bindings = [];
 		$db = self::db( $conn );
 
 		// Build the SQL query string from the request
@@ -288,12 +288,12 @@ class SSP {
 		/*
 		 * Output
 		 */
-		return array(
+		return [
 			"draw"            => intval( $request['draw'] ),
 			"recordsTotal"    => intval( $recordsTotal ),
 			"recordsFiltered" => intval( $recordsFiltered ),
 			"data"            => self::data_output( $columns, $data )
-		);
+		];
 	}
 
 
@@ -322,10 +322,10 @@ class SSP {
 	 */
 	static function complex ( $request, $conn, $table, $primaryKey, $columns, $whereResult=null, $whereAll=null )
 	{
-		$bindings = array();
+		$bindings = [];
 		$db = self::db( $conn );
-		$localWhereResult = array();
-		$localWhereAll = array();
+		$localWhereResult = [];
+		$localWhereAll = [];
 		$whereAllSql = '';
 
 		// Build the SQL query string from the request
@@ -401,12 +401,12 @@ class SSP {
 		/*
 		 * Output
 		 */
-		return array(
+		return [
 			"draw"            => intval( $request['draw'] ),
 			"recordsTotal"    => intval( $recordsTotal ),
 			"recordsFiltered" => intval( $recordsFiltered ),
 			"data"            => self::data_output( $columns, $data )
-		);
+		];
 	}
 
 
@@ -428,7 +428,7 @@ class SSP {
 				"mysql:host={$sql_details['host']};dbname={$sql_details['db']}",
 				$sql_details['user'],
 				$sql_details['pass'],
-				array( PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8" )
+				[ PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8" ]
 			);
 		}
 		catch (PDOException $e) {
@@ -500,9 +500,9 @@ class SSP {
 	 */
 	static function fatal ( $msg )
 	{
-		echo json_encode( array( 
+		echo json_encode( [ 
 			"error" => $msg
-		) );
+		] );
 
 		exit(0);
 	}
@@ -521,11 +521,11 @@ class SSP {
 	{
 		$key = ':binding_'.count( $a );
 
-		$a[] = array(
+		$a[] = [
 			'key' => $key,
 			'val' => $val,
 			'type' => $type
-		);
+		];
 
 		return $key;
 	}
@@ -541,7 +541,7 @@ class SSP {
 	 */
 	static function pluck ( $a, $prop )
 	{
-		$out = array();
+		$out = [];
 
 		for ( $i=0, $len=count($a) ; $i<$len ; $i++ ) {
 			$out[] = $a[$i][$prop];

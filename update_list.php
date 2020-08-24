@@ -15,13 +15,11 @@ login();
 $sql = "DELETE FROM muzieklijst_nummers_lijst WHERE lijst_id = ".$lijst;
 $result = $link->query($sql);
 
-foreach ($_POST["id"] as $key => $value) {
+foreach ($_POST['id'] as $key => $value) {
 	$sql = sprintf(
 		'INSERT INTO muzieklijst_nummers_lijst (nummer_id, lijst_id) VALUES (%d, %d)',
 		$value,
 		$lijst
 	);
 	$result = $link->query($sql);
-	
-	
 }

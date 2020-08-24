@@ -51,7 +51,7 @@ class OLERead {
         $this->extensionBlock = GetInt4d($this->data, EXTENSION_BLOCK_POS);
         $this->numExtensionBlocks = GetInt4d($this->data, NUM_EXTENSION_BLOCK_POS);
 
-        $bigBlockDepotBlocks = array();
+        $bigBlockDepotBlocks = [];
         $pos = BIG_BLOCK_DEPOT_BLOCKS_POS;
   $bbdBlocks = $this->numBigBlockDepotBlocks;
         
@@ -82,7 +82,7 @@ class OLERead {
 
         $pos = 0;
         $index = 0;
-        $this->bigBlockChain = array();
+        $this->bigBlockChain = [];
         
         for ($i = 0; $i < $this->numBigBlockDepotBlocks; $i++) {
             $pos = ($bigBlockDepotBlocks[$i] + 1) * BIG_BLOCK_SIZE;
@@ -97,7 +97,7 @@ class OLERead {
       $pos = 0;
       $index = 0;
       $sbdBlock = $this->sbdStartBlock;
-      $this->smallBlockChain = array();
+      $this->smallBlockChain = [];
   
       while ($sbdBlock != -2) {
         $pos = ($sbdBlock + 1) * BIG_BLOCK_SIZE;
@@ -151,11 +151,11 @@ class OLERead {
             
             $name = str_replace("\x00", "", $name);
             
-            $this->props[] = array (
+            $this->props[] = [
                 'name' => $name, 
                 'type' => $type,
                 'startBlock' => $startBlock,
-                'size' => $size);
+                'size' => $size];
 
             if (($name == "Workbook") || ($name == "Book")) {
                 $this->wrkbook = count($this->props) - 1;

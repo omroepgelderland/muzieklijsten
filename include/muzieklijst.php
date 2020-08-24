@@ -52,6 +52,15 @@ class Muzieklijst {
 	}
 	
 	/**
+	 * Geeft aan of de lijst actief is.
+	 * @return type
+	 */
+	public function is_actief() {
+		$this->set_db_properties();
+		return $this->actief;
+	}
+	
+	/**
 	 * 
 	 * @return string
 	 */
@@ -222,6 +231,33 @@ class Muzieklijst {
 			$stemmen[] = new Stem($sid);
 		}
 		return $stemmen;
+	}
+	
+	/**
+	 * Zet alle klassevariabelen terug naar null, behalve het ID. Dit is nuttig wanneer de lijst is verwijderd of zodanig is aangepast dat de klassevariabelen niet meer overeenkomen met de database, en dus opnieuw moeten worden opgehaald.
+	 * Wanneer er na de reset functies worden aangeroepen kunnen er twee dingen gebeuren:
+	 * 1. Data wordt opnieuw opgehaald en is consistent met de database
+	 * 2. Bij het ophalen van data wordt geconstateerd dat de lijst niet meer bestaat en een foutmelding gegeven.
+	 */
+	public function reset() {
+		// Alle klassenvariabelen unsetten behalve ID
+		foreach ( $this as $key => &$value ) {
+			if ( $key != 'id' ) {
+				$value = null;
+			}
+		}
+		$this->db_props_set = false;
+	}
+	
+	/**
+	 * Verwijdert de lijst. Koppelingen met nummers, extra velden, stemmen e.d. worden ook verwijderd
+	 */
+	public function remove() {
+		Muzieklijsten_Database::query(sprintf(
+			'DELETE FROM muzieklijst_lijsten WHERE id = %d',
+			$this->get_id()
+		));
+		$this->reset();
 	}
 	
 	/**

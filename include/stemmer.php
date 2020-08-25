@@ -44,6 +44,15 @@ class Stemmer {
 	}
 	
 	/**
+	 * Geeft aan of twee stemmers dezelfde zijn. Wanneer $obj geen Stemmer is wordt false gegeven.
+	 * @param mixed $obj Object om deze instantie mee te vergelijken
+	 * @return boolean Of $obj dezelfde stemmer is als deze instantie
+	 */
+	public function equals( $obj ) {
+		return ( $obj instanceof Stemmer && $obj->get_id() == $this->id );
+	}
+	
+	/**
 	 * 
 	 * @return string|null
 	 */

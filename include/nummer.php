@@ -36,6 +36,15 @@ class Nummer {
 	}
 	
 	/**
+	 * Geeft aan of twee nummers dezelfde zijn. Wanneer $obj geen Nummer is wordt false gegeven.
+	 * @param mixed $obj Object om deze instantie mee te vergelijken
+	 * @return boolean Of $obj hetzelfde nummer is als deze instantie
+	 */
+	public function equals( $obj ) {
+		return ( $obj instanceof Nummer && $obj->get_id() == $this->id );
+	}
+	
+	/**
 	 * 
 	 * @return string|null
 	 */

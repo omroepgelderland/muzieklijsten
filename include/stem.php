@@ -32,6 +32,15 @@ class Stem {
 	}
 	
 	/**
+	 * Geeft aan of twee stemmen dezelfde zijn. Wanneer $obj geen Stem is wordt false gegeven.
+	 * @param mixed $obj Object om deze instantie mee te vergelijken
+	 * @return boolean Of $obj dezelfde stem is als deze instantie
+	 */
+	public function equals( $obj ) {
+		return ( $obj instanceof Stem && $obj->get_id() == $this->id );
+	}
+	
+	/**
 	 * 
 	 * @return Nummer
 	 */

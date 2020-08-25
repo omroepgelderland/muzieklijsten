@@ -6,11 +6,43 @@ if ( is_dev() ) {
 	error_reporting(E_ALL & ~E_NOTICE);
 }
 
-$link = Muzieklijsten_Database::getDB();
-
-$lijst = (int)$_GET['lijst'];
-
 login();
+
+$lijst_id = (int)$_GET['lijst'];
+if ( $lijst_id === 0 ) {
+	$lijst = null;
+	$lijst_query = '';
+	$nummers = [];
+} else {
+	$lijst = new Muzieklijst($lijst_id);
+	$lijst_query = sprintf('?lijst=%d', $lijst->get_id());
+	$nummers = $lijst->get_nummers();
+}
+
+$andere_lijsten = get_muzieklijsten();
+
+$select_lijst_html = '';
+foreach ( $andere_lijsten as $andere_lijst ) {
+	if ( $andere_lijst->equals($lijst) ) {
+		$selected = ' selected';
+	} else {
+		$selected = '';
+	}
+	$select_lijst_html .= sprintf(
+		'<option value="%d"%s>%s</option>',
+		$andere_lijst->get_id(),
+		$selected,
+		$andere_lijst->get_naam()
+	);
+}
+
+$nummer_ids = [];
+foreach ( $nummers as $nummer ) {
+	$nummer_ids[] = (string)$nummer->get_id();
+}
+$rows_selected = json_encode($nummer_ids);
+
+$totaal_aantal_nummers = count(get_nummers());
 	
 ?>
 
@@ -85,24 +117,13 @@ login();
 				<td>			
 				<select name="lijst" class="form-control" onchange="location.href='?lijst=' + this.value">
 				<option value="">-- Selecteer een muzieklijst --
-				<?php
-				$sql = "SELECT * FROM muzieklijst_lijsten ORDER BY naam";
-				$result = $link->query($sql);
-				while ($r = mysqli_fetch_array($result)) {
-					echo '<option value="'.$r["id"].'"';
-					if ($lijst == $r["id"]) {
-						echo ' selected';
-						$lijstnaam = $r["naam"];
-					}
-					echo '>'.$r["naam"];
-				}
-				?>
+				<?php echo $select_lijst_html; ?>
 				</select>
 				</td>
 				<td align="right"><a href="beheer.php" data-toggle="modal" data-target="#nieuw" data-backdrop="static" data-keyboard="false" class="btn btn-primary" role="button">Nieuw</a></td>
-				<td align="right"><a href="beheer.php?lijst=<?php echo $lijst; ?>" data-toggle="modal" data-target="#beheer" data-backdrop="static" data-keyboard="false" class="btn btn-primary" role="button">Beheer</a></td>
-				<td align="right"><a href="iframe.php?lijst=<?php echo $lijst; ?>" data-toggle="modal" data-target="#popup" data-backdrop="static" data-keyboard="false" class="btn btn-primary<?php if ( $lijst == 0 ) echo ' disabled'; ?>" role="button">Resultaten</a></td>
-				<td align="right"><button class="btn btn-primary<?php if ( $lijst == 0 ) echo ' disabled'; ?>"<?php if ( $lijst == 0 ) echo ' disabled="disabled"';?>>Opslaan</button></td>
+				<td align="right"><a href="beheer.php<?php echo $lijst_query; ?>" data-toggle="modal" data-target="#beheer" data-backdrop="static" data-keyboard="false" class="btn btn-primary" role="button">Beheer</a></td>
+				<td align="right"><a href="iframe.php<?php echo $lijst_query; ?>" data-toggle="modal" data-target="#popup" data-backdrop="static" data-keyboard="false" class="btn btn-primary<?php if ( $lijst === null ) { echo ' disabled'; } ?>" role="button">Resultaten</a></td>
+				<td align="right"><button class="btn btn-primary<?php if ( $lijst === null ) { echo ' disabled'; } ?>"<?php if ( $lijst === null ) { echo ' disabled="disabled"'; } ?>>Opslaan</button></td>
 			</tr>
 			</table>
 	</div>
@@ -112,7 +133,7 @@ login();
 	<div class="modal-dialog" style="width: 90%;">
 		<div class="modal-header modal-top">
 			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-			<h4 class="modal-title">Resultaten van de lijst "<?php echo $lijstnaam; ?>"</h4>
+			<h4 class="modal-title">Resultaten van de lijst "<?php echo $lijst->get_naam(); ?>"</h4>
 		</div>
 		<div class="modal-content"></div>
 		<div class="modal-footer modal-end">
@@ -125,7 +146,7 @@ login();
 	<div class="modal-dialog" style="width: 90%;">
 		<div class="modal-header modal-top">
 			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-			<h4 class="modal-title">Beheer van de lijst "<?php echo $lijstnaam; ?>"</h4>
+			<h4 class="modal-title">Beheer van de lijst "<?php echo $lijst->get_naam(); ?>"</h4>
 		</div>
 		<div class="modal-content"></div>
 		<div class="modal-footer modal-end">
@@ -151,12 +172,7 @@ login();
 	<div class="row">
 	
 		<div class="col-sm-6">
-		<h4>Beschikbaar
-<?php 
-	$sql = "SELECT COUNT(id) as aantal FROM muzieklijst_nummers";
-	$result = mysqli_fetch_array($link->query($sql));
-	echo ' ('.$result[0].')';
-?></h4>
+		<h4>Beschikbaar (<?php echo $totaal_aantal_nummers; ?>)</h4>
 		<hr style="border: 1px solid #333;">
 			<table id="example" class="display select" cellspacing="0" width="100%">
 			   <thead>
@@ -218,19 +234,7 @@ function updateDataTableSelectAllCtrl(table){
 $(document).ready(function (){
 
    // Array holding selected row IDs
-   var rows_selected = [<?php
-	if ( $lijst != 0 ) {
-		$sql = "SELECT nummer_id FROM muzieklijst_nummers_lijst WHERE lijst_id = ".$lijst;
-		$result = $link->query($sql);
-		$num_rows = mysqli_num_rows($result);
-		$count = 0;
-		while ($r = mysqli_fetch_array($result)) {
-			echo '"'.$r["nummer_id"].'"';
-			$count++;
-			if ($num_rows > $count) echo ',';
-		}
-	}
-   ?>];
+   var rows_selected = <?php echo $rows_selected; ?>;
    var table = $('#example').DataTable({
       'processing': true,
       'serverSide': true,	
@@ -356,7 +360,7 @@ $(document).ready(function (){
 		url: 'update_list.php',
 		data: $(form).serialize(),
 		success: function( data ) {
-			$("#result").load("selected.php?lijst=<?php echo $lijst; ?>");
+			$("#result").load("selected.php<?php echo $lijst_query; ?>");
 		}
 		});
 	   
@@ -370,9 +374,9 @@ $(document).ready(function (){
    });
    
    <?php
-   if ( $lijst != 0 ) {
+   if ( $lijst !== null ) {
    ?>
-   $("#result").load("selected.php?lijst=<?php echo $lijst; ?>");
+   $("#result").load("selected.php<?php echo $lijst_query; ?>");
    <?php
    }
    ?>

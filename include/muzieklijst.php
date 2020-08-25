@@ -52,6 +52,15 @@ class Muzieklijst {
 	}
 	
 	/**
+	 * Geeft aan of twee muzieklijsten dezelfde zijn. Wanneer $obj geen Muzieklijst is wordt false gegeven.
+	 * @param mixed $obj Object om deze instantie mee te vergelijken
+	 * @return boolean Of $obj dezelfde muzieklijst is als deze instantie
+	 */
+	public function equals( $obj ) {
+		return ( $obj instanceof Muzieklijst && $obj->get_id() == $this->id );
+	}
+	
+	/**
 	 * Geeft aan of de lijst actief is.
 	 * @return type
 	 */

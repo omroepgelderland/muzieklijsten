@@ -38,6 +38,15 @@ class Extra_Veld {
 	}
 	
 	/**
+	 * Geeft aan of twee extra velden dezelfde zijn. Wanneer $obj geen Extra_Veld is wordt false gegeven.
+	 * @param mixed $obj Object om deze instantie mee te vergelijken
+	 * @return boolean Of $obj hetzelfde extra veld is als deze instantie
+	 */
+	public function equals( $obj ) {
+		return ( $obj instanceof Extra_Veld && $obj->get_id() == $this->id );
+	}
+	
+	/**
 	 * 
 	 * @return string
 	 */

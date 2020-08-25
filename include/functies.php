@@ -37,3 +37,19 @@ function login() {
 		throw new Muzieklijsten_Exception('Verkeerd wachtwoord en/of gebruikersnaam');
 	}
 }
+
+/**
+ * Geeft alle muzieklijsten.
+ * @return Muzieklijst[]
+ */
+function get_muzieklijsten() {
+	return Muzieklijsten_Database::selectObjectLijst('SELECT id FROM muzieklijst_lijsten', Muzieklijst::class);
+}
+
+/**
+ * Geeft alle nummers.
+ * @return Nummer[]
+ */
+function get_nummers() {
+	return Muzieklijsten_Database::selectObjectLijst('SELECT id FROM muzieklijst_nummers', Nummer::class);
+}

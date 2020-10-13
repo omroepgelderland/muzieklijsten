@@ -60,7 +60,8 @@ if ( is_dev() ) {
 		<meta property="og:url" content="<?php echo $og_url; ?>">
 		<meta property="og:locale" content="nl_NL">
 		<meta property="og:image" content="<?php echo $og_image; ?>">
-		<meta property="og:title" content="Dit is mijn keuze voor de Gelderse Top 100 2017">
+		<!--@todo jaar dynamisch maken-->
+		<meta property="og:title" content="Dit is mijn keuze voor de Gelderse Top 100 2020">
 		<meta property="og:description" content="<?php echo $nummers_meta; ?>">
 		<title>Mijn keuzes</title>
 		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
@@ -77,11 +78,12 @@ if ( is_dev() ) {
 	<body>
 		<div class="container">
 			<img src="fbshare_top100.jpg" class="img-responsive headerimage">
-			<h2>Dit is mijn keuze voor de Gelderse Top 100 2017:</h2>
+			<!--@todo jaar dynamisch maken-->
+			<h2>Dit is mijn keuze voor de Gelderse Top 100 2020:</h2>
 			<ol>
 				<?php echo $nummers_html; ?>
 			</ol>
-			<p>Ook meedoen? <a href="https://www.omroepgelderland.nl/radio-degeldersetop100-2017">Klik hier!</a></p>
+			<p>Ook meedoen? <a href="https://www.omroepgelderland.nl/radio-degeldersetop100">Klik hier!</a></p>
 		</div>
 		<script src="fbshare.js"></script>
 	</body>

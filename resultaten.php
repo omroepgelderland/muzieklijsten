@@ -55,8 +55,8 @@ function get_stemresultaat_html_rij( $muzieklijst, $nummer ) {
 	$aantal_stemmen = count($stemmen);
 	$th_velden = get_stemresultaat_html_rij_get_th_velden($muzieklijst);
 	$stemmers_html = get_stemmers_per_nummer_html($muzieklijst, $nummer);
-	return "<tr id=\"song_{$nummer_id}\" data-toggle=\"collapse\" data-target=\"#{$uitklaptabel_id}\" class=\"accordion-toggle hand {$var3}\">
-					<td style=\"text-align:center\"><i class=\"fa fa-minus-square\"></i></td>
+	return "<tr id=\"song_{$nummer_id}\" data-toggle=\"collapse\" data-target=\"#{$uitklaptabel_id}\" class=\"accordion-toggle hand collapsed {$var3}\">
+					<td style=\"text-align:center\"><i class=\"fa fa-plus-square\"></i></td>
 					<td>{$titel}</td>
 					<td>{$artiest}</td>
 					<td class=\"text-center\">{$aantal_stemmen}</td>
@@ -64,7 +64,7 @@ function get_stemresultaat_html_rij( $muzieklijst, $nummer ) {
 				</tr>
 				<tr>
 					<td colspan=\"4\" class=\"hiddenRow\">
-						<div class=\"accordion-body collapse in\" id=\"{$uitklaptabel_id}\" style=\"\">
+						<div class=\"accordion-body collapse\" id=\"{$uitklaptabel_id}\">
 							<div class=\"bs-callout bs-callout-info\" style=\"margin:0px;\">
 								<table class=\"table\">
 								<thead>

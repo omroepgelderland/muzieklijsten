@@ -34,8 +34,7 @@ class Muzieklijsten_Database {
 				$this->db->connect_errno
 			);
 		}
-		$this->db->set_charset('UTF-8');
-		$this->db->query('SET NAMES utf8');
+		$this->db->set_charset('utf8');
 	}
 	
 	/**

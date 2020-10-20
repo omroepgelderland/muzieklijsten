@@ -40,6 +40,7 @@ _*
 ehthumbs.db
 Icon?
 Thumbs.db
+.directory
 
 # Netbeans #
 nbproject/

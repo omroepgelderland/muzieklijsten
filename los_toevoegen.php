@@ -146,8 +146,7 @@ try {
 	if ( $db === false ) {
 		throw new SQLException('Database verbinding mislukt');
 	}
-	$db->set_charset('UTF-8');
-	$db->query('SET NAMES utf8');
+	$db->set_charset('utf8');
 	// Omzetter voor data uit Angular
 	$params = json_decode(file_get_contents('php://input'),true);
 	

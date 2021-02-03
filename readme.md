@@ -28,3 +28,7 @@ https://web.omroepgelderland.nl/muzieklijsten/selected.php?lijst=[lijst id]
 ## Deployment
 Installeren met git
 `composer install`
+
+## Scheduled commands
+Lijst (de)activeren:
+`mysql -u w3omrpg --password="[wachtwoord]" rtvgelderland -e "UPDATE muzieklijst_lijsten SET actief=[1|0] WHERE id=[lijst id]"`

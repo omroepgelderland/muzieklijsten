@@ -197,7 +197,10 @@ if ($_POST['session']) {
 
 
 		echo '<div class="col-sm-12">';
-		echo '<h4>Bedankt voor uw keuze</h4>';
+		printf(
+			'<h4>%s</h4>',
+			$muzieklijst->get_bedankt_tekst()
+		);
 		if ( $lijst == 31 || $lijst == 201 ) {
 			if ( is_dev() ) {
 				$fbshare_url = sprintf(

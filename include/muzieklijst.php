@@ -32,6 +32,8 @@ class Muzieklijst {
 	private $recaptcha;
 	/** @var string[] */
 	private $notificatie_email_adressen;
+	/** @var string */
+	private $bedankt_tekst;
 	/** @var Extra_Veld[] */
 	private $extra_velden;
 	/** @var Nummer[] */
@@ -243,6 +245,15 @@ class Muzieklijst {
 	}
 	
 	/**
+	 * Geeft de tekst die stemmers te zien krijgen na het uitbrengen van een stem.
+	 * @return string
+	 */
+	public function get_bedankt_tekst() {
+		$this->set_db_properties();
+		return $this->bedankt_tekst;
+	}
+	
+	/**
 	 * Zet alle klassevariabelen terug naar null, behalve het ID. Dit is nuttig wanneer de lijst is verwijderd of zodanig is aangepast dat de klassevariabelen niet meer overeenkomen met de database, en dus opnieuw moeten worden opgehaald.
 	 * Wanneer er na de reset functies worden aangeroepen kunnen er twee dingen gebeuren:
 	 * 1. Data wordt opnieuw opgehaald en is consistent met de database
@@ -298,6 +309,7 @@ class Muzieklijst {
 					$this->notificatie_email_adressen[] = $adres;
 				}
 			}
+			$this->bedankt_tekst = $entry['bedankt_tekst'];
 			$this->db_props_set = true;
 		}
 	}

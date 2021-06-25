@@ -1,0 +1,8 @@
+<FilesMatch "\.(gitignore|lock|md|sh)$">
+	Order Deny,Allow
+	Deny From All
+</FilesMatch>
+<FilesMatch "^(composer\.json)$">
+	Order Deny,Allow
+	Deny From All
+</FilesMatch>

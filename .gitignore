@@ -43,7 +43,7 @@ Thumbs.db
 .directory
 
 # Netbeans #
-nbproject/
+nbproject/private/
 
 # Composer #
 vendor/

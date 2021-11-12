@@ -148,7 +148,7 @@ try {
 	}
 	$db->set_charset('utf8');
 	// Omzetter voor data uit Angular
-	$params = json_decode(file_get_contents('php://input'),true);
+	$params = json_decode(file_get_contents('php://input'), true);
 	
 	switch ( $params['query'] ) {
 		case 'toevoegen':

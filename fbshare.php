@@ -48,6 +48,7 @@ if ( is_dev() ) {
 	$og_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$stemmer_id;
 	$og_image = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare_top100.jpg';
 }
+$jaar = strftime('%Y');
 
 ?>
 
@@ -61,11 +62,10 @@ if ( is_dev() ) {
 		<meta property="og:locale" content="nl_NL">
 		<meta property="og:image" content="<?php echo $og_image; ?>">
 		<!--@todo jaar dynamisch maken-->
-		<meta property="og:title" content="Dit is mijn keuze voor de Gelderse Top 100 2020">
+		<meta property="og:title" content="Dit is mijn keuze voor de Gelderse Top 100 <?php echo $jaar; ?>">
 		<meta property="og:description" content="<?php echo $nummers_meta; ?>">
 		<title>Mijn keuzes</title>
 		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
-		<link href="https://www.omroepgelderland.nl/Content/Styles/gelderland.min.css?v=1.23.1" rel="stylesheet">
 		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-route.js"></script>
 		<style>
@@ -79,11 +79,11 @@ if ( is_dev() ) {
 		<div class="container">
 			<img src="fbshare_top100.jpg" class="img-responsive headerimage">
 			<!--@todo jaar dynamisch maken-->
-			<h2>Dit is mijn keuze voor de Gelderse Top 100 2020:</h2>
+			<h2>Dit is mijn keuze voor de Gelderse Top 100 <?php echo $jaar; ?>:</h2>
 			<ol>
 				<?php echo $nummers_html; ?>
 			</ol>
-			<p>Ook meedoen? <a href="https://www.omroepgelderland.nl/radio-degeldersetop100">Klik hier!</a></p>
+			<p>Ook meedoen? <a href="https://www.gld.nl/de-gelderse-top-100">Klik hier!</a></p>
 		</div>
 		<script src="fbshare.js"></script>
 	</body>

@@ -388,7 +388,7 @@ if ($actief == 0) {
 ?>
 
 			<div style="margin: 20px;">
-				<small>Je moet minimaal 16 jaar zijn om deel te nemen aan deze dienst. Wilt u meer informatie over hoe Omroep Gelderland omgaat met je gegevens, lees dan ons <a href="https://www.omroepgelderland.nl/privacy-statement" target="_parent">privacystatement</a></small>	
+				<small>Je moet minimaal 16 jaar zijn om deel te nemen aan deze dienst. Wilt u meer informatie over hoe Omroep Gelderland omgaat met je gegevens, lees dan ons <a href="https://www.gld.nl/privacyverklaring" target="_parent">privacystatement</a></small>	
 			</div>
 	
 			<div class="form-group">

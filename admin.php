@@ -132,7 +132,7 @@ $totaal_aantal_nummers = count(get_nummers());
 <div class="modal fade" id="popup" role="dialog">
 	<div class="modal-dialog" style="width: 90%;">
 		<div class="modal-header modal-top">
-			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
 			<h4 class="modal-title">Resultaten van de lijst "<?php echo $lijst->get_naam(); ?>"</h4>
 		</div>
 		<div class="modal-content"></div>
@@ -145,7 +145,7 @@ $totaal_aantal_nummers = count(get_nummers());
 <div class="modal fade" id="beheer" role="dialog">
 	<div class="modal-dialog" style="width: 90%;">
 		<div class="modal-header modal-top">
-			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
 			<h4 class="modal-title">Beheer van de lijst "<?php echo $lijst->get_naam(); ?>"</h4>
 		</div>
 		<div class="modal-content"></div>
@@ -158,7 +158,7 @@ $totaal_aantal_nummers = count(get_nummers());
 <div class="modal fade" id="nieuw" role="dialog">
 	<div class="modal-dialog" style="width: 90%;">
 		<div class="modal-header modal-top">
-			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
 			<h4 class="modal-title">Nieuwe muzieklijst</h4>
 		</div>
 		<div class="modal-content"></div>

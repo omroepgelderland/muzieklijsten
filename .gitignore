@@ -45,6 +45,14 @@ Thumbs.db
 # Netbeans #
 nbproject/private/
 
+### VisualStudioCode ###
+.vscode
+# .vscode/*      # Maybe .vscode/**/* instead - see comments
+# !.vscode/settings.json
+# !.vscode/tasks.json
+# !.vscode/launch.json
+# !.vscode/extensions.json
+
 # Composer #
 vendor/
 !/composer.lock
@@ -52,3 +60,8 @@ vendor/
 debug.sh
 config/
 node_modules
+
+public/afbeeldingen/**
+public/css/**
+public/fonts/**
+public/js/**

@@ -1,0 +1,77 @@
+body {
+    padding-top: 70px;
+}
+
+nav .container-fluid {
+    padding-top: 10px;
+}
+
+table.dataTable.select tbody tr, table.dataTable thead th:first-child {
+    cursor: pointer;
+}
+
+#beschikbare-nummers_length {
+    select {
+        width: 80px;
+        display: inline;
+    }
+    input {
+        width: 200px;
+        display: inline;
+    }
+}
+
+.beschikbaar hr {
+    border: 1px solid #333;
+}
+
+.modal-dialog {
+    width: 90%;
+}
+
+.modal-top {
+    border-radius: 6px 6px 0px 0px;
+    -moz-border-radius: 6px 6px 0px 0px;
+    -webkit-border-radius: 6px 6px 0px 0px;
+    background-clip: padding-box;
+    background-color: #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.modal-end {
+    border-radius: 0px 0px 6px 6px;
+    -moz-border-radius: 0px 0px 6px 6px;
+    -webkit-border-radius: 0px 0px 6px 6px;
+    background-clip: padding-box;
+    background-color: #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    box-shadow: none;
+    border: none;
+    border-radius: 0px;
+}
+
+.separator {
+    height: 10px; clear: both;
+}
+
+.pointer {
+    cursor:pointer;
+}
+
+#result hr {
+    border: 1px solid #333;
+}
+
+#nieuw .beheer-bestaand {
+    display: none;
+}
+
+#modal-embed input {
+    min-width: 75%;
+}
+#modal-embed h5 {
+    font-weight: bold;
+}

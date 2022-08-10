@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="nl-NL">
+	<head>
+		<meta charset="utf-8">
+		<title>Losse nummers toevoegen</title>
+		<!-- Scripts dev -->
+		<script type="text/javascript" src="js/vendors-node_modules_bootstrap_dist_js_npm_js-node_modules_bootstrap_dist_css_bootstrap_min_css.js" defer></script>
+		<script type="text/javascript" src="js/vendors-node_modules_angular-route_index_js-node_modules_angular_index_js.js" defer></script>
+		<!-- Scripts prod -->
+		<script type="text/javascript" src="js/runtime.js" defer></script>
+		<script type="text/javascript" src="js/806.js" defer></script>
+		<script type="text/javascript" src="js/223.js" defer></script>
+		<!-- Scripts prod en dev -->
+		<script type="text/javascript" src="js/los_toevoegen.js" defer></script>
+		<!-- Styles prod -->
+		<link rel="stylesheet" href="css/806.css">
+		<link rel="stylesheet" href="css/los_toevoegen.css">
+		<link rel="icon" type="image/png" href="afbeeldingen/favicon-192p.png" sizes="192x192">
+		<link rel="icon" type="image/png" href="afbeeldingen/favicon-16p.png" sizes="16x16">
+		<link rel="icon" type="image/png" href="afbeeldingen/favicon-32p.png" sizes="32x32">
+		<link rel="icon" type="image/png" href="afbeeldingen/favicon-96p.png" sizes="96x96">
+		<link rel="apple-touch-icon" href="afbeeldingen/favicon-120p.png">
+		<link rel="apple-touch-icon" href="afbeeldingen/favicon-180p.png">
+		<link rel="apple-touch-icon" href="afbeeldingen/favicon-152p.png">
+		<link rel="apple-touch-icon" href="afbeeldingen/favicon-167p.png">
+	</head>
+	<body ng-app="losseNummers" ng-controller="MainCtrl">
+		<div class="container" ng-show="inlog_error">
+			<div class="alert alert-danger">{{inlog_error_msg}}</div>
+		</div>
+		<div class="container" ng-show="inlog_ok">
+			<h1>Losse nummers toevoegen</h1>
+			<div class="alert alert-danger" ng-show="error">{{error_msg}}</div>
+			<form class="form-horizontal" ng-submit="toevoegen()">
+				<div class="form-group row">
+					<hr>
+					<h2>Toevoegen aan lijsten</h2>
+					<div class="col-xs-1 lijst_item" ng-repeat="lijst in lijsten">
+						<label><input type="checkbox" ng-model="lijst.geselecteerd">&nbsp;{{lijst.naam}}</label>
+					</div>
+				</div>
+				<div>
+					<hr>
+					<h2>Nummers toevoegen</h2>
+					<div ng-repeat="nummer in nummers" class="form-group">
+						<input type="text" class="form-control inline_item" placeholder="Artiest" ng-model="nummer.artiest" ng-change="inputChangeHandler(nummer)">
+						<span>&nbsp;-&nbsp;</span>
+						<input type="text" class="form-control inline_item" placeholder="Titel" ng-model="nummer.titel" ng-change="inputChangeHandler(nummer)">
+					</div>
+				</div>
+				<p>
+					<span ng-show="een_toegevoegd">Er is één nummer toegevoegd.</span>
+					<span ng-show="meerdere_toegevoegd">Er zijn {{toegevoegde_nummers}} nummers toegevoegd.</span>
+					<span ng-show="een_dubbel"> één nummer stond al in de database.</span>
+					<span ng-show="meerdere_dubbel"> {{dubbele_nummers}} nummers stonden al in de database.</span>
+				</p>
+				<button type="submit" class="btn btn-primary">Toevoegen</button>
+			</form>
+		</div>
+	</body>
+</html>

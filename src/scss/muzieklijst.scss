@@ -1,0 +1,26 @@
+table.dataTable.select tbody tr,
+table.dataTable thead th:first-child {
+    cursor: pointer;
+}
+
+#nummers_length select {
+    width: 80px;
+    display: inline;
+}
+
+#nummers_filter input {
+    width: 200px;
+    display: inline;
+}
+
+.remark {
+    padding-right: 0px !important;
+}
+
+#postcode {
+    width: 10em;
+}
+
+.privacyinfo {
+    margin: 20px;
+}

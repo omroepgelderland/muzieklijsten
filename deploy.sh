@@ -24,6 +24,7 @@ elif [[ "$(hostname)" == "og-webdev1" ]]; then
 	. ~/.nvm/nvm.sh
 	if [[ $npm_onveranderd == 1 ]]; then
 		nvm install $node_versie || exit 1
+		. ~/.nvm/nvm.sh
 		nvm exec $node_versie npm ci || exit 1
 		md5sum package-lock.json>package-lock.json.md5
 	fi

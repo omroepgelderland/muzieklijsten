@@ -66,6 +66,7 @@ $nimbus_url = Config::get_instelling('nimbus_url');
 <html lang="nl-NL">
 	<head>
 		<meta charset="utf-8">
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title>Muzieklijsten beheer</title>
 		<!-- Scripts dev -->
 		<script type="text/javascript" src="js/vendors-node_modules_bootstrap_dist_js_npm_js-node_modules_bootstrap_dist_css_bootstrap_min_css.js" defer></script>

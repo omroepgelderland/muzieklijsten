@@ -58,6 +58,7 @@ $jaar = (new \DateTime())->format('Y');
 <html lang="nl-NL" ng-app="fbShare" ng-controller="MainCtrl">
 	<head>
 		<meta charset="utf-8">
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title>Delen op Facebook</title>
 		<meta property="og:type" content="website">
 		<meta property="fb:app_id" content="1269120393132176">

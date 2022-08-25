@@ -90,6 +90,9 @@ function exception_error_handler( $errno, $errstr, $errfile, $errline ) {
 			elseif ( strpos($errstr, 'Undefined array key') !== false ) {
 				throw new IndexException($errstr, 0, $errno, $errfile, $errline);
 			}
+			elseif ( strpos($errstr, 'Undefined property: ') === 0 ) {
+				throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
+			}
 			else {
 				throw new WarningErrorException($errstr, 0, $errno, $errfile, $errline);
 			}

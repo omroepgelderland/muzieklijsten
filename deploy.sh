@@ -4,7 +4,7 @@ md5sum --status -c package-lock.json.md5 2>/dev/null
 npm_onveranderd=$?
 vorige_git_hash=$(git rev-parse HEAD)
 
-if [[ "$(hostname)" == "prod" ]]; then
+if [[ "$(hostname)" == "app.gld.nl" ]]; then
 	# Productie
 	composercmd="composer"
 	git pull || exit 1

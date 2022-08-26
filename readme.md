@@ -1,7 +1,8 @@
 # Muzieklijsten module
 Webapp waarmee bezoekers nummers kunnen aanvragen en kunnen stemmen op toplijsten.
 
-De productieomgeving is bitserver:/home/web/www/muzieklijsten/
+De productieomgeving is muzieklijsten@app.gld.nl:/home/muzieklijsten/prod/
+De stagingomgeving is muzieklijsten@app.gld.nl:/home/muzieklijsten/staging/
 
 ## Interfaces
 Stemlijst
@@ -13,8 +14,12 @@ https://web.gld.nl/muzieklijsten/admin.php
 Losse nummer toevoegen aan de database, buiten Powergold om
 https://web.gld.nl/muzieklijsten/los_toevoegen.html
 
-## Deployment
-Installeren met git
+## Installatie
+Installeren met git clone.
+Maak de database.
+Configureer Apache met toegang tot de map public.
+Maak een bestand config/config.json
+
 ```sh
 ./deploy.sh
 ```

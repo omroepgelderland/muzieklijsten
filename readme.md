@@ -6,7 +6,8 @@ De stagingomgeving is muzieklijsten@app.gld.nl:/home/muzieklijsten/staging/
 
 ## Interfaces
 Stemlijst
-https://web.gld.nl/muzieklijsten/muzieklijst.php?lijst=[lijst id]
+https://web.gld.nl/muzieklijsten/index.php?lijst=[lijst id]
+https://web.gld.nl/muzieklijsten?lijst=[lijst id]
 
 Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten.
 https://web.gld.nl/muzieklijsten/admin.php

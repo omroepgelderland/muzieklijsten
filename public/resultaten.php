@@ -178,7 +178,7 @@ function get_stemmer_html_get_td_velden( Stem $stem ): string {
 		} catch ( Muzieklijsten_Exception $e ) {
 			$waarde = '';
 		}
-		$html .= "<td>{$waarde}}</td>";
+		$html .= "<td>{$waarde}</td>";
 	}
 	
 	return $html;

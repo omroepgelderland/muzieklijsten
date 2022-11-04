@@ -167,7 +167,11 @@ function filter_input_postcode( int $type = INPUT_POST, string $var_name = 'post
 		return null;
 	}
 	elseif ( preg_match('~([0-9]{4}).*([a-zA-Z]{2})~', $postcode, $m) === 1 ) {
-		return $m[1].strtoupper($m[2]);
+		return sprintf(
+			'%s %s',
+			$m[1],
+			strtoupper($m[2])
+		);
 	} else {
 		throw new OngeldigeInvoer("Ongeldige postcode: \"{$postcode}\"");
 	}

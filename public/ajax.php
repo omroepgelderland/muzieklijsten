@@ -340,7 +340,7 @@ function verwerk_stem( Lijst $lijst, array $nummers ): Stemmer {
 		}
 	}
 
-	$stemmer->mail_redactie();
+	$stemmer->mail_redactie($lijst);
 	return $stemmer;
 }
 

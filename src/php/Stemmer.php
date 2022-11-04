@@ -319,7 +319,7 @@ class Stemmer {
 		FROM stemmen
 		WHERE
 			lijst_id = {$lijst->get_id()}
-			AND stemmer_id = {$this->get_id}
+			AND stemmer_id = {$this->get_id()}
 		EOT;
 		$stemmen = [];
 		foreach ( DB::query($query) as $entry ) {

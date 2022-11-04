@@ -2,7 +2,8 @@
 
 namespace muzieklijsten;
 
-set_error_handler('\muzieklijsten\exception_error_handler');
+set_error_handler('\muzieklijsten\exception_error_handler', error_reporting());
+locale_set_default('nl_NL');
 setlocale(LC_TIME, 'nl', 'nl_NL', 'Dutch');
 date_default_timezone_set('Europe/Amsterdam');
 

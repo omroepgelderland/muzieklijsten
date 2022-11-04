@@ -4,7 +4,7 @@ md5sum --status -c package-lock.json.md5 2>/dev/null
 npm_onveranderd=$?
 vorige_git_hash=$(git rev-parse HEAD)
 
-if [[ "$(hostname)" == "app.gld.nl" ]]; then
+if [[ "$(hostname)" == "app.gld.nl" && "$PWD" == "/home/muzieklijsten/prod" ]]; then
 	# Productie
 	composercmd="composer"
 	git pull || exit 1
@@ -15,6 +15,17 @@ if [[ "$(hostname)" == "app.gld.nl" ]]; then
 		md5sum package-lock.json>package-lock.json.md5
 	fi
 	npx webpack --config webpack.prod.js || exit 1
+elif [[ "$(hostname)" == "app.gld.nl" && "$PWD" == "/home/muzieklijsten/staging" ]]; then
+	# Staging
+	composercmd="composer"
+	git pull || exit 1
+	$composercmd check-platform-reqs || exit 1
+	$composercmd install || exit 1
+	if [[ $npm_onveranderd == 1 ]]; then
+		npm ci || exit 1
+		md5sum package-lock.json>package-lock.json.md5
+	fi
+	npx webpack --config webpack.staging.js || exit 1
 elif [[ "$(hostname)" == "og-webdev1" ]]; then
 	# dev op devserver
 	node_versie="12.22.9"

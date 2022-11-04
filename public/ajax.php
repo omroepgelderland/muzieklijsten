@@ -325,6 +325,10 @@ function verwerk_stem( Lijst $lijst, array $nummers ): Stemmer {
 		$invoer->veld_vrijekeus,
 		$_SERVER['REMOTE_ADDR']
 	);
+    
+    foreach( $nummers as $nummer ) {
+        $stemmer->add_stem($nummer, $lijst, $nummer->get_post_toelichting());
+    }
 	
 	// Invoer van extra velden
 	foreach ( $lijst->get_extra_velden() as $extra_veld ) {
@@ -437,6 +441,7 @@ function vul_datatables(): array {
 }
 
 try {
+    DB::disableAutocommit();
     $functie = filter_input(INPUT_POST, 'functie');
     $respons = [];
     $data = null;
@@ -489,6 +494,7 @@ try {
         default:
             throw new Muzieklijsten_Exception("Onbekende ajax-functie: \"{$functie}\"");
     }
+    DB::commit();
     $respons['data'] = $data;
     $respons['error'] = false;
 } catch ( GebruikersException $e ) {

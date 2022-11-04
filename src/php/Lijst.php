@@ -330,7 +330,8 @@ class Lijst {
 	}
 
 	/**
-	 * Geeft alle nummers uit de lijst gesorteerd op het aantal stemmen (hoogste aantal eerst).
+	 * Geeft alle nummers met ten minste één stem uit de lijst gesorteerd op het
+	 * aantal stemmen (hoogste aantal eerst).
 	 * @param \DateTime $van Neem alleen de stemmen vanaf deze datum (optioneel).
 	 * @param \DateTime $tot Neem alleen de stemmen tot en met deze datum (optioneel).
 	 * @return Nummer[]
@@ -368,6 +369,7 @@ class Lijst {
 			WHERE
 				nl.lijst_id = {$this->get_id()}
 			GROUP BY nl.nummer_id
+			HAVING COUNT(sm.stemmer_id) > 0
 			ORDER BY COUNT(sm.stemmer_id) DESC
 		EOT;
 		return DB::selectObjectLijst($query, Nummer::class);

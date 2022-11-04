@@ -36,20 +36,9 @@ foreach( $res as $r ) {
 }
 $nummers_meta_str = implode("\n", $nummers_meta);
 
-if ( is_dev() ) {
-	$og_url = sprintf(
-		'http://192.168.1.107/%s/muzieklijsten/fbshare.php?stemmer=%d',
-		get_developer(),
-		$stemmer->get_id()
-	);
-	$og_image = sprintf(
-		'http://192.168.1.107/%s/muzieklijsten/afbeeldingen/fbshare_top100.jpg',
-		get_developer()
-	);
-} else {
-	$og_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$stemmer_id;
-	$og_image = 'https://web.omroepgelderland.nl/muzieklijsten/afbeeldingen/fbshare_top100.jpg';
-}
+$root_url = Config::get_instelling('root_url');
+$og_url = "{$root_url}fbshare.php?stemmer={$stemmer_id}";
+$og_image = "{$root_url}afbeeldingen/fbshare_top100.jpg";
 $jaar = (new \DateTime())->format('Y');
 
 ?>

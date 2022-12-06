@@ -22,8 +22,8 @@ export function get_instant_promise(...args) {
   }
   
   function post(functie, data) {
-    if (data instanceof FormData) {
-      data.append('functie', functie)
+    if ( data instanceof FormData ) {
+      data.append('functie', functie);
       return $.ajax({
         'url': 'ajax.php',
         'data': data,

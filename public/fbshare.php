@@ -37,7 +37,7 @@ foreach( $res as $r ) {
 $nummers_meta_str = implode("\n", $nummers_meta);
 
 $root_url = Config::get_instelling('root_url');
-$og_url = "{$root_url}fbshare.php?stemmer={$stemmer_id}";
+$og_url = "{$root_url}fbshare.php?stemmer={$stemmer->get_id()}";
 $og_image = "{$root_url}afbeeldingen/fbshare_top100.jpg";
 $jaar = (new \DateTime())->format('Y');
 

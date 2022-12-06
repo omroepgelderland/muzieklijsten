@@ -349,30 +349,24 @@ function verwerk_stem( Lijst $lijst, array $nummers ): Stemmer {
 }
 
 /**
- * Voegt nieuwe nummers toe aan een lijst en verwijdert nummers.
+ * Voegt een nummer toe aan een stemlijst.
  */
-function update_lijst(): void {
+function lijst_nummer_toevoegen(): void {
     login();
-    $lijst = Lijst::maak_uit_request();
-    $nummer_ids = filter_input(INPUT_POST, 'nummers', FILTER_VALIDATE_INT, FILTER_REQUIRE_ARRAY);
-
     DB::disableAutocommit();
-    $values_lijst_str = implode(",{$lijst->get_id()}),(", $nummer_ids);
-    $query = <<<EOT
-        INSERT IGNORE into lijsten_nummers (nummer_id, lijst_id)
-        VALUES ({$values_lijst_str},{$lijst->get_id()})
-    EOT;
-    DB::query($query);
-    
-    $nummer_ids_str = implode(',', $nummer_ids);
-    $query = <<<EOT
-        DELETE FROM lijsten_nummers
-        WHERE
-            lijst_id = {$lijst->get_id()}
-            AND nummer_id NOT IN ({$nummer_ids_str})
-    EOT;
-    DB::query($query);
-    verwijder_stemmers_zonder_stemmen();
+    $lijst = Lijst::maak_uit_request();
+    $lijst->nummer_toevoegen(Nummer::maak_uit_request());
+    DB::commit();
+}
+
+/**
+ * Haalt een nummer weg uit een stemlijst.
+ */
+function lijst_nummer_verwijderen(): void {
+    login();
+    DB::disableAutocommit();
+    $lijst = Lijst::maak_uit_request();
+    $lijst->verwijder_nummer(Nummer::maak_uit_request());
     DB::commit();
 }
 
@@ -479,8 +473,11 @@ try {
         case 'stem':
             $data = stem();
             break;
-        case 'update_lijst':
-            update_lijst();
+        case 'lijst_nummer_toevoegen':
+            lijst_nummer_toevoegen();
+            break;
+        case 'lijst_nummer_verwijderen':
+            lijst_nummer_verwijderen();
             break;
         case 'vul_datatables':
             $data = vul_datatables();
@@ -502,9 +499,6 @@ try {
     $respons['errordata'] = $e->getMessage();
 } catch ( \Throwable $e ) {
     Log::err($e);
-    Log::err(json_encode($_POST));
-    Log::err(json_encode($_SERVER));
-    Log::err(json_encode($_REQUEST));
     $respons['error'] = true;
     $respons['errordata'] = is_dev()
     ? $e->getMessage()

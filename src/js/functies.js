@@ -21,7 +21,7 @@ export function get_instant_promise(...args) {
     return get_instant_reject_promise(errorThrown);
   }
   
-  function post(functie, data) {
+  export function post(functie, data) {
     if ( data instanceof FormData ) {
       data.append('functie', functie);
       return $.ajax({
@@ -29,8 +29,7 @@ export function get_instant_promise(...args) {
         'data': data,
         'processData': false,
         'contentType': false,
-        'type': 'POST',
-        'cache': false
+        'type': 'POST'
       }).then(ajax_done, ajax_fail);
     } else {
       data.functie = functie;
@@ -103,13 +102,6 @@ export function get_instant_promise(...args) {
   
   export function stem(data) {
     return post('stem', data);
-  }
-  
-  export function update_lijst(lijst_id, nummer_ids) {
-    return post('update_lijst', {
-      'lijst': lijst_id,
-      'nummers': nummer_ids
-    });
   }
   
   export function get_selected_html(lijst_id) {

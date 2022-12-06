@@ -574,6 +574,20 @@ class Lijst {
 	}
 
 	/**
+	 * Voegt een nummer toe aan de stemlijst.
+	 * @param Nummer $nummer
+	 */
+	public function nummer_toevoegen( Nummer $nummer ): void {
+		DB::insertMulti('lijsten_nummers', [
+			'nummer_id' => $nummer->get_id(),
+			'lijst_id' => $this->get_id()
+		]);
+		if ( isset($this->nummers) ) {
+			$this->nummers[] = $nummer;
+		}
+	}
+
+	/**
 	 * Haalt een nummer weg uit de stemlijst.
 	 * Het nummer blijft bestaan in de database; het is alleen niet meer aan deze lijst gekoppeld.
 	 * Alle stemmen op dit nummer in deze lijst worden verwijderd.

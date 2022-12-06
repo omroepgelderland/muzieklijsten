@@ -184,56 +184,62 @@ function get_stemmer_html_get_td_velden( Stem $stem ): string {
 	return $html;
 }
 
-login();
+try {
 
-$lijst = Lijst::maak_uit_request(INPUT_GET);
+	login();
 
-$van = filter_input_van_tot('van');
-$tot = filter_input_van_tot('tot');
+	$lijst = Lijst::maak_uit_request(INPUT_GET);
 
-$naam = $lijst->get_naam();
+	$van = filter_input_van_tot('van');
+	$tot = filter_input_van_tot('tot');
 
-$body_classes = [];
-if ( is_admin() ) {
-	$body_classes[] = 'admin';
+	$naam = $lijst->get_naam();
+
+	$body_classes = [];
+	if ( is_admin() ) {
+		$body_classes[] = 'admin';
+	}
+	if ( $lijst->heeft_veld_telefoonnummer() ) {
+		$body_classes[] = 'veld-telefoonnummer';
+	}
+	if ( $lijst->heeft_veld_email() ) {
+		$body_classes[] = 'veld-email';
+	}
+	if ( $lijst->heeft_veld_woonplaats() ) {
+		$body_classes[] = 'veld-woonplaats';
+	}
+	if ( $lijst->heeft_veld_adres() ) {
+		$body_classes[] = 'veld-adres';
+	}
+	if ( $lijst->heeft_veld_uitzenddatum() ) {
+		$body_classes[] = 'veld-uitzenddatum';
+	}
+	if ( $lijst->heeft_veld_vrijekeus() ) {
+		$body_classes[] = 'veld-vrijekeus';
+	}
+
+	$body_classes_str = implode(' ', $body_classes);
+
+	$stemmen = $lijst->get_stemmen(null, $van, $tot);
+	$stemmers = $lijst->get_stemmers($van, $tot);
+
+	$stemmen_tabel = '';
+
+	$nummers = $lijst->get_nummers_volgorde_aantal_stemmen($van, $tot);
+	foreach ( $nummers as $nummer ) {
+		$stemmen_tabel .= get_html_nummer($lijst, $nummer, $van, $tot);
+	}
+
+	$van_str = isset($van)
+		? $van->format('d-m-Y')
+		: '';
+	$tot_str = isset($tot)
+		? $tot->format('d-m-Y')
+		: '';
+} catch ( \Throwable $e ) {
+	Log::err($e);
+	throw $e;
 }
-if ( $lijst->heeft_veld_telefoonnummer() ) {
-	$body_classes[] = 'veld-telefoonnummer';
-}
-if ( $lijst->heeft_veld_email() ) {
-	$body_classes[] = 'veld-email';
-}
-if ( $lijst->heeft_veld_woonplaats() ) {
-	$body_classes[] = 'veld-woonplaats';
-}
-if ( $lijst->heeft_veld_adres() ) {
-	$body_classes[] = 'veld-adres';
-}
-if ( $lijst->heeft_veld_uitzenddatum() ) {
-	$body_classes[] = 'veld-uitzenddatum';
-}
-if ( $lijst->heeft_veld_vrijekeus() ) {
-	$body_classes[] = 'veld-vrijekeus';
-}
-
-$body_classes_str = implode(' ', $body_classes);
-
-$stemmen = $lijst->get_stemmen(null, $van, $tot);
-$stemmers = $lijst->get_stemmers($van, $tot);
-
-$stemmen_tabel = '';
-
-$nummers = $lijst->get_nummers_volgorde_aantal_stemmen($van, $tot);
-foreach ( $nummers as $nummer ) {
-	$stemmen_tabel .= get_html_nummer($lijst, $nummer, $van, $tot);
-}
-
-$van_str = isset($van)
-	? $van->format('d-m-Y')
-	: '';
-$tot_str = isset($tot)
-	? $tot->format('d-m-Y')
-	: '';
 
 ?>
 <!DOCTYPE HTML>

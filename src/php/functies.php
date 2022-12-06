@@ -23,6 +23,14 @@ function get_developer(): string {
 }
 
 /**
+ * Geeft aan of het script handmatig (niet via cron o.i.d.) via de commandline is aangeroepen.
+ * @return bool
+ */
+function is_cli(): bool {
+	return php_sapi_name() === 'cli' && isset($_SERVER['TERM']);
+}
+
+/**
  * Vereist HTTP login voor beheerders
  */
 function login(): void {
@@ -308,4 +316,33 @@ function stuur_mail(
 	$mail_obj->send($ontvangers, $headers, $body);
 	error_reporting(E_ALL);
 	set_error_handler('\muzieklijsten\exception_error_handler', E_ALL);
+}
+
+/**
+ * Plakt paden aan elkaar met slashes.
+ * @param string $paths,... Meerdere paden die aan elkaar geplakt worden. Het
+ * aantal parameters is variabel.
+ * @return string Het resulterende pad.
+ */
+function path_join( ...$paths ): string {
+	foreach ( $paths as $i => $arg ) {
+		if ( $i == 0 ) {
+			// eerste parameter
+			$path = rtrim($arg, '/') . '/';
+		} elseif ( $i == count($paths) - 1 ) {
+			// laatste parameter
+			$path .= ltrim($arg, '/');
+		} else {
+			$path .= trim($arg, '/') . '/';
+		}
+	}
+	return $path;
+}
+
+/**
+ * Geeft het pad naar het eerst gestartte script, los van de class van waaruit deze functie wordt aangeroepen.
+ * @return string
+ */
+function get_hoofdscript_pad(): string {
+	return get_included_files()[0];
 }

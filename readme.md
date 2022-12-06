@@ -22,6 +22,11 @@ Configureer Apache met toegang tot de map public.
 Maak een bestand config/config.json
 
 ```sh
+mkdir -p data/log
+setfacl -R \
+    -m u:muzieklijsten:rwx,u:www-data:rwx \
+    -dm u:muzieklijsten:rwX,u:www-data:rwX \
+    data
 ./deploy.sh
 ```
 

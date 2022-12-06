@@ -10,48 +10,53 @@ try {
 	throw new Muzieklijsten_Exception('Geef een lijst mee in de URL');
 }
 
-$body_classes = [];
-if ( $lijst->heeft_veld_telefoonnummer() ) {
-	$body_classes[] = 'veld-telefoonnummer';
-}
-if ( $lijst->heeft_veld_email() ) {
-	$body_classes[] = 'veld-email';
-}
-if ( $lijst->heeft_veld_woonplaats() || $lijst->heeft_veld_adres() ) {
-	$body_classes[] = 'veld-woonplaats';
-}
-if ( $lijst->heeft_veld_adres() ) {
-	$body_classes[] = 'veld-adres';
-}
-if ( $lijst->heeft_veld_uitzenddatum() ) {
-	$body_classes[] = 'veld-uitzenddatum';
-}
-if ( $lijst->heeft_veld_vrijekeus() ) {
-	$body_classes[] = 'veld-vrijekeus';
-}
-if ( $lijst->heeft_gebruik_recaptcha() ) {
-	$body_classes[] = 'heeft-recaptcha';
-}
-if ( $lijst->is_actief() ) {
-	$body_classes[] = 'is-actief';
-}
-if ( $lijst->is_max_stemmen_per_ip_bereikt() ) {
-	$body_classes[] = 'max-ip-bereikt';
-}
-$body_classes_str = implode(' ', $body_classes);
+try {
+	$body_classes = [];
+	if ( $lijst->heeft_veld_telefoonnummer() ) {
+		$body_classes[] = 'veld-telefoonnummer';
+	}
+	if ( $lijst->heeft_veld_email() ) {
+		$body_classes[] = 'veld-email';
+	}
+	if ( $lijst->heeft_veld_woonplaats() || $lijst->heeft_veld_adres() ) {
+		$body_classes[] = 'veld-woonplaats';
+	}
+	if ( $lijst->heeft_veld_adres() ) {
+		$body_classes[] = 'veld-adres';
+	}
+	if ( $lijst->heeft_veld_uitzenddatum() ) {
+		$body_classes[] = 'veld-uitzenddatum';
+	}
+	if ( $lijst->heeft_veld_vrijekeus() ) {
+		$body_classes[] = 'veld-vrijekeus';
+	}
+	if ( $lijst->heeft_gebruik_recaptcha() ) {
+		$body_classes[] = 'heeft-recaptcha';
+	}
+	if ( $lijst->is_actief() ) {
+		$body_classes[] = 'is-actief';
+	}
+	if ( $lijst->is_max_stemmen_per_ip_bereikt() ) {
+		$body_classes[] = 'max-ip-bereikt';
+	}
+	$body_classes_str = implode(' ', $body_classes);
 
-$extra_velden_html = '';
-foreach ( $lijst->get_extra_velden() as $extra_veld ) {
-	$extra_velden_html .= $extra_veld->get_formulier_html();
+	$extra_velden_html = '';
+	foreach ( $lijst->get_extra_velden() as $extra_veld ) {
+		$extra_velden_html .= $extra_veld->get_formulier_html();
+	}
+	$recaptcha_sitekey = Config::get_instelling('recaptcha', 'sitekey');
+
+	$artiest_eenmalig = $lijst->is_artiest_eenmalig()
+		? 'true'
+		: 'false';
+
+	$organisatie = Config::get_instelling('organisatie');
+	$privacy_url = Config::get_instelling('privacy_url');
+} catch ( \Throwable $e ) {
+	Log::err($e);
+	throw $e;
 }
-$recaptcha_sitekey = Config::get_instelling('recaptcha', 'sitekey');
-
-$artiest_eenmalig = $lijst->is_artiest_eenmalig()
-	? 'true'
-	: 'false';
-
-$organisatie = Config::get_instelling('organisatie');
-$privacy_url = Config::get_instelling('privacy_url');
 
 ?>
 <!DOCTYPE html>

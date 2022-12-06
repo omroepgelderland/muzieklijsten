@@ -4,61 +4,67 @@ namespace muzieklijsten;
 
 require_once __DIR__.'/../vendor/autoload.php';
 
-login();
-
 try {
-	$lijst = Lijst::maak_uit_request(INPUT_GET);
-	$lijst_id = $lijst->get_id();
-	$lijst_naam = $lijst->get_naam();
-	$lijst_query = sprintf('?lijst=%d', $lijst->get_id());
-	$nummers = $lijst->get_nummers();
-	$bewerk_knoppen_disabled = '';
-	$bewerk_knoppen_title = '';
-	$iframe_url = htmlspecialchars(sprintf(
-		'%s?lijst=%d',
-		Config::get_instelling('root_url'),
-		$lijst_id
-	));
-	$iframe_code = htmlspecialchars("<iframe src=\"{$iframe_url}\" frameborder=\"0\" height=\"3000\" style=\"width: 100%; height: 3000px; border: none;\">");
-} catch ( Muzieklijsten_Exception $e ) {
-	$lijst = null;
-	$lijst_id = '';
-	$lijst_naam = 'Nieuwe lijst';
-	$lijst_query = '';
-	$nummers = [];
-	$bewerk_knoppen_disabled = ' disabled';
-	$bewerk_knoppen_title = ' title="Kies eerst een lijst of maak een nieuwe lijst aan."';
-	$iframe_url = '';
-	$iframe_code = '';
-}
 
-$andere_lijsten = get_muzieklijsten();
+	login();
 
-$select_lijst_html = '';
-foreach ( $andere_lijsten as $andere_lijst ) {
-	if ( $andere_lijst->equals($lijst) ) {
-		$selected = ' selected';
-	} else {
-		$selected = '';
+	try {
+		$lijst = Lijst::maak_uit_request(INPUT_GET);
+		$lijst_id = $lijst->get_id();
+		$lijst_naam = $lijst->get_naam();
+		$lijst_query = sprintf('?lijst=%d', $lijst->get_id());
+		$nummers = $lijst->get_nummers();
+		$bewerk_knoppen_disabled = '';
+		$bewerk_knoppen_title = '';
+		$iframe_url = htmlspecialchars(sprintf(
+			'%s?lijst=%d',
+			Config::get_instelling('root_url'),
+			$lijst_id
+		));
+		$iframe_code = htmlspecialchars("<iframe src=\"{$iframe_url}\" frameborder=\"0\" height=\"3000\" style=\"width: 100%; height: 3000px; border: none;\">");
+	} catch ( Muzieklijsten_Exception $e ) {
+		$lijst = null;
+		$lijst_id = '';
+		$lijst_naam = 'Nieuwe lijst';
+		$lijst_query = '';
+		$nummers = [];
+		$bewerk_knoppen_disabled = ' disabled';
+		$bewerk_knoppen_title = ' title="Kies eerst een lijst of maak een nieuwe lijst aan."';
+		$iframe_url = '';
+		$iframe_code = '';
 	}
-	$select_lijst_html .= sprintf(
-		'<option value="%d"%s>%s</option>',
-		$andere_lijst->get_id(),
-		$selected,
-		htmlspecialchars($andere_lijst->get_naam())
-	);
+
+	$andere_lijsten = get_muzieklijsten();
+
+	$select_lijst_html = '';
+	foreach ( $andere_lijsten as $andere_lijst ) {
+		if ( $andere_lijst->equals($lijst) ) {
+			$selected = ' selected';
+		} else {
+			$selected = '';
+		}
+		$select_lijst_html .= sprintf(
+			'<option value="%d"%s>%s</option>',
+			$andere_lijst->get_id(),
+			$selected,
+			htmlspecialchars($andere_lijst->get_naam())
+		);
+	}
+
+	$nummer_ids = [];
+	foreach ( $nummers as $nummer ) {
+		$nummer_ids[] = (string)$nummer->get_id();
+	}
+	$rows_selected = htmlspecialchars(json_encode($nummer_ids));
+
+	$totaal_aantal_nummers = count(get_nummers());
+
+	$organisatie = Config::get_instelling('organisatie');
+	$nimbus_url = Config::get_instelling('nimbus_url');
+} catch ( \Throwable $e ) {
+	Log::err($e);
+	throw $e;
 }
-
-$nummer_ids = [];
-foreach ( $nummers as $nummer ) {
-	$nummer_ids[] = (string)$nummer->get_id();
-}
-$rows_selected = htmlspecialchars(json_encode($nummer_ids));
-
-$totaal_aantal_nummers = count(get_nummers());
-
-$organisatie = Config::get_instelling('organisatie');
-$nimbus_url = Config::get_instelling('nimbus_url');
 
 ?>
 

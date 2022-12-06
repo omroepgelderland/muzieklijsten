@@ -4,42 +4,48 @@ namespace muzieklijsten;
 
 require_once __DIR__.'/../vendor/autoload.php';
 
-$stemmer = Stemmer::maak_uit_request(INPUT_GET);
+try {
 
-$query = <<<EOT
-	SELECT n.artiest, n.titel
-	FROM nummers n
-	INNER JOIN stemmen sn ON
-		sn.nummer_id = n.id
-	INNER JOIN stemmers s ON
-		s.id = {$stemmer->get_id()}
-		AND s.id = sn.stemmer_id
-	ORDER BY n.artiest, n.titel
-EOT;
-$res = DB::query($query);
-$nummers_meta = [];
-$nummers_html_str = '';
-$i = 1;
-foreach( $res as $r ) {
-	$nummers_meta[] = sprintf(
-		'%d) %s - %s',
-		$i,
-		htmlspecialchars($r['artiest']),
-		htmlspecialchars($r['titel'])
-	);
-	$nummers_html_str .= sprintf(
-		'<li>%s - %s</li>',
-		htmlspecialchars($r['artiest']),
-		htmlspecialchars($r['titel'])
-	);
-	$i++;
+	$stemmer = Stemmer::maak_uit_request(INPUT_GET);
+
+	$query = <<<EOT
+		SELECT n.artiest, n.titel
+		FROM nummers n
+		INNER JOIN stemmen sn ON
+			sn.nummer_id = n.id
+		INNER JOIN stemmers s ON
+			s.id = {$stemmer->get_id()}
+			AND s.id = sn.stemmer_id
+		ORDER BY n.artiest, n.titel
+	EOT;
+	$res = DB::query($query);
+	$nummers_meta = [];
+	$nummers_html_str = '';
+	$i = 1;
+	foreach( $res as $r ) {
+		$nummers_meta[] = sprintf(
+			'%d) %s - %s',
+			$i,
+			htmlspecialchars($r['artiest']),
+			htmlspecialchars($r['titel'])
+		);
+		$nummers_html_str .= sprintf(
+			'<li>%s - %s</li>',
+			htmlspecialchars($r['artiest']),
+			htmlspecialchars($r['titel'])
+		);
+		$i++;
+	}
+	$nummers_meta_str = implode("\n", $nummers_meta);
+
+	$root_url = Config::get_instelling('root_url');
+	$og_url = "{$root_url}fbshare.php?stemmer={$stemmer->get_id()}";
+	$og_image = "{$root_url}afbeeldingen/fbshare_top100.jpg";
+	$jaar = (new \DateTime())->format('Y');
+} catch ( \Throwable $e ) {
+	Log::err($e);
+	throw $e;
 }
-$nummers_meta_str = implode("\n", $nummers_meta);
-
-$root_url = Config::get_instelling('root_url');
-$og_url = "{$root_url}fbshare.php?stemmer={$stemmer->get_id()}";
-$og_image = "{$root_url}afbeeldingen/fbshare_top100.jpg";
-$jaar = (new \DateTime())->format('Y');
 
 ?>
 

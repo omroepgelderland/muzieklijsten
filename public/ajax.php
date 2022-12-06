@@ -501,6 +501,7 @@ try {
     $respons['error'] = true;
     $respons['errordata'] = $e->getMessage();
 } catch ( \Throwable $e ) {
+    Log::err($e);
     $respons['error'] = true;
     $respons['errordata'] = is_dev()
     ? $e->getMessage()

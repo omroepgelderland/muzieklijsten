@@ -29,7 +29,8 @@ export function get_instant_promise(...args) {
         'data': data,
         'processData': false,
         'contentType': false,
-        'type': 'POST'
+        'type': 'POST',
+        'cache': false
       }).then(ajax_done, ajax_fail);
     } else {
       data.functie = functie;

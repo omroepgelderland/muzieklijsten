@@ -502,6 +502,9 @@ try {
     $respons['errordata'] = $e->getMessage();
 } catch ( \Throwable $e ) {
     Log::err($e);
+    Log::err(json_encode($_POST));
+    Log::err(json_encode($_SERVER));
+    Log::err(json_encode($_REQUEST));
     $respons['error'] = true;
     $respons['errordata'] = is_dev()
     ? $e->getMessage()

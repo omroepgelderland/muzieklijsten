@@ -48,6 +48,10 @@ function login(): void {
 		$_SERVER['PHP_AUTH_USER'] !== Config::get_instelling('php_auth', 'user')
 		|| $_SERVER['PHP_AUTH_PW'] !== Config::get_instelling('php_auth', 'password') )
 	{
+		// header('WWW-Authenticate: Basic realm="Inloggen"');
+		header('HTTP/1.0 401 Unauthorized');
+		echo 'Verkeerd wachtwoord en/of gebruikersnaam. Ververs de pagina met F5 om het nog een keer te proberen.';
+		session_destroy();
 		throw new Muzieklijsten_Exception('Verkeerd wachtwoord en/of gebruikersnaam');
 	}
 	$_SESSION['is_ingelogd'] = true;

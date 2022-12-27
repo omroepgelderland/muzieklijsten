@@ -206,6 +206,9 @@ function filter_input_telefoonnummer( int $type = INPUT_POST, string $var_name =
 	elseif ( $telefoonnummer === null || $telefoonnummer === '' ) {
 		return null;
 	}
+	if ( strlen($telefoonnummer) < 4 ) {
+		throw new OngeldigeInvoer("Ongeldig telefoonnummer: \"{$telefoonnummer}\"");
+	}
 	$telefoonnummer = preg_replace('~[^+0-9]~', '', $telefoonnummer);
     if ( substr($telefoonnummer, 0, 2) === '00' ) {
         // Handmatige uitbelcode

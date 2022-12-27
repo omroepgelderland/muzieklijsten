@@ -1,3 +1,7 @@
+body:not(.lijst-geselecteerd) .lijst-geselecteerd {
+    display: none;
+}
+
 body {
     padding-top: 70px;
 }

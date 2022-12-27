@@ -8,11 +8,13 @@ try {
 
 	login();
 
+	$body_classes = [];
 	try {
 		$lijst = Lijst::maak_uit_request(INPUT_GET);
 		$lijst_id = $lijst->get_id();
 		$lijst_naam = $lijst->get_naam();
 		$lijst_query = sprintf('?lijst=%d', $lijst->get_id());
+		$body_classes[] = 'lijst-geselecteerd';
 		$nummers = $lijst->get_nummers();
 		$bewerk_knoppen_disabled = '';
 		$bewerk_knoppen_title = '';
@@ -61,6 +63,7 @@ try {
 
 	$organisatie = Config::get_instelling('organisatie');
 	$nimbus_url = Config::get_instelling('nimbus_url');
+	$body_classes_str = implode(' ', $body_classes);
 } catch ( \Throwable $e ) {
 	Log::err($e);
 	throw $e;
@@ -96,7 +99,7 @@ try {
 		<link rel="apple-touch-icon" href="afbeeldingen/favicon-152p.png">
 		<link rel="apple-touch-icon" href="afbeeldingen/favicon-167p.png">
 	</head>
-	<body data-lijst-id="<?php echo $lijst_id; ?>" data-rows-selected="<?php echo $rows_selected; ?>">
+	<body class="<?php echo $body_classes_str; ?>" data-lijst-id="<?php echo $lijst_id; ?>" data-rows-selected="<?php echo $rows_selected; ?>">
 
 		<nav class="navbar navbar-default navbar-fixed-top">
 			<div class="container-fluid">
@@ -129,7 +132,7 @@ try {
 			</div>
 		</nav>
 
-		<form id="beheer-nummers" method="POST">
+		<form id="beheer-nummers" method="POST" class="lijst-geselecteerd">
 			<div class="container-fluid beschikbaar">
 				<div class="row">
 					<div class="col-sm-6">

@@ -32,6 +32,44 @@ function set_totaal_aantal_stemmers(lijst_id) {
   });
 }
 
+/**
+ * Filtert de resultatenlijst aan de hand van de ingevoerde filtertekst.
+ * @param {Event} e 
+ */
+function resultaatfilter(e) {
+  let filter = e.target.value.toLowerCase();
+  let rijen = document.querySelectorAll('#resultaten tbody tr');
+  let cel_tekst;
+  let match;
+  for ( const rij of rijen ) {
+    if ( filter.length < 3 ) {
+      rij.classList.remove('verborgen');
+      continue;
+    }
+    match = false;
+    for ( const cel of rij.children ) {
+      if ( cel.nodeName.toLowerCase() !== 'td' ) {
+        continue;
+      }
+      cel_tekst = '';
+      for ( const node of cel.childNodes ) {
+        if ( node.nodeType === Node.TEXT_NODE ) {
+          cel_tekst += node.data.toLowerCase();
+        }
+      }
+      if ( cel_tekst.includes(filter) ) {
+        match = true;
+        break;
+      }
+    }
+    if ( match ) {
+      rij.classList.remove('verborgen');
+    } else {
+      rij.classList.add('verborgen');
+    }
+  }
+}
+
 $(document).ready(() => {
   var lijst_id = $('body').data('lijst-id');
 
@@ -102,6 +140,9 @@ $(document).ready(() => {
     }
     event.stopPropagation();
   });
+
+  // Filterveld
+  document.getElementById('resultaatfilter').addEventListener('input', resultaatfilter);
 
   $('#datetimepicker1').datetimepicker({
     'locale': 'nl',

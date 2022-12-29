@@ -7,6 +7,7 @@ body:not(.veld-vrijekeus) .veld-vrijekeus,
 body:not(.heeft-recaptcha) .heeft-recaptcha,
 body:not(.is-actief) .is-actief,
 body.is-actief .is-niet-actief,
-body:not(.max-ip-bereikt) .max-ip-bereikt {
+body:not(.max-ip-bereikt) .max-ip-bereikt,
+.verborgen {
 	display: none;
 }

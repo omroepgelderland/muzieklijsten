@@ -483,7 +483,7 @@ class Lijst {
 	
 	/**
 	 * Geeft de stemmen op alle nummers in de lijst.
-	 * @param ?Nummer $nummer Neem alleen de stemmen op dit nummer mee (optioneel).
+	 * @param Nummer|null $nummer Neem alleen de stemmen op dit nummer mee (optioneel).
 	 * @param \DateTime $van Neem alleen de stemmen vanaf deze datum (optioneel).
 	 * @param \DateTime $tot Neem alleen de stemmen tot en met deze datum (optioneel).
 	 * @return Stem[] Stemmen

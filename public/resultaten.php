@@ -278,7 +278,12 @@ try {
 			<div id="page-wrapper">
 				<div class="row">
 					<div class="col-sm-12">
-						<div class="col-sm-7"></div>
+						<div class="col-sm-5"></div>
+						<div class="col-sm-2">
+							<div class="input-group">
+								<input type="text" id="resultaatfilter" name="resultaatfilter" class="form-control" placeholder="Filter">
+							</div>
+						</div>
 						<div class="col-sm-2">
 							<div class="input-group date" id="datetimepicker1">
 								<input type="text" name="van" class="form-control" placeholder="Datum van" value="<?php echo $van_str; ?>">
@@ -301,7 +306,7 @@ try {
 					</div>
 					<div class="col-sm-12">
 						<div class="table-responsive">
-							<table class="table table-striped">
+							<table id="resultaten" class="table table-striped">
 								<thead>                                        
 									<tr>
 										<th></th>

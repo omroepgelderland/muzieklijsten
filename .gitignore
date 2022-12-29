@@ -46,7 +46,7 @@ Thumbs.db
 nbproject/private/
 
 ### VisualStudioCode ###
-.vscode
+/.vscode/**
 # .vscode/*      # Maybe .vscode/**/* instead - see comments
 # !.vscode/settings.json
 # !.vscode/tasks.json
@@ -57,9 +57,11 @@ nbproject/private/
 vendor/
 !/composer.lock
 
-debug.sh
+/debug-php.sh
 config/
 node_modules
+/*.md5
+/test/*.xls
 
 public/afbeeldingen/**
 public/css/**

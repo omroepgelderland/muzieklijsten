@@ -3,6 +3,9 @@
 namespace muzieklijsten;
 
 class Lijst {
+
+	public const VELD_ZICHTBAAR_BIT = 0;
+	public const VELD_VERPLICHT_BIT = 1;
 	
 	private int $id;
 	private bool $actief;
@@ -11,12 +14,12 @@ class Lijst {
 	private int $maxkeuzes;
 	private ?int $stemmen_per_ip;
 	private bool $artiest_eenmalig;
-	private bool $veld_telefoonnummer;
-	private bool $veld_email;
-	private bool $veld_woonplaats;
-	private bool $veld_adres;
-	private bool $veld_uitzenddatum;
-	private bool $veld_vrijekeus;
+	private int $veld_telefoonnummer;
+	private int $veld_email;
+	private int $veld_woonplaats;
+	private int $veld_adres;
+	private int $veld_uitzenddatum;
+	private int $veld_vrijekeus;
 	private bool $recaptcha;
 	/** @var string[] */
 	private array $notificatie_email_adressen;
@@ -109,6 +112,42 @@ class Lijst {
 		$this->set_db_properties();
 		return $this->artiest_eenmalig;
 	}
+
+	/**
+	 * Geeft aan of het veld "naam" in het formulier staat.
+	 * @return bool
+	 */
+	public function heeft_veld_naam(): bool {
+		return true;
+	}
+
+	/**
+	 * Geeft aan of het veld "naam" verplicht is.
+	 * @return bool
+	 */
+	public function is_veld_naam_verplicht(): bool {
+		return true;
+	}
+
+	/**
+	 * Geeft de HTML van het invoerveld voor de naam.
+	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
+	 * @return string
+	 */
+	public function get_veld_naam_html(): string {
+		if ( $this->heeft_veld_naam() ) {
+			return $this->get_formulier_html(
+				'naam',
+				'Naam',
+				'text',
+				'Vul uw naam in a.u.b.',
+				$this->is_veld_naam_verplicht(),
+				100
+			);
+		} else {
+			return '';
+		}
+	}
 	
 	/**
 	 * 
@@ -116,7 +155,36 @@ class Lijst {
 	 */
 	public function heeft_veld_telefoonnummer(): bool {
 		$this->set_db_properties();
-		return $this->veld_telefoonnummer;
+		return ($this->veld_telefoonnummer & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
+	}
+
+	/**
+	 * Geeft aan of het veld "telefoonnummer" verplicht is.
+	 * @return bool
+	 */
+	public function is_veld_telefoonnummer_verplicht(): bool {
+		$this->set_db_properties();
+		return ($this->veld_telefoonnummer & (1 << self::VELD_VERPLICHT_BIT)) > 0;
+	}
+	
+	/**
+	 * Geeft de HTML van het invoerveld voor het telefoonnummer.
+	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
+	 * @return string
+	 */
+	public function get_veld_telefoonnummer_html(): string {
+		if ( $this->heeft_veld_telefoonnummer() ) {
+			return $this->get_formulier_html(
+				'telefoonnummer',
+				'Telefoonnummer',
+				'tel',
+				'Vul uw telefoonnummer in a.u.b.',
+				$this->is_veld_telefoonnummer_verplicht(),
+				100
+			);
+		} else {
+			return '';
+		}
 	}
 	
 	/**
@@ -125,7 +193,36 @@ class Lijst {
 	 */
 	public function heeft_veld_email(): bool {
 		$this->set_db_properties();
-		return $this->veld_email;
+		return ($this->veld_email & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
+	}
+
+	/**
+	 * Geeft aan of het veld "e-mail" verplicht is.
+	 * @return bool
+	 */
+	public function is_veld_email_verplicht(): bool {
+		$this->set_db_properties();
+		return ($this->veld_email & (1 << self::VELD_VERPLICHT_BIT)) > 0;
+	}
+	
+	/**
+	 * Geeft de HTML van het invoerveld voor het e-mailadres.
+	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
+	 * @return string
+	 */
+	public function get_veld_email_html(): string {
+		if ( $this->heeft_veld_email() ) {
+			return $this->get_formulier_html(
+				'veld_email',
+				'E-mailadres',
+				'email',
+				'Vul uw e-mailadres in a.u.b.',
+				$this->is_veld_email_verplicht(),
+				100
+			);
+		} else {
+			return '';
+		}
 	}
 	
 	/**
@@ -134,7 +231,36 @@ class Lijst {
 	 */
 	public function heeft_veld_woonplaats(): bool {
 		$this->set_db_properties();
-		return $this->veld_woonplaats;
+		return ($this->veld_woonplaats & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
+	}
+
+	/**
+	 * Geeft aan of het veld "woonplaats" verplicht is.
+	 * @return bool
+	 */
+	public function is_veld_woonplaats_verplicht(): bool {
+		$this->set_db_properties();
+		return ($this->veld_woonplaats & (1 << self::VELD_VERPLICHT_BIT)) > 0;
+	}
+	
+	/**
+	 * Geeft de HTML van het invoerveld voor de woonplaats.
+	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
+	 * @return string
+	 */
+	public function get_veld_woonplaats_html(): string {
+		if ( $this->heeft_veld_adres() || $this->heeft_veld_woonplaats() ) {
+			return $this->get_formulier_html(
+				'woonplaats',
+				'Woonplaats',
+				'text',
+				'Vul uw woonplaats in a.u.b.',
+				$this->is_veld_adres_verplicht() || $this->is_veld_woonplaats_verplicht(),
+				100
+			);
+		} else {
+			return '';
+		}
 	}
 	
 	/**
@@ -143,7 +269,44 @@ class Lijst {
 	 */
 	public function heeft_veld_adres(): bool {
 		$this->set_db_properties();
-		return $this->veld_adres;
+		return ($this->veld_adres & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
+	}
+
+	/**
+	 * Geeft aan of het veld "adres" verplicht is.
+	 * @return bool
+	 */
+	public function is_veld_adres_verplicht(): bool {
+		$this->set_db_properties();
+		return ($this->veld_adres & (1 << self::VELD_VERPLICHT_BIT)) > 0;
+	}
+
+	/**
+	 * Geeft de HTML van het invoerveld voor het adres.
+	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
+	 * @return string
+	 */
+	public function get_veld_adres_html(): string {
+		if ( $this->heeft_veld_adres() ) {
+			return $this->get_formulier_html(
+				'adres',
+				'Adres',
+				'text',
+				'Vul uw adres in a.u.b.',
+				$this->is_veld_adres_verplicht(),
+				100
+			)
+			.$this->get_formulier_html(
+				'postcode',
+				'Postcode',
+				'text',
+				'Vul uw postcode in a.u.b.',
+				$this->is_veld_adres_verplicht(),
+				100
+			);
+		} else {
+			return '';
+		}
 	}
 	
 	/**
@@ -152,7 +315,54 @@ class Lijst {
 	 */
 	public function heeft_veld_uitzenddatum(): bool {
 		$this->set_db_properties();
-		return $this->veld_uitzenddatum;
+		return ($this->veld_uitzenddatum & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
+	}
+
+	/**
+	 * Geeft aan of het veld "uitzenddatum" verplicht is.
+	 * @return bool
+	 */
+	public function is_veld_uitzenddatum_verplicht(): bool {
+		$this->set_db_properties();
+		return ($this->veld_uitzenddatum & (1 << self::VELD_VERPLICHT_BIT)) > 0;
+	}
+	
+	/**
+	 * Geeft de HTML van het invoerveld voor de uitzenddatum.
+	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
+	 * @return string
+	 */
+	public function get_veld_uitzenddatum_html(): string {
+		if ( $this->heeft_veld_uitzenddatum() ) {	
+			$template = <<<EOT
+			<div class="form-group">
+				<label class="control-label col-sm-2">Uitzenddatum</label>
+				<div class="col-sm-10">
+					<div class="input-group date" id="datetimepicker">
+						<input type="text" class="form-control" placeholder="selecteer een datum" data-leeg-feedback="Vul de uitzenddatum in a.u.b.">
+						<span class="input-group-addon">
+							<span class="glyphicon glyphicon-calendar"></span>
+						</span>
+					</div>
+				</div>
+			</div>
+			EOT;
+			$id = 'veld_uitzenddatum';
+			$doc = new HTMLTemplate($template);
+			/** @var \DOMElement */
+			$e_label = $doc->getElementsByTagName('label')->item(0);
+			/** @var \DOMElement */
+			$e_input = $doc->getElementsByTagName('input')->item(0);
+			$e_label->setAttribute('for', $id);
+			$e_input->setAttribute('id', $id);
+			$e_input->setAttribute('name', $id);
+			if ( $this->is_veld_uitzenddatum_verplicht() ) {
+				$e_input->appendChild($doc->createAttribute('required'));
+			}
+			return $doc->saveHTML();
+		} else {
+			return '';
+		}
 	}
 	
 	/**
@@ -161,7 +371,37 @@ class Lijst {
 	 */
 	public function heeft_veld_vrijekeus(): bool {
 		$this->set_db_properties();
-		return $this->veld_vrijekeus;
+		return ($this->veld_vrijekeus & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
+	}
+
+	/**
+	 * Geeft aan of het veld "vrije keuze" verplicht is.
+	 * @return bool
+	 */
+	public function is_veld_vrijekeus_verplicht(): bool {
+		$this->set_db_properties();
+		return ($this->veld_vrijekeus & (1 << self::VELD_VERPLICHT_BIT)) > 0;
+	}
+	
+	/**
+	 * Geeft de HTML van het invoerveld voor de vrije keuze.
+	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
+	 * @return string
+	 */
+	public function get_veld_vrijekeus_html(): string {
+		if ( $this->heeft_veld_vrijekeus() ) {
+			return $this->get_formulier_html(
+				'veld_vrijekeus',
+				'Vrije keuze',
+				'text',
+				'Vul een eigen keuze in a.u.b.',
+				$this->is_veld_vrijekeus_verplicht(),
+				null,
+				'Vul hier je eigen favoriet in.'
+			);
+		} else {
+			return '';
+		}
 	}
 	
 	/**
@@ -434,12 +674,12 @@ class Lijst {
 		$this->maxkeuzes = $data['maxkeuzes'];
 		$this->stemmen_per_ip = $data['stemmen_per_ip'];
 		$this->artiest_eenmalig = $data['artiest_eenmalig'] == 1;
-		$this->veld_telefoonnummer = $data['veld_telefoonnummer'] == 1;
-		$this->veld_email = $data['veld_email'] == 1;
-		$this->veld_woonplaats = $data['veld_woonplaats'] == 1;
-		$this->veld_adres = $data['veld_adres'] == 1;
-		$this->veld_uitzenddatum = $data['veld_uitzenddatum'] == 1;
-		$this->veld_vrijekeus = $data['veld_vrijekeus'] == 1;
+		$this->veld_telefoonnummer = $data['veld_telefoonnummer'];
+		$this->veld_email = $data['veld_email'];
+		$this->veld_woonplaats = $data['veld_woonplaats'];
+		$this->veld_adres = $data['veld_adres'];
+		$this->veld_uitzenddatum = $data['veld_uitzenddatum'];
+		$this->veld_vrijekeus = $data['veld_vrijekeus'];
 		$this->recaptcha = $data['recaptcha'] == 1;
 		$this->notificatie_email_adressen = [];
 		foreach ( explode(',', $data['email']) as $adres ) {
@@ -620,6 +860,58 @@ class Lijst {
 			unset($this->$key);
 		}
 		$this->db_props_set = false;
+	}
+	
+	/**
+	 * Maakt HTML voor een invoerveld in het formulier.
+	 * @param string $id ID en naam van het veld.
+	 * @param string $label Zichtbaar label.
+	 * @param string $type Type van <input>
+	 * @param string $leeg_feedback Tekst die aan de gebruiker wordt getoond
+	 * als het verplichte veld niet is ingevuld.
+	 * @param bool $is_verplicht Of het veld verplicht is.
+	 * @param int|null $max_length Maximale lengte van tekstinvoer (optioneel).
+	 * @param string $placeholder Placeholdertekst (optioneel).
+	 * @return string HTML.
+	 */
+	private function get_formulier_html(
+		string $id,
+		string $label,
+		string $type,
+		string $leeg_feedback,
+		bool $is_verplicht,
+		?int $max_length = null,
+		string $placeholder = ''
+	): string {
+		$template = <<<EOT
+		<div class="form-group">
+			<label class="control-label col-sm-2"></label>
+			<div class="col-sm-10">
+				<input class="form-control">
+			</div>
+		</div>
+		EOT;
+		$doc = new HTMLTemplate($template);
+		/** @var \DOMElement */
+		$e_label = $doc->getElementsByTagName('label')->item(0);
+		/** @var \DOMElement */
+		$e_input = $doc->getElementsByTagName('input')->item(0);
+		$e_label->appendChild($doc->createTextNode($label));
+		$e_label->setAttribute('for', $id);
+		$e_input->setAttribute('type', $type);
+		$e_input->setAttribute('id', $id);
+		$e_input->setAttribute('name', $id);
+		if ( strlen($placeholder) > 0 ){
+			$e_input->setAttribute('placeholder', $placeholder);
+		}
+		$e_input->setAttribute('data-leeg-feedback', $leeg_feedback);
+		if ( isset($max_length) && in_array($type, ['text', 'search', 'url', 'tel', 'email', 'password']) ) {
+			$e_input->setAttribute('maxlength', $max_length);
+		}
+		if ( $is_verplicht ) {
+			$e_input->appendChild($doc->createAttribute('required'));
+		}
+		return $doc->saveHTML();
 	}
 
 }

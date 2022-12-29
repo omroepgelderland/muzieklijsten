@@ -23,13 +23,19 @@ function filter_lijst_metadata(): array {
 	$maxkeuzes = filter_input(INPUT_POST, 'maxkeuzes', FILTER_VALIDATE_INT);
 	$stemmen_per_ip = filter_input(INPUT_POST, 'stemmen-per-ip', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 	$artiest_eenmalig = filter_input(INPUT_POST, 'artiest-eenmalig', FILTER_VALIDATE_BOOL);
-	$veld_telefoonnummer = filter_input(INPUT_POST, 'veld-telefoonnummer', FILTER_VALIDATE_BOOL);
-	$veld_email = filter_input(INPUT_POST, 'veld-email', FILTER_VALIDATE_BOOL);
-	$veld_woonplaats = filter_input(INPUT_POST, 'veld-woonplaats', FILTER_VALIDATE_BOOL);
-	$veld_adres = filter_input(INPUT_POST, 'veld-adres', FILTER_VALIDATE_BOOL);
-	$veld_uitzenddatum = filter_input(INPUT_POST, 'veld-uitzenddatum', FILTER_VALIDATE_BOOL);
-	$veld_vrijekeus = filter_input(INPUT_POST, 'veld-vrijekeus', FILTER_VALIDATE_BOOL);
-	$recaptcha = filter_input(INPUT_POST, 'recaptcha', FILTER_VALIDATE_BOOL);
+	$veld_telefoonnummer = filter_input(INPUT_POST, 'veld-telefoonnummer', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_telefoonnummer_verplicht = filter_input(INPUT_POST, 'veld-telefoonnummer-verplicht', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_email = filter_input(INPUT_POST, 'veld-email', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_email_verplicht = filter_input(INPUT_POST, 'veld-email-verplicht', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_woonplaats = filter_input(INPUT_POST, 'veld-woonplaats', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_woonplaats_verplicht = filter_input(INPUT_POST, 'veld-woonplaats-verplicht', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_adres = filter_input(INPUT_POST, 'veld-adres', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_adres_verplicht = filter_input(INPUT_POST, 'veld-adres-verplicht', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_uitzenddatum = filter_input(INPUT_POST, 'veld-uitzenddatum', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_uitzenddatum_verplicht = filter_input(INPUT_POST, 'veld-uitzenddatum-verplicht', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_vrijekeus = filter_input(INPUT_POST, 'veld-vrijekeus', FILTER_VALIDATE_BOOL) ?? false;
+	$veld_vrijekeus_verplicht = filter_input(INPUT_POST, 'veld-vrijekeus-verplicht', FILTER_VALIDATE_BOOL) ?? false;
+	$recaptcha = filter_input(INPUT_POST, 'recaptcha', FILTER_VALIDATE_BOOL) ?? false;
 	$emails = explode(',', filter_input(INPUT_POST, 'email'));
 	$emails_geparsed = [];
 	foreach ( $emails as $email ) {
@@ -51,13 +57,6 @@ function filter_lijst_metadata(): array {
 	}
 	$is_actief ??= false;
 	$artiest_eenmalig ??= false;
-	$veld_telefoonnummer ??= false;
-	$veld_email ??= false;
-	$veld_woonplaats ??= false;
-	$veld_adres ??= false;
-	$veld_uitzenddatum ??= false;
-	$veld_vrijekeus ??= false;
-	$recaptcha ??= false;
 	if ( $minkeuzes === false ) {
 		throw new GebruikersException('Het minimaal aantal keuzes moet meer dan één zijn.');
 	}
@@ -77,12 +76,24 @@ function filter_lijst_metadata(): array {
 		'maxkeuzes' => $maxkeuzes,
 		'stemmen_per_ip' => $stemmen_per_ip,
 		'artiest_eenmalig' => $artiest_eenmalig,
-		'veld_telefoonnummer' => $veld_telefoonnummer,
-		'veld_email' => $veld_email,
-		'veld_woonplaats' => $veld_woonplaats,
-		'veld_adres' => $veld_adres,
-		'veld_uitzenddatum' => $veld_uitzenddatum,
-		'veld_vrijekeus' => $veld_vrijekeus,
+		'veld_telefoonnummer' =>
+			$veld_telefoonnummer << Lijst::VELD_ZICHTBAAR_BIT
+			| $veld_telefoonnummer_verplicht << Lijst::VELD_VERPLICHT_BIT,
+		'veld_email' =>
+			$veld_email << Lijst::VELD_ZICHTBAAR_BIT
+			| $veld_email_verplicht << Lijst::VELD_VERPLICHT_BIT,
+		'veld_woonplaats' =>
+			$veld_woonplaats << Lijst::VELD_ZICHTBAAR_BIT
+			| $veld_woonplaats_verplicht << Lijst::VELD_VERPLICHT_BIT,
+		'veld_adres' =>
+			$veld_adres << Lijst::VELD_ZICHTBAAR_BIT
+			| $veld_adres_verplicht << Lijst::VELD_VERPLICHT_BIT,
+		'veld_uitzenddatum' =>
+			$veld_uitzenddatum << Lijst::VELD_ZICHTBAAR_BIT
+			| $veld_uitzenddatum_verplicht << Lijst::VELD_VERPLICHT_BIT,
+		'veld_vrijekeus' =>
+			$veld_vrijekeus << Lijst::VELD_ZICHTBAAR_BIT
+			| $veld_vrijekeus_verplicht << Lijst::VELD_VERPLICHT_BIT,
 		'recaptcha' => $recaptcha,
 		'email' => $emails_str,
 		'bedankt_tekst' => $bedankt_tekst
@@ -228,33 +239,48 @@ function toon_geselecteerde_nummers(): string {
             $nummers[] = new Nummer($nummer_id);
         }
     }
-    $html = <<<EOT
-        <h4>Uw keuze</h4>
-        <table class="table" id="keuzes">
-            <thead>
-                <tr>
-                    <th>Titel</th>
-                    <th>Artiest</th>
-                    <th>Toelichting</th>
-                </tr>
-            </thead>
-            <tbody>
-    EOT;
-	foreach ( $nummers as $nummer ) {
-		$titel = htmlspecialchars($nummer->get_titel());
-		$artiest = htmlspecialchars($nummer->get_artiest());
-		$html .= <<<EOT
+	$template = <<<EOT
+	<h4>Uw keuze</h4>
+	<table class="table" id="keuzes">
+		<thead>
 			<tr>
-				<td>{$titel}</td>
-				<td>{$artiest}</td>
+				<th>Titel</th>
+				<th>Artiest</th>
+				<th>Toelichting</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td></td>
+				<td></td>
 				<td class="remark">
-					<input name="id_{$nummer->get_id()}" type="text" class="form-control">
+					<input type="text" class="form-control" maxlength="1024">
 				</td>
 			</tr>
-		EOT;
+		</tbody>
+	</table>
+	EOT;
+	$doc = new HTMLTemplate($template);
+	/** @var \DOMElement */
+	$e_tbody = $doc->getElementsByTagName('tbody')->item(0);
+	$e_tr_template = $e_tbody->getElementsByTagName('tr')->item(0);
+	foreach ( $nummers as $nummer ) {
+		/** @var \DOMElement */
+		$e_tr = $e_tr_template->cloneNode(true);
+		$e_tbody->appendChild($e_tr);
+		/** @var \DOMElement */
+		$e_td_titel = $e_tr->getElementsByTagName('td')->item(0);
+		/** @var \DOMElement */
+		$e_td_artiest = $e_tr->getElementsByTagName('td')->item(1);
+		/** @var \DOMElement */
+		$e_input = $e_tr->getElementsByTagName('input')->item(0);
+
+		$e_td_titel->appendChild($doc->createTextNode($nummer->get_titel()));
+		$e_td_artiest->appendChild($doc->createTextNode($nummer->get_artiest()));
+		$e_input->setAttribute('name', "id_{$nummer->get_id()}");
 	}
-	$html .= '</tbody></table>';
-	return $html;
+	$e_tr_template->parentNode->removeChild($e_tr_template);
+	return $doc->saveHTML();
 }
 
 /**

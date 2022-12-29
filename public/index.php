@@ -12,24 +12,6 @@ try {
 
 try {
 	$body_classes = [];
-	if ( $lijst->heeft_veld_telefoonnummer() ) {
-		$body_classes[] = 'veld-telefoonnummer';
-	}
-	if ( $lijst->heeft_veld_email() ) {
-		$body_classes[] = 'veld-email';
-	}
-	if ( $lijst->heeft_veld_woonplaats() || $lijst->heeft_veld_adres() ) {
-		$body_classes[] = 'veld-woonplaats';
-	}
-	if ( $lijst->heeft_veld_adres() ) {
-		$body_classes[] = 'veld-adres';
-	}
-	if ( $lijst->heeft_veld_uitzenddatum() ) {
-		$body_classes[] = 'veld-uitzenddatum';
-	}
-	if ( $lijst->heeft_veld_vrijekeus() ) {
-		$body_classes[] = 'veld-vrijekeus';
-	}
 	if ( $lijst->heeft_gebruik_recaptcha() ) {
 		$body_classes[] = 'heeft-recaptcha';
 	}
@@ -41,18 +23,29 @@ try {
 	}
 	$body_classes_str = implode(' ', $body_classes);
 
-	$extra_velden_html = '';
+	$velden_str =
+		$lijst->get_veld_naam_html()
+		.$lijst->get_veld_adres_html()
+		.$lijst->get_veld_woonplaats_html()
+		.$lijst->get_veld_telefoonnummer_html()
+		.$lijst->get_veld_email_html()
+		.$lijst->get_veld_uitzenddatum_html()
+		.$lijst->get_veld_vrijekeus_html();
 	foreach ( $lijst->get_extra_velden() as $extra_veld ) {
-		$extra_velden_html .= $extra_veld->get_formulier_html();
+		$velden_str .= $extra_veld->get_formulier_html();
 	}
 	$recaptcha_sitekey = Config::get_instelling('recaptcha', 'sitekey');
 
-	$artiest_eenmalig = $lijst->is_artiest_eenmalig()
-		? 'true'
-		: 'false';
+	$metadata = [
+		'lijst_id' => $lijst->get_id(),
+		'minkeuzes' => $lijst->get_minkeuzes(),
+		'maxkeuzes' => $lijst->get_maxkeuzes(),
+		'artiest_eenmalig' => $lijst->is_artiest_eenmalig()
+	];
+	$metadata_str = htmlspecialchars(json_encode($metadata));
 
-	$organisatie = Config::get_instelling('organisatie');
-	$privacy_url = Config::get_instelling('privacy_url');
+	$organisatie = htmlspecialchars(Config::get_instelling('organisatie'));
+	$privacy_url = htmlspecialchars(Config::get_instelling('privacy_url'));
 } catch ( \Throwable $e ) {
 	Log::err($e);
 	throw $e;
@@ -64,7 +57,7 @@ try {
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="content-type" content="text/html; charset=utf-8">
-		<title><?php echo $organisatie; ?> – <?php echo $lijst->get_naam(); ?></title>
+		<title><?php echo $organisatie; ?> – <?php echo htmlspecialchars($lijst->get_naam()); ?></title>
 		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
 		<!-- Scripts dev -->
 		<script type="text/javascript" src="js/vendors-node_modules_bootstrap_dist_js_npm_js-node_modules_bootstrap_dist_css_bootstrap_min_css.js" defer></script>
@@ -89,11 +82,11 @@ try {
 		<link rel="apple-touch-icon" href="afbeeldingen/favicon-152p.png">
 		<link rel="apple-touch-icon" href="afbeeldingen/favicon-167p.png">
 	</head>
-	<body class="<?php echo $body_classes_str; ?>" data-minkeuzes="<?php echo $lijst->get_minkeuzes(); ?>" data-maxkeuzes="<?php echo $lijst->get_maxkeuzes(); ?>" data-artiest-eenmalig="<?php echo $artiest_eenmalig; ?>">
+	<body class="<?php echo $body_classes_str; ?>" data-metadata="<?php echo $metadata_str; ?>">
 		<!-- FB share knop script -->
 		<div id="fb-root"></div>
 		<!-- Einde FB share knop script -->
-		<form id="stemformulier" name="form" method="POST" class="form-horizontal" role="form">
+		<form id="keuzeformulier" name="keuzeformulier" class="form-horizontal" role="form">
 			<input type="hidden" name="lijst" value="<?php echo $lijst->get_id(); ?>">
 			<div class="container-fluid">
 				<div class="row">
@@ -115,66 +108,14 @@ try {
 						</table>
 					</div>
 				</div>
+			</form>
+			<form id="stemmerformulier" name="stemmerformulier" method="POST" class="form-horizontal" role="form">
 				<div class="row is-actief">
 					<div class="col-sm-12" id="result"></div>
 				</div>
 				<div class="row is-actief">
 					<div class="col-sm-12" id="contactform">
-						<div class="form-group">
-							<label class="control-label col-sm-2" for="naam">Naam</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="naam" name="naam">
-							</div>
-						</div>
-						<div class="form-group veld-adres">
-							<label class="control-label col-sm-2" for="adres">Adres</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="adres" name="adres">
-							</div>
-						</div>
-						<div class="form-group">
-							<label class="control-label col-sm-2" for="postcode">Postcode</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="postcode" name="postcode">
-							</div>
-						</div>
-						<div class="form-group veld-woonplaats">
-							<label class="control-label col-sm-2" for="woonplaats">Woonplaats</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="woonplaats" name="woonplaats">
-							</div>
-						</div>
-						<div class="form-group veld-telefoonnummer">
-							<label class="control-label col-sm-2" for="telefoonnummer">Telefoonnummer</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="telefoonnummer" name="telefoonnummer">
-							</div>
-						</div>	
-						<div class="form-group veld-email">
-							<label class="control-label col-sm-2" for="veld_email">E-mailadres</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="veld_email" name="veld_email">
-							</div>
-						</div>
-						<div class="form-group veld-uitzenddatum">
-							<label class="control-label col-sm-2" for="veld_uitzenddatum">Uitzenddatum</label>
-							<div class="col-sm-10">
-								<div class="input-group date" id="datetimepicker">
-									<input type="text" name="veld_uitzenddatum" id="veld_uitzenddatum" class="form-control" placeholder="selecteer een datum">
-									<span class="input-group-addon">
-										<span class="glyphicon glyphicon-calendar"></span>
-									</span>
-								</div>
-							</div>
-						</div>
-						<div class="form-group veld-vrijekeus">
-							<label class="control-label col-sm-2" for="veld_vrijekeus">Vrije keuze</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="veld_vrijekeus" name="veld_vrijekeus" placeholder="Vul hier je eigen favoriet in">
-							</div>
-						</div>
-						<?php echo $extra_velden_html; ?>
-
+						<?php echo $velden_str; ?>
 						<div class="form-group heeft-recaptcha">
 							<label class="control-label col-sm-2" for="code"></label>
 							<div class="col-sm-10">

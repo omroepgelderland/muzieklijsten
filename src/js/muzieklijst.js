@@ -19,35 +19,49 @@ import '../../assets/afbeeldingen/fbshare_top100.jpg';
 
 class StemView {
 
+  /** @type {object} */
+  lijst_metadata;
+  /** @type {number} */
   lijst_id;
+  /** @type {number} */
   minkeuzes;
+  /** @type {number} */
   maxkeuzes;
+  /** @type {boolean} */
   artiest_eenmalig;
-  veld_woonplaats;
-  veld_adres;
-  veld_telefoonnummer;
-  veld_email;
-  veld_uitzenddatum;
+  /** @type {boolean} */
   heeft_recaptcha;
+  /** @type {Array} */
   geselecteerde_nummers;
+  /** @type {Array} */
   geselecteerde_artiesten;
+  /** @type {Element} */
+  datatable_elem;
+  /** @type {Element} */
+  datatable_body;
+  /** @type {_Api} */
   datatable;
+  /** @type {HTMLFormElement} */
+  keuzeformulier;
+  /** @type {HTMLFormElement} */
+  stemmerformulier;
 
   constructor() {
-    this.lijst_id = $('input[name="lijst"]').val();
-    this.minkeuzes = $('body').data('minkeuzes');
-    this.maxkeuzes = $('body').data('maxkeuzes');
-    this.artiest_eenmalig = $('body').data('artiest-eenmalig');
-    this.veld_woonplaats = $('body').hasClass('veld-woonplaats');
-    this.veld_adres = $('body').hasClass('veld-adres');
-    this.veld_telefoonnummer = $('body').hasClass('veld-telefoonnummer');
-    this.veld_email = $('body').hasClass('veld-email');
-    this.veld_uitzenddatum = $('body').hasClass('veld-uitzenddatum');
-    this.heeft_recaptcha = $('body').hasClass('heeft-recaptcha');
+    let body = document.getElementsByTagName('body').item(0);
+    this.lijst_metadata = JSON.parse(body.getAttribute('data-metadata'));
+    this.lijst_id = this.lijst_metadata.lijst_id;
+    this.minkeuzes = this.lijst_metadata.minkeuzes;
+    this.maxkeuzes = this.lijst_metadata.maxkeuzes;
+    this.artiest_eenmalig = this.lijst_metadata.artiest_eenmalig;
+    this.heeft_recaptcha = body.classList.contains('heeft-recaptcha');
+    this.keuzeformulier = document.getElementById('keuzeformulier');
+    this.stemmerformulier = document.getElementById('stemmerformulier');
 
     this.geselecteerde_nummers = [];
     this.geselecteerde_artiesten = [];
-    this.datatable = $('#nummers').DataTable({
+    this.datatable_elem = document.getElementById('nummers');
+    this.datatable_body = this.datatable_elem.getElementsByTagName('tbody').item(0);
+    this.datatable = $(this.datatable_elem).DataTable({
       'processing': true,
       'serverSide': true,
       'ajax': (data, callback, settings) => {
@@ -64,7 +78,7 @@ class StemView {
         'render': (data, type, full, meta) => {
           return '<input type="checkbox">';
         }
-          }],
+      }],
       'order': [1, 'asc'],
       // 'rowCallback': this.row_callback.bind(this),
       'language': {
@@ -92,69 +106,53 @@ class StemView {
     });
 
     // Handle form submission event 
-    $('#stemformulier').on('submit', this.stem.bind(this));
+    $('#stemmerformulier').on('submit', this.stem.bind(this));
 
     $('#submit').on('click', () => {
       return this.validate();
     });
 
-    if (this.veld_uitzenddatum) {
-      $('#datetimepicker').datetimepicker({
-        locale: 'nl',
-        format: 'DD-MM-YYYY'
-      });
-    }
+    $('#datetimepicker').datetimepicker({
+      locale: 'nl',
+      format: 'DD-MM-YYYY'
+    });
   }
 
   validate() {
-    if (this.minkeuzes !== undefined && this.geselecteerde_nummers.length < this.minkeuzes) {
+    if ( this.minkeuzes !== undefined && this.geselecteerde_nummers.length < this.minkeuzes ) {
       alert(`U moet mimimaal ${this.minkeuzes} nummers selecteren.`);
       return false;
     }
-    if (form.naam.value === '') {
-      alert('Vul het ontbrekende veld in a.u.b.');
-      form.naam.focus();
-      return false;
-    }
-    if (this.veld_woonplaats && form.woonplaats.value === '') {
-      alert('Vul het ontbrekende veld in a.u.b.');
-      form.woonplaats.focus();
-      return false;
-    }
-    if (this.veld_adres && form.adres.value === '') {
-      alert('Vul het ontbrekende veld in a.u.b.');
-      form.adres.focus();
-      return false;
-    }
-    if (this.veld_telefoonnummer && form.telefoonnummer.value === '') {
-      alert('Vul het ontbrekende veld in a.u.b.');
-      form.telefoonnummer.focus();
-      return false;
-    }
-    if (this.veld_email && form.veld_email.value === '') {
-      alert('Vul het ontbrekende veld in a.u.b.');
-      form.veld_email.focus();
-      return false;
-    }
-    if (this.veld_uitzenddatum && form.veld_uitzenddatum.value === '') {
-      alert('Vul het ontbrekende veld in a.u.b.');
-      form.veld_uitzenddatum.focus();
-      return false;
-    }
-    var geldig = true;
-    $('input[required]').each((index, element) => {
-      if ($(element).val() === '') {
-        var leeg_feedback = $(element).data('leeg-feedback');
-        alert(leeg_feedback);
-        return geldig = false;
-      }
-    });
-    if (!geldig) {
-      return false;
-    }
-    if (this.heeft_recaptcha && document.getElementById('g-recaptcha-response').value === '') {
+    if ( this.heeft_recaptcha && document.getElementById('g-recaptcha-response').value === '' ) {
       alert('Plaats een vinkje a.u.b.');
       return false;
+    }
+
+    for ( const veld of this.stemmerformulier.elements ) {
+      veld.value = veld.value.trim();
+    }
+    for ( const veld of this.stemmerformulier.elements ) {
+      if ( veld.required && veld.value === '' ) {
+        alert(veld.getAttribute('data-leeg-feedback'));
+        veld.focus();
+        return false;
+      }
+      if ( veld.min > 0 && veld.valueAsNumber < veld.min ) {
+        alert(`De waarde van ${veld.name} is te laag. Het minimum is ${veld.min}`);
+        return false;
+      }
+      if ( veld.max > 0 && veld.valueAsNumber > veld.max ) {
+        alert(`De waarde van ${veld.name} is te hoog. Het maximum is ${veld.max}`);
+        return false;
+      }
+      if ( veld.minLength > 0 && veld.value.length < veld.minLength ) {
+        alert(`De invoer van ${veld.name} is te kort. De minimumlengte is ${veld.minLenght}`);
+        return false;
+      }
+      if ( veld.maxLength > 0  && veld.value.length > veld.maxLength ) {
+        alert(`De invoer van ${veld.name} is te lang. De maximumlengte is ${veld.maxLength}`);
+        return false;
+      }
     }
     return true;
   }
@@ -169,7 +167,8 @@ class StemView {
   
   stem(e) {
     e.preventDefault();
-    let fd = new FormData(document.getElementById('stemformulier'));
+    let fd = new FormData(this.stemmerformulier);
+    fd.append('lijst', this.lijst_id);
     for (const nummer_id of this.geselecteerde_nummers) {
       fd.append('nummers[]', nummer_id);
     }
@@ -256,5 +255,5 @@ class StemView {
 }
 
 $(document).ready(() => {
-  let v = new StemView();
+  new StemView();
 });

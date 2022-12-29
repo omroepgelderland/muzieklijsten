@@ -178,28 +178,37 @@ class Stemmer {
 		?string $veld_vrijekeus,
 		string $ip
 	): Stemmer {
-		$id = DB::insertMulti('stemmers', [
-			'naam' => $naam,
-			'adres' => $adres,
-			'postcode' => $postcode,
-			'woonplaats' => $woonplaats,
-			'telefoonnummer' => $telefoonnummer,
-			'emailadres' => $veld_email,
-			'uitzenddatum' => $veld_uitzenddatum,
-			'vrijekeus' => $veld_vrijekeus,
-			'ip' => $ip
-		]);
-		return new self($id);
+		try {
+			$id = DB::insertMulti('stemmers', [
+				'naam' => $naam,
+				'adres' => $adres,
+				'postcode' => $postcode,
+				'woonplaats' => $woonplaats,
+				'telefoonnummer' => $telefoonnummer,
+				'emailadres' => $veld_email,
+				'uitzenddatum' => $veld_uitzenddatum,
+				'vrijekeus' => $veld_vrijekeus,
+				'ip' => $ip
+			]);
+			return new self($id);
+		} catch ( SQLException_DataTooLong ) {
+			throw new GebruikersException('De invoer van een van de tekstvelden is te lang.');
+		}
 	}
 
 	public function add_stem( Nummer $nummer, Lijst $lijst, string $toelichting ): Stem {
-		$id = DB::insertMulti('stemmen', [
-			'nummer_id' => $nummer->get_id(),
-			'lijst_id' => $lijst->get_id(),
-			'stemmer_id' => $this->get_id(),
-			'toelichting' => $toelichting
-		]);
-		return new Stem($nummer, $lijst, $this);
+		try {
+			DB::insertMulti('stemmen', [
+				'nummer_id' => $nummer->get_id(),
+				'lijst_id' => $lijst->get_id(),
+				'stemmer_id' => $this->get_id(),
+				'toelichting' => $toelichting
+			]);
+			return new Stem($nummer, $lijst, $this);
+		} catch ( SQLException_DataTooLong ) {
+			$max = DB::get_max_kolom_lengte('stemmen', 'toelichting');
+			throw new GebruikersException("De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens.");
+		}
 	}
 	
 	/**

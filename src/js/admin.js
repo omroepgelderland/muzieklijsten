@@ -77,6 +77,8 @@ class Main {
 
     // Lijst verwijderen
     $('#beheer').on('click', '#verwijder-lijst', this.verwijder_lijst.bind(this));
+
+    $('#beheer').on('change', 'form#beheer-lijst input[type="checkbox"]', this.check_verplicht.bind(this));
   }
 
   checkbox_handler(e) {
@@ -209,6 +211,25 @@ class Main {
     }, (msg) => {
       alert(msg);
     });
+  }
+
+  /**
+   * Handler voor wanneer er een vinkje verandert in de invoervelden.
+   * Wanneer een vinkje wordt uitgezet wordt het bijbehorende 'verplicht'-vinkje
+   * uitgezet en disabled.
+   * @param {Event} e 
+   */
+  check_verplicht(e) {
+    let verplicht_id = e.target.getAttribute('data-input-verplicht');
+    let verplicht_elem = document.getElementById(verplicht_id);
+    if ( verplicht_elem instanceof HTMLInputElement ) {
+      if ( e.target.checked ) {
+        verplicht_elem.disabled = false;
+      } else {
+        verplicht_elem.disabled = true;
+        verplicht_elem.checked = false;
+      }
+    }
   }
 }
 

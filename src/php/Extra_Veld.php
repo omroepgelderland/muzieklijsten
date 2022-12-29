@@ -121,29 +121,39 @@ class Extra_Veld {
 	}
 	
 	/**
-	 * Geeft een stukje HTML voor het invoerveld binnen een formulier
+	 * Geeft een stukje HTML voor het invoerveld binnen een formulier.
 	 * @return string
 	 */
 	public function get_formulier_html(): string {
 		$id = $this->get_html_id();
-		$label = htmlspecialchars($this->get_label());
-		$type = htmlspecialchars($this->get_type());
-		$placeholder = htmlspecialchars($this->get_placeholder());
-		
-		if ( $this->is_verplicht() ) {
-			$required_str = ' required';
-		} else {
-			$required_str = '';
-		}
-		
-		return <<<EOT
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="{$id}">{$label}</label>
-				<div class="col-sm-10">
-					<input type="{$type}" class="form-control" id="{$id}" name="{$id}" placeholder="{$placeholder}" data-leeg-feedback="{$this->get_leeg_feedback()}"{$required_str}>
-				</div>
+
+		$template = <<<EOT
+		<div class="form-group">
+			<label class="control-label col-sm-2"></label>
+			<div class="col-sm-10">
+				<input class="form-control">
 			</div>
+		</div>
 		EOT;
+		$doc = new HTMLTemplate($template);
+		/** @var \DOMElement */
+		$e_label = $doc->getElementsByTagName('label')->item(0);
+		/** @var \DOMElement */
+		$e_input = $doc->getElementsByTagName('input')->item(0);
+		$e_label->appendChild($doc->createTextNode($this->get_label()));
+		$e_label->setAttribute('for', $id);
+		$e_input->setAttribute('type', $this->get_type());
+		$e_input->setAttribute('id', $id);
+		$e_input->setAttribute('name', $id);
+		$e_input->setAttribute('placeholder', $this->get_placeholder());
+		$e_input->setAttribute('data-leeg-feedback', $this->get_leeg_feedback());
+		if ( in_array($this->get_type(), ['text', 'search', 'url', 'tel', 'email', 'password']) ) {
+			$e_input->setAttribute('maxlength', 1024);
+		}
+		if ( $this->is_verplicht() ) {
+			$e_input->appendChild($doc->createAttribute('required'));
+		}
+		return $doc->saveHTML();
 	}
 	
 	/**

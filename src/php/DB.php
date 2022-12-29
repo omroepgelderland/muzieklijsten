@@ -108,16 +108,19 @@ class DB {
 	 * @throws SQLException Als de query mislukt.
 	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
 	 */
-	public static function query( string $sql ) {
-		$sql = (string)$sql;
-		$db = self::getDB();
-		
-		$res = $db->query($sql);
-		if ( $res === false ) {
-			self::throwQueryException($sql);
+	public static function query( string $sql ): ?\mysqli_result {
+		try {
+			$res = self::getDB()->query($sql);
+			if ( $res === false ) {
+				self::throwQueryException($sql);
+			}
+		} catch ( \mysqli_sql_exception $e ) {
+			self::throwQueryException($sql, $e);
 		}
 		if ( $res instanceof mysqli_result ) {
 			return $res;
+		} else {
+			return null;
 		}
 	}
 	
@@ -130,13 +133,7 @@ class DB {
 	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
 	 */
 	public static function selectSingle( string $sql ) {
-		$sql = (string)$sql;
-		$db = self::getDB();
-		
-		$res = $db->query($sql);
-		if ( $res === false ) {
-			self::throwQueryException($sql);
-		}
+		$res = self::query($sql);
 		if ( $res->num_rows === 0 ) {
 			throw new SQLException(sprintf(
 				'Geen resultaat bij query: "%s"',
@@ -155,13 +152,7 @@ class DB {
 	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
 	 */
 	public static function selectSingleRow( string $sql ): array {
-		$sql = $sql;
-		$db = self::getDB();
-		
-		$res = $db->query($sql);
-		if ( $res === false ) {
-			self::throwQueryException($sql);
-		}
+		$res = self::query($sql);
 		if ( $res->num_rows === 0 ) {
 			throw new SQLException(sprintf(
 				'Geen resultaat bij query: "%s"',
@@ -183,13 +174,7 @@ class DB {
 	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
 	 */
 	public static function selectSingleColumn( string $sql ): array {
-		$sql = (string)$sql;
-		$db = self::getDB();
-		
-		$res = $db->query($sql);
-		if ( $res === false ) {
-			self::throwQueryException($sql);
-		}
+		$res = self::query($sql);
 		$type = $res->fetch_field()->type;
 		$ret = [];
 		while ( ( $r = $res->fetch_row() ) !== null ) {
@@ -225,13 +210,7 @@ class DB {
 	 * @throws SQLException bij databasefouten
 	 */
 	public static function recordBestaat( string $sql, int $min = 1, int $max = 1 ): bool {
-		$sql = (string)$sql;
-		$db = self::getDB();
-		
-		$res = $db->query($sql);
-		if ( $res === false ) {
-			self::throwQueryException($sql);
-		}
+		$res = self::query($sql);
 		return ( $res->num_rows >= $min && $res->num_rows <= $max );
 	}
 	
@@ -270,10 +249,7 @@ class DB {
 		$columnstr = implode(',', $columns);
 		$valuestr = implode(',', $values);
 		$sql = "INSERT INTO `{$table}` ({$columnstr}) VALUES ({$valuestr})";
-		$res = $db->query($sql);
-		if ( $res === false ) {
-			self::throwQueryException($sql);
-		}
+		self::query($sql);
 		if ( $db->affected_rows == 0 ) {
 			throw new SQLException(sprintf(
 				'Toevoegen van rij mislukt. Query: "%s"',
@@ -293,9 +269,6 @@ class DB {
 	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
 	 */
 	public static function updateMulti( string $table, array $data, string $conditions ): int {
-		$table = (string)$table;
-		$data = (array)$data;
-		$conditions = (string)$conditions;
 		$db = self::getDB();
 		
 		$datastr = '';
@@ -333,10 +306,7 @@ class DB {
 				$conditions
 			);
 		}
-		$res = $db->query($sql);
-		if ( $res === false ) {
-			self::throwQueryException($sql);
-		}
+		DB::query($sql);
 		return $db->affected_rows;
 	}
 	
@@ -451,31 +421,40 @@ class DB {
 	}
 	
 	/**
-	 * Genereert een foutmelding aan de hand van de foutinformatie uit MySQLi
-	 * @param string $sql	De query die de fout veroorzaakte
+	 * Genereert een foutmelding aan de hand van de foutinformatie uit MySQLi.
+	 * @param string $sql De query die de fout veroorzaakte.
+	 * @param \mysqli_sql_exception|null $e Door PHP gegooide error (optioneel).
 	 * @throws SQLException
 	 */
-	private static function throwQueryException( string $sql ): void {
+	private static function throwQueryException( string $sql, ?\mysqli_sql_exception $e = null ): never {
 		self::throwException(sprintf(
 			'Query: "%s"',
 			$sql
-		));
+		), $e);
 	}
 	
 	/**
-	 * Genereert een foutmelding aan de hand van de foutinformatie uit MySQLi
-	 * @param string $msg	Foutinformatie
+	 * Genereert een foutmelding aan de hand van de foutinformatie uit MySQLi.
+	 * @param string $msg Foutinformatie
+	 * @param \mysqli_sql_exception|null $e Door PHP gegooide error (optioneel).
 	 * @throws SQLException
 	 */
-	private static function throwException( string $msg ): void {
+	private static function throwException( string $msg, ?\mysqli_sql_exception $e = null ): never {
 		$db = self::getDB();
+		if ( isset($e) ) {
+			$error = $e->getMessage();
+			$errno = $e->getCode();
+		} else {
+			$error = $db->error;
+			$errno = $db->errno;
+		}
 		$e_msg = sprintf(
 			'%s. Error: "%s". Errornummer: %d.',
 			$msg,
-			$db->error,
-			$db->errno
+			$error,
+			$errno
 		);
-		switch ( $db->errno ) {
+		switch ( $errno ) {
 			case 1062:
 				throw new SQLException_DupEntry($e_msg, $db->errno);
 			case 1406:
@@ -483,6 +462,16 @@ class DB {
 			default:
 				throw new SQLException($e_msg, $db->errno);
 		}
+	}
+	
+	/**
+	 * Geeft de maximale mogelijke lengte van de invoer in een kolom.
+	 * @param string $tabel Tabel.
+	 * @param string $kolom Kolom.
+	 * @return int
+	 */
+	public static function get_max_kolom_lengte( string $tabel, string $kolom ): int {
+		return self::selectSingle("SELECT max(length(`{$kolom}`)) `max_column_length` from `{$tabel}`");
 	}
 	
 }

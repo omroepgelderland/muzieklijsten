@@ -18,11 +18,17 @@ try {
 		$stemmen_per_ip = $lijst->get_max_stemmen_per_ip();
 		$artiest_eenmalig = $lijst->is_artiest_eenmalig();
 		$veld_telefoonnummer = $lijst->heeft_veld_telefoonnummer();
+		$veld_telefoonnummer_verplicht = $lijst->is_veld_telefoonnummer_verplicht();
 		$veld_email = $lijst->heeft_veld_email();
+		$veld_email_verplicht = $lijst->is_veld_email_verplicht();
 		$veld_woonplaats = $lijst->heeft_veld_woonplaats();
+		$veld_woonplaats_verplicht = $lijst->is_veld_woonplaats_verplicht();
 		$veld_adres = $lijst->heeft_veld_adres();
+		$veld_adres_verplicht = $lijst->is_veld_adres_verplicht();
 		$veld_uitzenddatum = $lijst->heeft_veld_uitzenddatum();
+		$veld_uitzenddatum_verplicht = $lijst->is_veld_uitzenddatum_verplicht();
 		$veld_vrijekeus = $lijst->heeft_veld_vrijekeus();
+		$veld_vrijekeus_verplicht = $lijst->is_veld_vrijekeus_verplicht();
 		$recaptcha = $lijst->heeft_gebruik_recaptcha();
 		$email = htmlspecialchars(implode(',', $lijst->get_notificatie_email_adressen()));
 		$bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
@@ -35,11 +41,17 @@ try {
 		$stemmen_per_ip = null;
 		$artiest_eenmalig = false;
 		$veld_telefoonnummer = false;
+		$veld_telefoonnummer_verplicht = false;
 		$veld_email = false;
+		$veld_email_verplicht = false;
 		$veld_woonplaats = true;
+		$veld_woonplaats_verplicht = true;
 		$veld_adres = false;
+		$veld_adres_verplicht = false;
 		$veld_uitzenddatum = false;
+		$veld_uitzenddatum_verplicht = false;
 		$veld_vrijekeus = false;
+		$veld_vrijekeus_verplicht = false;
 		$recaptcha = true;
 		$email = '';
 		$bedankt_tekst = 'Bedankt voor je keuze';
@@ -57,21 +69,57 @@ try {
 	$veld_telefoonnummer_checked = $veld_telefoonnummer
 		? ' checked'
 		: '';
+	$veld_telefoonnummer_verplicht_checked = $veld_telefoonnummer_verplicht
+		? ' checked'
+		: '';
+	$veld_telefoonnummer_verplicht_disabled = $veld_telefoonnummer
+		? ''
+		: ' disabled';
 	$veld_email_checked = $veld_email
 		? ' checked'
 		: '';
+	$veld_email_verplicht_checked = $veld_email_verplicht
+		? ' checked'
+		: '';
+	$veld_email_verplicht_disabled = $veld_email
+		? ''
+		: ' disabled';
 	$veld_woonplaats_checked = $veld_woonplaats
 		? ' checked'
 		: '';
+	$veld_woonplaats_verplicht_checked = $veld_woonplaats_verplicht
+		? ' checked'
+		: '';
+	$veld_woonplaats_verplicht_disabled = $veld_woonplaats
+		? ''
+		: ' disabled';
 	$veld_adres_checked = $veld_adres
 		? ' checked'
 		: '';
+	$veld_adres_verplicht_checked = $veld_adres_verplicht
+		? ' checked'
+		: '';
+	$veld_adres_verplicht_disabled = $veld_adres
+		? ''
+		: ' disabled';
 	$veld_uitzenddatum_checked = $veld_uitzenddatum
 		? ' checked'
 		: '';
+	$veld_uitzenddatum_verplicht_checked = $veld_uitzenddatum_verplicht
+		? ' checked'
+		: '';
+	$veld_uitzenddatum_verplicht_disabled = $veld_uitzenddatum
+		? ''
+		: ' disabled';
 	$veld_vrijekeus_checked = $veld_vrijekeus
 		? ' checked'
 		: '';
+	$veld_vrijekeus_verplicht_checked = $veld_vrijekeus_verplicht
+		? ' checked'
+		: '';
+	$veld_vrijekeus_verplicht_disabled = $veld_vrijekeus
+		? ''
+		: ' disabled';
 	$recaptcha_checked = $recaptcha
 		? ' checked'
 		: '';
@@ -108,14 +156,22 @@ try {
 		<div class="separator"></div>
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="velden">Velden tonen:</label>
-			<div class="col-sm-10">
-				<input type="checkbox" id="veld-telefoonnummer" name="veld-telefoonnummer"<?php echo $veld_telefoonnummer_checked; ?>> Telefoonnummer <br>
-				<input type="checkbox" id="veld-email" name="veld-email"<?php echo $veld_email_checked; ?>> E-mailadres <br>
-				<input type="checkbox" id="veld-woonplaats" name="veld-woonplaats"<?php echo $veld_woonplaats_checked; ?>> Woonplaats <br>
-				<input type="checkbox" id="veld-adres" name="veld-adres"<?php echo $veld_adres_checked; ?>> Adres <br>
-				<input type="checkbox" id="veld-uitzenddatum" name="veld-uitzenddatum"<?php echo $veld_uitzenddatum_checked; ?>> Uitzenddatum <br>
-				<input type="checkbox" id="veld-vrijekeus" name="veld-vrijekeus"<?php echo $veld_vrijekeus_checked; ?>> Vrije keuze <br>
-				<input type="checkbox" id="recaptcha" name="recaptcha"<?php echo $recaptcha_checked; ?>> Re-Captcha <br>
+			<div class="col-sm-2">
+				<input type="checkbox" id="veld-telefoonnummer" name="veld-telefoonnummer" data-input-verplicht="veld-telefoonnummer-verplicht"<?php echo $veld_telefoonnummer_checked; ?>> Telefoonnummer<br>
+				<input type="checkbox" id="veld-email" name="veld-email" data-input-verplicht="veld-email-verplicht"<?php echo $veld_email_checked; ?>> E-mailadres<br>
+				<input type="checkbox" id="veld-woonplaats" name="veld-woonplaats" data-input-verplicht="veld-woonplaats-verplicht"<?php echo $veld_woonplaats_checked; ?>> Woonplaats<br>
+				<input type="checkbox" id="veld-adres" name="veld-adres" data-input-verplicht="veld-adres-verplicht"<?php echo $veld_adres_checked; ?>> Adres<br>
+				<input type="checkbox" id="veld-uitzenddatum" name="veld-uitzenddatum" data-input-verplicht="veld-uitzenddatum-verplicht"<?php echo $veld_uitzenddatum_checked; ?>> Uitzenddatum<br>
+				<input type="checkbox" id="veld-vrijekeus" name="veld-vrijekeus" data-input-verplicht="veld-vrijekeus-verplicht"<?php echo $veld_vrijekeus_checked; ?>> Vrije keuze<br>
+				<input type="checkbox" id="recaptcha" name="recaptcha"<?php echo $recaptcha_checked; ?>> Re-Captcha<br>
+			</div>
+			<div class="col-sm-8">
+				<input type="checkbox" id="veld-telefoonnummer-verplicht" name="veld-telefoonnummer-verplicht"<?php echo $veld_telefoonnummer_verplicht_checked; echo $veld_telefoonnummer_verplicht_disabled; ?>> Verplicht<br>
+				<input type="checkbox" id="veld-email-verplicht" name="veld-email-verplicht"<?php echo $veld_email_verplicht_checked; echo $veld_email_verplicht_disabled; ?>> Verplicht<br>
+				<input type="checkbox" id="veld-woonplaats-verplicht" name="veld-woonplaats-verplicht"<?php echo $veld_woonplaats_verplicht_checked; echo $veld_woonplaats_verplicht_disabled; ?>> Verplicht<br>
+				<input type="checkbox" id="veld-adres-verplicht" name="veld-adres-verplicht"<?php echo $veld_adres_verplicht_checked; echo $veld_adres_verplicht_disabled; ?>> Verplicht<br>
+				<input type="checkbox" id="veld-uitzenddatum-verplicht" name="veld-uitzenddatum-verplicht"<?php echo $veld_uitzenddatum_verplicht_checked; echo $veld_uitzenddatum_verplicht_disabled; ?>> Verplicht<br>
+				<input type="checkbox" id="veld-vrijekeus-verplicht" name="veld-vrijekeus-verplicht"<?php echo $veld_vrijekeus_verplicht_checked; echo $veld_vrijekeus_verplicht_disabled; ?>> Verplicht<br>
 			</div>
 		</div>
 		<div class="separator"></div>

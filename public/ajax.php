@@ -308,11 +308,11 @@ function stem(): string {
 	if ( $lijst->get_id() == 31 || $lijst->get_id() == 201 ) {
 		if ( is_dev() ) {
 			$fbshare_url = sprintf(
-				'http://192.168.1.107/%s/muzieklijsten/fbshare.php?stemmer=%d',
+				'https://webdev.gld.nl/%s/muzieklijsten/fbshare.php?stemmer=%d',
 				get_developer(),
 				$stemmer->get_id()
 			);
-			$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F192.168.1.107%2F'.get_developer().'%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$stemmer->get_id().'&amp;src=sdkpreparse';
+			$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebdev.gld.nl%2F'.get_developer().'%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$stemmer->get_id().'&amp;src=sdkpreparse';
 		} else {
 			$fbshare_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$stemmer->get_id();
 			$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$stemmer->get_id().'&amp;src=sdkpreparse';

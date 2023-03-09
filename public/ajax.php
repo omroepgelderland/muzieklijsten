@@ -302,10 +302,15 @@ function stem(): string {
 	if ( $lijst->is_max_stemmen_per_ip_bereikt($lijst) ) {
 		return 'Het maximum aantal stemmen voor dit IP-adres is bereikt.';
 	}
-	$stemmer = verwerk_stem($lijst, $nummers);
+	try {
+		$stemmer = verwerk_stem($lijst, $nummers);
+		$is_blacklist = false;
+	} catch ( BlacklistException ) {
+		$is_blacklist = true;
+	}
 	$bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
 	$html = "<h4>{$bedankt_tekst}</h4>";
-	if ( $lijst->get_id() == 31 || $lijst->get_id() == 201 ) {
+	if ( !$is_blacklist && ( $lijst->get_id() == 31 || $lijst->get_id() == 201 ) ) {
 		if ( is_dev() ) {
 			$fbshare_url = sprintf(
 				'https://webdev.gld.nl/%s/muzieklijsten/fbshare.php?stemmer=%d',
@@ -327,6 +332,7 @@ function stem(): string {
 }
 
 function verwerk_stem( Lijst $lijst, array $nummers ): Stemmer {
+	check_ip_blacklist($_SERVER['REMOTE_ADDR']);
 	$invoer = (object)filter_input_array(INPUT_POST, [
 		'naam' => FILTER_DEFAULT,
 		'woonplaats' => FILTER_DEFAULT,

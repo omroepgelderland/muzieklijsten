@@ -353,3 +353,14 @@ function path_join( ...$paths ): string {
 function get_hoofdscript_pad(): string {
 	return get_included_files()[0];
 }
+
+/**
+ * Geeft een error als het IP van de gebruiker op de blacklist staat.
+ * @param string $ip
+ * @throws BlacklistException
+ */
+function check_ip_blacklist( string $ip ): void {
+	if ( DB::recordBestaat("SELECT ip FROM blacklist WHERE ip = \"{$ip}\"") ) {
+		throw new BlacklistException();
+	}
+}

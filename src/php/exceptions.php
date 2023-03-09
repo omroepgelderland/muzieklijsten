@@ -59,3 +59,8 @@ class ConfigException extends Muzieklijsten_Exception {}
 class GebruikersException extends Muzieklijsten_Exception {}
 
 class OngeldigeInvoer extends GebruikersException {}
+
+/**
+ * Stemmer staat op de blacklist
+ */
+class BlacklistException extends Muzieklijsten_Exception {}

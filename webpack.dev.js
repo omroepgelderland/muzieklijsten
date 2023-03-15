@@ -15,7 +15,7 @@ module.exports = merge(common, {
 						'presets': [
 							['@babel/preset-env', {
 								'targets': {
-									'chrome': '104'
+									'chrome': '110'
 								}
 							}]
 						]
@@ -38,10 +38,5 @@ module.exports = merge(common, {
 				],
 			}
 		]
-	},
-	'optimization': {
-		'splitChunks': {
-			'chunks': 'all'
-		}
 	}
 });

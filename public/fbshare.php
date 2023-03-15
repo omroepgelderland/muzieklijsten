@@ -63,15 +63,12 @@ try {
 		<meta property="og:title" content="Dit is mijn keuze voor de Gelderse Top 100 <?php echo $jaar; ?>">
 		<meta property="og:description" content="<?php echo $nummers_meta_str; ?>">
 		<title>Mijn keuzes</title>
-		<!-- Scripts dev -->
-		<script type="text/javascript" src="js/vendors-node_modules_bootstrap_dist_js_npm_js-node_modules_bootstrap_dist_css_bootstrap_min_css.js" defer></script>
-		<!-- Scripts prod -->
-		<script type="text/javascript" src="js/runtime.js" defer></script>
-		<script type="text/javascript" src="js/806.js" defer></script>
 		<!-- Scripts prod en dev -->
-		<script type="text/javascript" src="js/fbshare.js" defer></script>
+		<script src="js/runtime.js" defer></script>
+		<script src="js/admin-fbshare-los_toevoegen-muzieklijst-resultaten.js" defer></script>
+		<script src="js/fbshare.js" defer></script>
 		<!-- Styles prod -->
-		<link rel="stylesheet" href="css/806.css">
+		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst-resultaten.css">
 		<link rel="stylesheet" href="css/fbshare.css">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-192p.png" sizes="192x192">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-16p.png" sizes="16x16">

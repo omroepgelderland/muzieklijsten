@@ -77,18 +77,13 @@ try {
 		<meta charset="utf-8">
 		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title>Muzieklijsten beheer</title>
-		<!-- Scripts dev -->
-		<script type="text/javascript" src="js/vendors-node_modules_bootstrap_dist_js_npm_js-node_modules_bootstrap_dist_css_bootstrap_min_css.js" defer></script>
-		<script type="text/javascript" src="js/vendors-node_modules_datatables_net-dt_js_dataTables_dataTables_js.js" defer></script>
-		<script type="text/javascript" src="js/vendors-node_modules_datatables_net-dt_css_jquery_dataTables_min_css.js" defer></script>
-		<!-- Scripts prod -->
-		<script type="text/javascript" src="js/runtime.js" defer></script>
-		<script type="text/javascript" src="js/806.js" defer></script>
-		<script type="text/javascript" src="js/290.js" defer></script>
 		<!-- Scripts prod en dev -->
-		<script type="text/javascript" src="js/admin.js" defer></script>
+		<script src="js/runtime.js" defer></script>
+		<script src="js/admin-fbshare-los_toevoegen-muzieklijst-resultaten.js" defer></script>
+		<script src="js/admin-muzieklijst-resultaten.js" defer></script>
+		<script src="js/admin.js" defer></script>
 		<!-- Styles prod -->
-		<link rel="stylesheet" href="css/806.css">
+		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst-resultaten.css">
 		<link rel="stylesheet" href="css/admin.css">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-192p.png" sizes="192x192">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-16p.png" sizes="16x16">

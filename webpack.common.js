@@ -38,5 +38,14 @@ module.exports = {
 			'jQuery': 'jquery',
 			'moment': 'moment'
 		})
-	]
+	],
+	'optimization': {
+		'runtimeChunk': 'single',
+		'splitChunks': {
+			'chunks': 'all',
+			'name': (module, chunks, cacheGroupKey) => {
+				return chunks.map((chunk) => chunk.name).join('-');
+			}
+		}
+	}
 };

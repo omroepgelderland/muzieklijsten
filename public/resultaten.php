@@ -249,20 +249,14 @@ try {
 		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title><?php echo $naam; ?> – Resultaten</title>	
 		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
-		<!-- Scripts dev -->
-		<script type="text/javascript" src="js/vendors-node_modules_bootstrap_dist_js_npm_js-node_modules_bootstrap_dist_css_bootstrap_min_css.js" defer></script>
-		<script type="text/javascript" src="js/vendors-node_modules_datatables_net-dt_js_dataTables_dataTables_js.js" defer></script>
-		<script type="text/javascript" src="js/vendors-node_modules_eonasdan-bootstrap-datetimepicker_src_js_bootstrap-datetimepicker_js-nod-84fd46.js" defer></script>
-		<script type="text/javascript" src="js/vendors-node_modules_eonasdan-bootstrap-datetimepicker_build_css_bootstrap-datetimepicker_min-051fae.js" defer></script>
-		<!-- Scripts prod -->
-		<script type="text/javascript" src="js/runtime.js" defer></script>
-		<script type="text/javascript" src="js/806.js" defer></script>
-		<script type="text/javascript" src="js/290.js" defer></script>
-		<script type="text/javascript" src="js/498.js" defer></script>
 		<!-- Scripts prod en dev -->
-		<script type="text/javascript" src="js/resultaten.js" defer></script>
+		<script src="js/runtime.js" defer></script>
+		<script src="js/admin-fbshare-los_toevoegen-muzieklijst-resultaten.js" defer></script>
+		<script src="js/admin-muzieklijst-resultaten.js" defer></script>
+		<script src="js/muzieklijst-resultaten.js" defer></script>
+		<script src="js/resultaten.js" defer></script>
 		<!-- Styles prod -->
-		<link rel="stylesheet" href="css/806.css">
+		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst-resultaten.css">
 		<link rel="stylesheet" href="css/resultaten.css">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-192p.png" sizes="192x192">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-16p.png" sizes="16x16">

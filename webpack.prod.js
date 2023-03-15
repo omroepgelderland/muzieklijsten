@@ -49,10 +49,6 @@ module.exports = merge(common, {
 		})
 	],
 	'optimization': {
-		'runtimeChunk': 'single',
-		'splitChunks': {
-			'chunks': 'all'
-		},
 		'minimize': true,
 		'minimizer': [
 			new TerserPlugin({

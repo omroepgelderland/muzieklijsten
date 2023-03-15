@@ -32,6 +32,8 @@
     "datatables.net-dt": "^1.10.25",
     "eonasdan-bootstrap-datetimepicker": "^4.15.35",
     "font-awesome": "^4.7.0",
+    "html-loader": "^4.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "jquery": "^1.12.4",
     "mini-css-extract-plugin": "^2.6.1",
     "sass": "^1.54.3",

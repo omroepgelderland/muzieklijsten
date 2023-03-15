@@ -40,6 +40,11 @@ if [[ $npm_onveranderd != 0 ]]; then
 	md5sum package-lock.json >package-lock.json.md5
 fi
 if [[ $env == "dev" ]]; then
-	rm -rf public/afbeeldingen/ public/css/ public/fonts/ public/js/
+	rm -rf \
+		public/afbeeldingen/ \
+		public/css/ \
+		public/fonts/ \
+		public/js/ \
+		public/los_toevoegen.html
 fi
 npx webpack --config webpack.$env.js || exit 1

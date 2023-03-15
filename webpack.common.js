@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 var webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
 	'entry': {
@@ -16,6 +17,12 @@ module.exports = {
 	},
 	'module': {
 		'rules': [
+			{
+				'test': /\.html$/,
+				'use': {
+					'loader': 'html-loader'
+				}
+			},
 			{
 				'test': /\.(jpe?g|png|gif|webp|svg)$/,
 				'type': 'asset/resource',
@@ -37,6 +44,11 @@ module.exports = {
 			'$': 'jquery',
 			'jQuery': 'jquery',
 			'moment': 'moment'
+		}),
+		new HtmlWebpackPlugin({
+			'filename': 'los_toevoegen.html',
+			'chunks': ['los_toevoegen'],
+			'template': path.resolve(__dirname, 'src', 'html', 'los_toevoegen.html')
 		})
 	],
 	'optimization': {

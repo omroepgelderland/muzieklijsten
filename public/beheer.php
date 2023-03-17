@@ -178,8 +178,8 @@ try {
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="velden">Opties:</label>
 			<div class="col-sm-10">
-				Minimaal aantal keuzes <input type="number" class="form-control" id="minkeuzes" name="minkeuzes" min="1" value="<?php echo $minkeuzes; ?>"><br>
-				Maximaal aantal keuzes <input type="number" class="form-control" id="maxkeuzes" name="maxkeuzes" min="1" value="<?php echo $maxkeuzes; ?>"><br>
+				Minimum aantal keuzes <input type="number" class="form-control" id="minkeuzes" name="minkeuzes" min="1" value="<?php echo $minkeuzes; ?>"><br>
+				Maximum aantal keuzes <input type="number" class="form-control" id="maxkeuzes" name="maxkeuzes" min="1" value="<?php echo $maxkeuzes; ?>"><br>
 				Aantal stemmen per IP (leeglaten voor onbeperkt) <input type="number" class="form-control" id="stemmen-per-ip" name="stemmen-per-ip" min="1" value="<?php echo $stemmen_per_ip; ?>"><br>
 				<input type="checkbox" id="is-actief" name="is-actief"<?php echo $is_actief_checked; ?>> Lijst is actief (stemmen staat aan)<br>
 				<input type="checkbox" id="artiest-eenmalig" name="artiest-eenmalig"<?php $artiest_eenmalig_checked; ?>> Artiesten eenmalig te selecteren <br>

@@ -45,6 +45,7 @@ if [[ $env == "dev" ]]; then
 		public/css/ \
 		public/fonts/ \
 		public/js/ \
+		public/index.html \
 		public/los_toevoegen.html
 fi
 npx webpack --config webpack.$env.js || exit 1

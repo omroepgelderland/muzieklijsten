@@ -1,3 +1,14 @@
+body:not(.geladen),
+body:not(.gestemd) .gestemd,
+body.gestemd .not-gestemd,
+body:not(.max-ip-bereikt) .max-ip-bereikt,
+body.max-ip-bereikt .not-max-ip-bereikt,
+body:not(.error) .error,
+body.error .not-error,
+body:not(.heeft-nummers-geselecteerd) .heeft-nummers-geselecteerd {
+    display: none;
+}
+
 table.dataTable.select tbody tr,
 table.dataTable thead th:first-child {
     cursor: pointer;
@@ -22,5 +33,5 @@ table.dataTable thead th:first-child {
 }
 
 .privacyinfo {
-    margin: 20px;
+    margin-bottom: 20px;
 }

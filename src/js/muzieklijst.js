@@ -1,7 +1,6 @@
 // Libraries js
 import 'bootstrap';
 import 'datatables.net-dt';
-import 'eonasdan-bootstrap-datetimepicker';
 
 // Project js
 import './favicons.js';
@@ -15,12 +14,66 @@ import '../scss/algemeen.scss';
 import '../scss/muzieklijst.scss';
 
 // Afbeeldingen
-import '../../assets/afbeeldingen/fbshare_top100.jpg';
+// import '../../assets/afbeeldingen/fbshare_top100.jpg';
+
+/**
+ * Een door de bezoeker geselecteerd nummer.
+ * Maakt een regel in de DOM bij de geselecteerde nummers en inputs in het formulier zodat de nummer-ids bij het stemmen
+ * in de formuliervelden staan.
+ */
+class Nummer {
+
+  /** @type {HTMLTableRowElement} */
+  e_tr;
+
+  /**
+   * 
+   * @param {number} nummer_id 
+   * @param {string} titel 
+   * @param {string} artiest 
+   */
+  constructor(nummer_id, titel, artiest) {
+    this.e_tr = document.createElement('tr');
+
+    let e_td_titel = document.createElement('td');
+    e_td_titel.appendChild(document.createTextNode(titel));
+    this.e_tr.appendChild(e_td_titel);
+
+    let e_td_artiest = document.createElement('td');
+    e_td_artiest.appendChild(document.createTextNode(artiest));
+    this.e_tr.appendChild(e_td_artiest);
+
+    let e_td_toelichting = document.createElement('td');
+    e_td_toelichting.classList.add('remark');
+    this.e_tr.appendChild(e_td_toelichting);
+
+    let e_toelichting = document.createElement('input');
+    e_toelichting.type = 'text';
+    e_toelichting.classList.add('form-control');
+    e_toelichting.maxLength = 1024;
+    e_toelichting.name = `nummers[${nummer_id}][toelichting]`;
+    e_td_toelichting.appendChild(e_toelichting);
+
+    let e_hidden = document.createElement('input');
+    e_hidden.type = 'hidden';
+    e_hidden.name = `nummers[${nummer_id}][id]`;
+    e_hidden.value = nummer_id;
+    this.e_tr.appendChild(e_hidden);
+
+    document.querySelector('#keuzes tbody').appendChild(this.e_tr);
+  }
+
+  /**
+   * Verwijdert het nummer uit de DOM.
+   */
+  destroy() {
+    this.e_tr.parentNode.removeChild(this.e_tr);
+  }
+
+}
 
 class StemView {
 
-  /** @type {object} */
-  lijst_metadata;
   /** @type {number} */
   lijst_id;
   /** @type {number} */
@@ -28,40 +81,47 @@ class StemView {
   /** @type {number} */
   maxkeuzes;
   /** @type {boolean} */
-  artiest_eenmalig;
+  is_artiest_eenmalig;
   /** @type {boolean} */
   heeft_recaptcha;
   /** @type {Array} */
   geselecteerde_nummers;
   /** @type {Array} */
   geselecteerde_artiesten;
-  /** @type {Element} */
-  datatable_elem;
-  /** @type {Element} */
-  datatable_body;
+  /** @type {HTMLTableElement} */
+  e_datatable;
+  /** @type {HTMLTableSectionElement} */
+  e_datatable_body;
   /** @type {_Api} */
   datatable;
+  /** @type {HTMLBodyElement} */
+  e_body;
   /** @type {HTMLFormElement} */
-  keuzeformulier;
+  e_keuzeformulier;
   /** @type {HTMLFormElement} */
-  stemmerformulier;
-
+  e_stemmerformulier;
+  /** @type {Promise} */
+  serverdata_promise;
+  /** @type {HTMLDivElement} */
+  e_errormsg;
+  
   constructor() {
-    let body = document.getElementsByTagName('body').item(0);
-    this.lijst_metadata = JSON.parse(body.getAttribute('data-metadata'));
-    this.lijst_id = this.lijst_metadata.lijst_id;
-    this.minkeuzes = this.lijst_metadata.minkeuzes;
-    this.maxkeuzes = this.lijst_metadata.maxkeuzes;
-    this.artiest_eenmalig = this.lijst_metadata.artiest_eenmalig;
-    this.heeft_recaptcha = body.classList.contains('heeft-recaptcha');
-    this.keuzeformulier = document.getElementById('keuzeformulier');
-    this.stemmerformulier = document.getElementById('stemmerformulier');
-
-    this.geselecteerde_nummers = [];
+    this.lijst_id = (new URLSearchParams(window.location.search)).get('lijst');
+    this.e_body = document.getElementsByTagName('body').item(0);
+    this.e_keuzeformulier = document.getElementById('keuzeformulier');
+    this.e_stemmerformulier = document.getElementById('stemmerformulier');
+    this.geselecteerde_nummers = {};
     this.geselecteerde_artiesten = [];
-    this.datatable_elem = document.getElementById('nummers');
-    this.datatable_body = this.datatable_elem.getElementsByTagName('tbody').item(0);
-    this.datatable = $(this.datatable_elem).DataTable({
+    this.e_errormsg = document.getElementById('errormsg');
+
+    let serverdata_geladen = this.vul_serverdata();
+    serverdata_geladen.then(() => {
+      this.e_body.classList.add('geladen');
+    });
+
+    const e_datatable = document.getElementById('nummers');
+    // datatables heeft jQuery nodig.
+    this.datatable = $(e_datatable).DataTable({
       'processing': true,
       'serverSide': true,
       'ajax': (data, callback, settings) => {
@@ -96,164 +156,216 @@ class StemView {
         },
       }
     });
+    this.e_datatable_body = e_datatable.getElementsByTagName('tbody').item(0);
 
-    // Handle click on checkbox
-    $('#nummers tbody').on('click', 'input[type="checkbox"]', this.checkbox_handler.bind(this));
+    serverdata_geladen.then(() => {
+      for ( const elem of this.e_stemmerformulier.elements ) {
+        this.add_trim_handler(elem);
+      }
+  
+      // Klik op een checkbox of tabelrij met een nummer.
+      this.e_datatable_body.addEventListener('click', this.tabel_klik_handler.bind(this));
 
-    // Handle click on table cells with checkboxes
-    $('#nummers').on('click', 'tbody td, thead th:first-child', (e) => {
-      $(e.target).parent().find('input[type="checkbox"]').trigger('click');
-    });
+      // Insturen keuzeformulier. Gebeurt in principe niet want er is geen knop.
+      this.e_keuzeformulier.addEventListener('submit', this.submit_handler.bind(this));
 
-    // Handle form submission event 
-    $('#stemmerformulier').on('submit', this.stem.bind(this));
-
-    $('#submit').on('click', () => {
-      return this.validate();
-    });
-
-    $('#datetimepicker').datetimepicker({
-      locale: 'nl',
-      format: 'DD-MM-YYYY'
+      // Insturen
+      this.e_stemmerformulier.addEventListener('submit', this.submit_handler.bind(this));
     });
   }
 
-  validate() {
-    if ( this.minkeuzes !== undefined && this.geselecteerde_nummers.length < this.minkeuzes ) {
+  /**
+   * Vult serverdata in in het object en de DOM.
+   */
+  async vul_serverdata() {
+    let serverdata;
+    try {
+      serverdata = await this.get_serverdata();
+    } catch (msg) {
+      this.error(msg);
+      return;
+    }
+    this.minkeuzes = serverdata.minkeuzes;
+    this.maxkeuzes = serverdata.maxkeuzes;
+    this.is_artiest_eenmalig = serverdata.is_artiest_eenmalig;
+    const titel = `${serverdata.organisatie} – ${serverdata.lijst_naam}`
+    document.getElementsByTagName('title').item(0).innerText = titel;
+    if ( serverdata.heeft_gebruik_recaptcha ) {
+      this.e_body.classList.add('heeft-recaptcha');
+    }
+    if ( serverdata.is_actief ) {
+      this.e_body.classList.add('is-actief');
+    }
+    if ( serverdata.is_max_stemmen_per_ip_bereikt ) {
+      this.e_body.classList.add('max-ip-bereikt');
+    }
+    this.e_keuzeformulier.elements.lijst.value = this.lijst_id;
+    document.getElementById('formulier-velden').innerHTML = serverdata.formulier_velden;
+    for ( const e_captcha of document.querySelectorAll('.g-recaptcha') ) {
+      e_captcha.setAttribute('data-sitekey', serverdata.recaptcha_sitekey);
+      let e_script = document.createElement('script');
+      e_script.src = 'https://www.google.com/recaptcha/api.js?hl=nl';
+      e_captcha.parentElement.appendChild(e_script);
+    }
+    for ( const e_organisatie of document.querySelectorAll('.organisatie') ) {
+      e_organisatie.innerText = serverdata.organisatie;
+    }
+    for ( const e_privacy_url of document.querySelectorAll('a.privacy-url') ) {
+      e_privacy_url.setAttribute('href', serverdata.privacy_url);
+    }
+  }
+
+  /**
+   * Haalt gegevens over de stemlijst van de server.
+   * @returns {Promise<object>}
+   */
+  get_serverdata() {
+    return this.serverdata_promise ??= functies.post('get_stemlijst_frontend_data', {
+      'lijst': this.lijst_id
+    });
+  }
+
+  /**
+   * Verwerkt het stemmen.
+   * @param {Event} e 
+   */
+  submit_handler(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if ( Object.keys(this.geselecteerde_nummers).length < this.minkeuzes ) {
       alert(`U moet mimimaal ${this.minkeuzes} nummers selecteren.`);
-      return false;
+      return;
     }
     if ( this.heeft_recaptcha && document.getElementById('g-recaptcha-response').value === '' ) {
       alert('Plaats een vinkje a.u.b.');
-      return false;
+      return;
     }
 
-    for ( const veld of this.stemmerformulier.elements ) {
-      veld.value = veld.value.trim();
-    }
-    for ( const veld of this.stemmerformulier.elements ) {
+    for ( const veld of this.e_stemmerformulier.elements ) {
       if ( veld.required && veld.value === '' ) {
         alert(veld.getAttribute('data-leeg-feedback'));
         veld.focus();
-        return false;
+        return;
       }
       if ( veld.min > 0 && veld.valueAsNumber < veld.min ) {
         alert(`De waarde van ${veld.name} is te laag. Het minimum is ${veld.min}`);
-        return false;
+        return;
       }
       if ( veld.max > 0 && veld.valueAsNumber > veld.max ) {
         alert(`De waarde van ${veld.name} is te hoog. Het maximum is ${veld.max}`);
-        return false;
+        return;
       }
       if ( veld.minLength > 0 && veld.value.length < veld.minLength ) {
         alert(`De invoer van ${veld.name} is te kort. De minimumlengte is ${veld.minLenght}`);
-        return false;
+        return;
       }
       if ( veld.maxLength > 0  && veld.value.length > veld.maxLength ) {
         alert(`De invoer van ${veld.name} is te lang. De maximumlengte is ${veld.maxLength}`);
-        return false;
+        return;
       }
     }
-    return true;
-  }
-  
-  update_geselecteerde_nummers_info() {
-    functies.toon_geselecteerde_nummers(this.geselecteerde_nummers).then((data) => {
-      $('#result').html(data);
-    }, (msg) => {
-      alert(msg);
-    });
-  }
-  
-  stem(e) {
-    e.preventDefault();
-    let fd = new FormData(this.stemmerformulier);
+
+    let fd = new FormData(this.e_stemmerformulier);
     fd.append('lijst', this.lijst_id);
-    for (const nummer_id of this.geselecteerde_nummers) {
-      fd.append('nummers[]', nummer_id);
-    }
     functies.stem(fd).then((data) => {
-      let wrapper_hoogte = $('#nummers_wrapper').outerHeight();
-      $('#nummers_wrapper').hide();
-      $('#table_placeholder').height(wrapper_hoogte);
-      $('#contactform').hide();  
-      $('#result').html(data);
+      let hoogte = document.getElementById('stemsegment').offsetHeight - 100;
+      document.getElementById('stemsegment-placeholder').style.height = `${hoogte}px`;
+      document.getElementById('result').innerHTML = data;
+      this.e_body.classList.add('gestemd');
     }, (msg) => {
       alert(msg);
     });
   }
 
-  // row_callback(row, data, displayNum, displayIndex, dataIndex) {
-  //   // Get row ID
-  //   var nummer_id = data[0];
-  //   // If row ID is in the list of selected row IDs
-  //   if ($.inArray(nummer_id, this.geselecteerde_nummers) !== -1) {
-  //     $(row).find('input[type="checkbox"]').prop('checked', true);
-  //     $(row).addClass('selected');
-  //   }
-  // }
-
-  checkbox_handler(e) {
-    var $row = $(e.target).closest('tr');
-    // Get row data
-    var data = this.datatable.row($row).data();
-    // Get row ID
-    var nummer_id = data[0];
-    // Determine whether row ID is in the list of selected row IDs 
-    var index = $.inArray(nummer_id, this.geselecteerde_nummers);
-    // If checkbox is checked and row ID is not in list of selected row IDs
-    if (e.target.checked && index === -1) {
-      this.geselecteerde_nummers.push(nummer_id);
-      // Otherwise, if checkbox is not checked and row ID is in list of selected row IDs
-    } else if (!e.target.checked && index !== -1) {
-      this.geselecteerde_nummers.splice(index, 1);
+  /**
+   * Knipt spaties en andere lege tekens weg aan het begin en einde van tekstvelden.
+   * @param {HTMLElement} e 
+   */
+  add_trim_handler(elem) {
+    const types = [
+      'email',
+      'month',
+      'number',
+      'tel',
+      'text',
+      'time',
+      'url',
+      'week'
+    ];
+    if ( elem instanceof HTMLInputElement && types.includes(elem.type) || elem instanceof HTMLTextAreaElement ) {
+      elem.addEventListener('blur', e => {
+        e.target.value = e.target.value.trim();
+      });
     }
-    if (this.artiest_eenmalig) {
-      // Get row ID
-      var artiest = data[2];
-      // Determine whether row ID is in the list of selected row IDs 
-      var index2 = $.inArray(artiest, this.geselecteerde_artiesten);
-      // If checkbox is checked and row ID is not in list of selected row IDs
-      if (e.target.checked) {
-        this.geselecteerde_artiesten.push(artiest);
-        // Otherwise, if checkbox is not checked and row ID is in list of selected row IDs
-      } else if (!e.target.checked) {
-        this.geselecteerde_artiesten.splice(index2, 1);
-      }
-      var unique = (a) => {
-        var counts = [];
-        for (var i = 0; i <= a.length; i++) {
-          if (counts[a[i]] === undefined) {
-            counts[a[i]] = 1;
-          } else {
-            return true;
-          }
-        }
-        return false;
-      }
-      if (unique(this.geselecteerde_artiesten) == true) {
-        $(e.target).prop('checked', false);
-        this.geselecteerde_artiesten.splice(index, 1);
-        this.geselecteerde_nummers.splice(index, 1);
-        alert('Deze artiest is al gekozen');
-      }
-    }
-    if (this.geselecteerde_nummers.length > this.maxkeuzes) {
-      $(e.target).prop('checked', false);
-      this.geselecteerde_nummers.splice(index, 1);
-      alert(`U kunt maximaal ${this.maxkeuzes} nummers selecteren.`);
-    }
-    if (e.target.checked) {
-      $row.addClass('selected');
-    } else {
-      $row.removeClass('selected');
-    }
-    this.update_geselecteerde_nummers_info();
-    e.stopPropagation();
   }
   
+  /**
+   * Regelt het selecteren of deselecteren van een nummer in de lijst.
+   * @param {Event} e 
+   * @returns 
+   */
+  tabel_klik_handler(e) {
+    const e_rij = e.target.closest('tr');
+    const e_checkbox = e_rij.querySelector('input[type="checkbox"]');
+    const checkbox_klik = e.target instanceof HTMLInputElement;
+    // Bij het klikken op de checkbox zelf is deze al geselecteerd,
+    // bij het klikken op een andere plek in de tabel niet.
+    const selecteren = checkbox_klik && e_checkbox.checked || !checkbox_klik && !e_checkbox.checked;
+
+    // Get row data
+    let data = this.datatable.row($(e_rij)).data();
+    // Get row ID
+    let nummer_id = data[0];
+    let titel = data[1];
+    let artiest = data[2];
+
+    if ( selecteren ) {
+      // Nummer selecteren
+      if ( Object.keys(this.geselecteerde_nummers).length >= this.maxkeuzes ) {
+        e_checkbox.checked = false;
+        alert(`U kunt maximaal ${this.maxkeuzes} nummers selecteren.`);
+        return;
+      }
+      if ( this.is_artiest_eenmalig && this.geselecteerde_artiesten.includes(artiest) ) {
+        e_checkbox.checked = false;
+        alert('Deze artiest is al gekozen');
+        return;
+      }
+      this.geselecteerde_nummers[nummer_id] = new Nummer(nummer_id, titel, artiest);
+      if ( !this.geselecteerde_artiesten.includes(artiest) ) {
+        this.geselecteerde_artiesten.push(artiest);
+      }
+      e_checkbox.checked = true;
+      e_rij.classList.add('selected');
+    } else {
+      // Nummer deselecteren
+      let nummer = this.geselecteerde_nummers[nummer_id];
+      nummer.destroy();
+      delete this.geselecteerde_nummers[nummer_id];
+      let artiest_index = this.geselecteerde_artiesten.indexOf(artiest);
+      if ( artiest_index !== -1 ) {
+        this.geselecteerde_artiesten.splice(artiest_index, 1);
+      }
+      e_checkbox.checked = false;
+      e_rij.classList.remove('selected');
+    }
+    if ( Object.keys(this.geselecteerde_nummers).length > 0 ) {
+      this.e_body.classList.add('heeft-nummers-geselecteerd');
+    } else {
+      this.e_body.classList.remove('heeft-nummers-geselecteerd');
+    }
+  }
+
+  /**
+   * Plaatst een foutmelding op de pagina.
+   * @param {string} msg 
+   */
+  error(msg) {
+    this.e_errormsg.innerText = msg;
+    this.e_body.classList.add('error');
+  }
 }
 
-$(document).ready(() => {
+document.addEventListener('DOMContentLoaded', () => {
   new StemView();
 });

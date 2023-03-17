@@ -228,74 +228,11 @@ function get_totaal_aantal_stemmers(): int {
 }
 
 /**
- * Toon gekozen nummers aan de bezoeker.
- * @return string HTML.
- */
-function toon_geselecteerde_nummers(): string {
-    $nummer_ids = filter_input(INPUT_POST, 'nummers', FILTER_VALIDATE_INT, FILTER_FORCE_ARRAY);
-    $nummers = [];
-    if ( $nummer_ids !== null ) {
-        foreach ( $nummer_ids as $nummer_id ) {
-            $nummers[] = new Nummer($nummer_id);
-        }
-    }
-	$template = <<<EOT
-	<h4>Uw keuze</h4>
-	<table class="table" id="keuzes">
-		<thead>
-			<tr>
-				<th>Titel</th>
-				<th>Artiest</th>
-				<th>Toelichting</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td></td>
-				<td></td>
-				<td class="remark">
-					<input type="text" class="form-control" maxlength="1024">
-				</td>
-			</tr>
-		</tbody>
-	</table>
-	EOT;
-	$doc = new HTMLTemplate($template);
-	/** @var \DOMElement */
-	$e_tbody = $doc->getElementsByTagName('tbody')->item(0);
-	$e_tr_template = $e_tbody->getElementsByTagName('tr')->item(0);
-	foreach ( $nummers as $nummer ) {
-		/** @var \DOMElement */
-		$e_tr = $e_tr_template->cloneNode(true);
-		$e_tbody->appendChild($e_tr);
-		/** @var \DOMElement */
-		$e_td_titel = $e_tr->getElementsByTagName('td')->item(0);
-		/** @var \DOMElement */
-		$e_td_artiest = $e_tr->getElementsByTagName('td')->item(1);
-		/** @var \DOMElement */
-		$e_input = $e_tr->getElementsByTagName('input')->item(0);
-
-		$e_td_titel->appendChild($doc->createTextNode($nummer->get_titel()));
-		$e_td_artiest->appendChild($doc->createTextNode($nummer->get_artiest()));
-		$e_input->setAttribute('name', "id_{$nummer->get_id()}");
-	}
-	$e_tr_template->parentNode->removeChild($e_tr_template);
-	return $doc->saveHTML();
-}
-
-/**
  * Verwerk een stem van een bezoeker.
  * @return string HTML-respons.
  */
 function stem(): string {
     $lijst = Lijst::maak_uit_request();
-    $nummer_ids = filter_input(INPUT_POST, 'nummers', FILTER_VALIDATE_INT, FILTER_FORCE_ARRAY);
-    $nummers = [];
-    if ( $nummer_ids !== null ) {
-        foreach ( $nummer_ids as $nummer_id ) {
-            $nummers[] = new Nummer($nummer_id);
-        }
-    }
 	if ( $lijst->heeft_gebruik_recaptcha() && !is_captcha_ok() ) {
 		throw new GebruikersException('Captcha verkeerd.');
 	}
@@ -303,7 +240,7 @@ function stem(): string {
 		return 'Het maximum aantal stemmen voor dit IP-adres is bereikt.';
 	}
 	try {
-		$stemmer = verwerk_stem($lijst, $nummers);
+		$stemmer = verwerk_stem($lijst);
 		$is_blacklist = false;
 	} catch ( BlacklistException ) {
 		$is_blacklist = true;
@@ -331,7 +268,7 @@ function stem(): string {
 	return $html;
 }
 
-function verwerk_stem( Lijst $lijst, array $nummers ): Stemmer {
+function verwerk_stem( Lijst $lijst ): Stemmer {
 	check_ip_blacklist($_SERVER['REMOTE_ADDR']);
 	$invoer = (object)filter_input_array(INPUT_POST, [
 		'naam' => FILTER_DEFAULT,
@@ -358,8 +295,11 @@ function verwerk_stem( Lijst $lijst, array $nummers ): Stemmer {
 		$_SERVER['REMOTE_ADDR']
 	);
     
-    foreach( $nummers as $nummer ) {
-        $stemmer->add_stem($nummer, $lijst, $nummer->get_post_toelichting());
+	$input_nummers = filter_input(INPUT_POST, 'nummers', FILTER_DEFAULT, FILTER_FORCE_ARRAY);
+    foreach( $input_nummers as $input_nummer ) {
+		$nummer = new Nummer(filter_var($input_nummer['id'], FILTER_VALIDATE_INT));
+		$toelichting = filter_var($input_nummer['toelichting']);
+        $stemmer->add_stem($nummer, $lijst, $toelichting);
     }
 	
 	// Invoer van extra velden
@@ -466,12 +406,54 @@ function vul_datatables(): array {
     return $ssp->simple();
 }
 
+/**
+ * Geeft data over de stemlijst voor de stempagina.
+ * @return array
+ */
+function get_stemlijst_frontend_data(): array {
+	try {
+		$lijst = Lijst::maak_uit_request();
+		$lijst->get_naam();	// Forceer dat de lijst in de database wordt geopend.
+	} catch ( SQLException ) {
+		throw new GebruikersException('Ongeldige lijst');
+	}
+
+	$velden_str =
+		$lijst->get_veld_naam_html()
+		.$lijst->get_veld_adres_html()
+		.$lijst->get_veld_woonplaats_html()
+		.$lijst->get_veld_telefoonnummer_html()
+		.$lijst->get_veld_email_html()
+		.$lijst->get_veld_uitzenddatum_html()
+		.$lijst->get_veld_vrijekeus_html();
+	foreach ( $lijst->get_extra_velden() as $extra_veld ) {
+		$velden_str .= $extra_veld->get_formulier_html();
+	}
+
+	return [
+		'minkeuzes' => $lijst->get_minkeuzes(),
+		'maxkeuzes' => $lijst->get_maxkeuzes(),
+		'is_artiest_eenmalig' => $lijst->is_artiest_eenmalig(),
+		'organisatie' => Config::get_instelling('organisatie'),
+		'lijst_naam' => $lijst->get_naam(),
+		'heeft_gebruik_recaptcha' => $lijst->heeft_gebruik_recaptcha(),
+		'is_actief' => $lijst->is_actief(),
+		'is_max_stemmen_per_ip_bereikt' => $lijst->is_max_stemmen_per_ip_bereikt(),
+		'formulier_velden' => $velden_str,
+		'recaptcha_sitekey' => Config::get_instelling('recaptcha', 'sitekey'),
+		'privacy_url' => Config::get_instelling('privacy_url')
+	];
+}
+
 try {
     DB::disableAutocommit();
     $functie = filter_input(INPUT_POST, 'functie');
     $respons = [];
     $data = null;
     switch ($functie) {
+		case 'get_stemlijst_frontend_data':
+			$data = get_stemlijst_frontend_data();
+			break;
         case 'verwijder_lijst':
             verwijder_lijst();
             break;
@@ -498,9 +480,6 @@ try {
             break;
         case 'get_totaal_aantal_stemmers':
             $data = get_totaal_aantal_stemmers();
-            break;
-        case 'toon_geselecteerde_nummers':
-            $data = toon_geselecteerde_nummers();
             break;
         case 'stem':
             $data = stem();

@@ -339,10 +339,7 @@ class Lijst {
 				<label class="control-label col-sm-2">Uitzenddatum</label>
 				<div class="col-sm-10">
 					<div class="input-group date" id="datetimepicker">
-						<input type="text" class="form-control" placeholder="selecteer een datum" data-leeg-feedback="Vul de uitzenddatum in a.u.b.">
-						<span class="input-group-addon">
-							<span class="glyphicon glyphicon-calendar"></span>
-						</span>
+						<input type="date" class="form-control" placeholder="selecteer een datum" data-leeg-feedback="Vul de uitzenddatum in a.u.b.">
 					</div>
 				</div>
 			</div>
@@ -884,7 +881,7 @@ class Lijst {
 		string $placeholder = ''
 	): string {
 		$template = <<<EOT
-		<div class="form-group">
+		<div class="form-group row">
 			<label class="control-label col-sm-2"></label>
 			<div class="col-sm-10">
 				<input class="form-control">

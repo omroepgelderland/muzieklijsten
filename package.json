@@ -30,7 +30,7 @@
     "css-loader": "^6.7.1",
     "css-minimizer-webpack-plugin": "^3.4.1",
     "datatables.net-dt": "^1.10.25",
-    "eonasdan-bootstrap-datetimepicker": "^4.15.35",
+    "eonasdan-bootstrap-datetimepicker": "^4.17.49",
     "font-awesome": "^4.7.0",
     "html-loader": "^4.2.0",
     "html-webpack-plugin": "^5.5.0",

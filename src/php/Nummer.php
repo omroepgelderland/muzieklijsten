@@ -173,14 +173,4 @@ class Nummer {
 		return new static($id);
 	}
 
-	/**
-	 * Haalt de toelichting op een nummer uit het POST-request bij een stemactie.
-	 * Superomslachtige hack; komt door overname legacy code. Kan een keer
-	 * verbeterd worden
-	 * @return string De toelichting.
-	 */
-	public function get_post_toelichting(): string {
-		return filter_input(INPUT_POST, "id_{$this->get_id()}");
-	}
-
 }

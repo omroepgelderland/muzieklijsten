@@ -46,6 +46,11 @@ module.exports = {
 			'moment': 'moment'
 		}),
 		new HtmlWebpackPlugin({
+			'filename': 'index.html',
+			'chunks': ['muzieklijst'],
+			'template': path.resolve(__dirname, 'src', 'html', 'muzieklijst.html')
+		}),
+		new HtmlWebpackPlugin({
 			'filename': 'los_toevoegen.html',
 			'chunks': ['los_toevoegen'],
 			'template': path.resolve(__dirname, 'src', 'html', 'los_toevoegen.html')

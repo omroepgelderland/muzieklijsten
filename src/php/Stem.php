@@ -8,7 +8,6 @@ class Stem {
 	public Lijst $lijst;
 	public Stemmer $stemmer;
 	private ?string $toelichting;
-	private ?string $eigenkeuze;
 	private bool $behandeld;
 	private bool $db_props_set;
 	
@@ -57,15 +56,6 @@ class Stem {
 	
 	/**
 	 * 
-	 * @return string|null
-	 */
-	public function get_eigenkeuze(): ?string {
-		$this->set_db_properties();
-		return $this->eigenkeuze;
-	}
-	
-	/**
-	 * 
 	 * @return bool
 	 */
 	public function is_behandeld(): bool {
@@ -94,7 +84,6 @@ class Stem {
 	 */
 	private function set_data( array $data ): void {
 		$this->toelichting = $data['toelichting'];
-		$this->eigenkeuze = $data['eigenkeuze'];
 		$this->behandeld = $data['behandeld'] == 1;
 		$this->db_props_set = true;
 	}

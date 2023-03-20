@@ -48,4 +48,4 @@ if [[ $env == "dev" ]]; then
 		public/index.html \
 		public/los_toevoegen.html
 fi
-npx webpack --config webpack.$env.js || exit 1
+nvm exec $node_versie npx webpack --config webpack.$env.js || exit 1

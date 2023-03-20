@@ -253,7 +253,6 @@ try {
 		<script src="js/runtime.js" defer></script>
 		<script src="js/admin-fbshare-los_toevoegen-muzieklijst-resultaten.js" defer></script>
 		<script src="js/admin-muzieklijst-resultaten.js" defer></script>
-		<script src="js/muzieklijst-resultaten.js" defer></script>
 		<script src="js/resultaten.js" defer></script>
 		<!-- Styles prod -->
 		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst-resultaten.css">

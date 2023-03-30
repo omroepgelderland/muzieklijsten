@@ -27,10 +27,10 @@ function anonimiseer_stemmen( int $stemmer_id ): void {
 	}
 }
 
-function anonimiseer_extra_velden( int $stemmer_id ): void {
+function anonimiseer_velden( int $stemmer_id ): void {
 	$query = <<<EOT
 		SELECT waarde
-		FROM stemmers_extra_velden
+		FROM stemmers_velden
 		WHERE
 			stemmer_id = {$stemmer_id}
 			AND waarde IS NOT NULL
@@ -40,7 +40,7 @@ function anonimiseer_extra_velden( int $stemmer_id ): void {
 	foreach ( DB::selectSingleColumn($query) as $waarde ) {
 		$escaped = DB::escape_string($waarde);
 		DB::updateMulti(
-			'stemmers_extra_velden', [
+			'stemmers_velden', [
 			'waarde' => anonimiseer($waarde)
 		],
 		"waarde = \"$escaped\"");
@@ -73,7 +73,7 @@ foreach ( DB::query($query) as $entry ) {
 		"id = {$id}"
 	);
 	anonimiseer_stemmen($id);
-	anonimiseer_extra_velden($id);
+	anonimiseer_velden($id);
 }
 
 DB::commit();

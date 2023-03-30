@@ -171,7 +171,15 @@ function is_captcha_ok(): bool {
  * @return ?string De geparste postcode of null als de invoer leeg is.
  */
 function filter_input_postcode( int $type = INPUT_POST, string $var_name = 'postcode' ): ?string {
-	$postcode = filter_input($type, $var_name);
+	return filter_postcode(filter_input($type, $var_name));
+}
+
+/**
+ * Checkt en format een postcode.
+ * @param mixed $postcode Ruwe input.
+ * @return ?string De geparste postcode of null als de invoer leeg is.
+ */
+function filter_postcode( $postcode ): ?string {
 	if ( $postcode === false ) {
 		throw new OngeldigeInvoer('Ongeldige postcode');
 	}
@@ -199,7 +207,18 @@ function filter_input_postcode( int $type = INPUT_POST, string $var_name = 'post
  * @return ?string Het geparste telefoonnummer of null als de invoer leeg is.
  */
 function filter_input_telefoonnummer( int $type = INPUT_POST, string $var_name = 'telefoonnummer' ): ?string {
-	$telefoonnummer = filter_input($type, $var_name);
+	return filter_telefoonnummer(filter_input($type, $var_name));
+}
+
+/**
+ * Checkt en format een telefoonnummer.
+ * Leestekens worden weggefilterd.
+ * Lokale nummers worden internationaal gemaakt.
+ * Nederlands nummers worden gecheckt op geldige prefix en lengte.
+ * @param mixed $telefoonnummer Ruwe input.
+ * @return ?string Het geparste telefoonnummer of null als de invoer leeg is.
+ */
+function filter_telefoonnummer( mixed $telefoonnummer ): ?string {
 	if ( $telefoonnummer === false ) {
 		throw new OngeldigeInvoer('Ongeldig telefoonnummer');
 	}

@@ -64,3 +64,5 @@ class OngeldigeInvoer extends GebruikersException {}
  * Stemmer staat op de blacklist
  */
 class BlacklistException extends Muzieklijsten_Exception {}
+
+class ObjectEigenschapOntbreekt extends Muzieklijsten_Exception {}

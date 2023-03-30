@@ -23,18 +23,6 @@ function filter_lijst_metadata(): array {
 	$maxkeuzes = filter_input(INPUT_POST, 'maxkeuzes', FILTER_VALIDATE_INT);
 	$stemmen_per_ip = filter_input(INPUT_POST, 'stemmen-per-ip', FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 	$artiest_eenmalig = filter_input(INPUT_POST, 'artiest-eenmalig', FILTER_VALIDATE_BOOL);
-	$veld_telefoonnummer = filter_input(INPUT_POST, 'veld-telefoonnummer', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_telefoonnummer_verplicht = filter_input(INPUT_POST, 'veld-telefoonnummer-verplicht', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_email = filter_input(INPUT_POST, 'veld-email', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_email_verplicht = filter_input(INPUT_POST, 'veld-email-verplicht', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_woonplaats = filter_input(INPUT_POST, 'veld-woonplaats', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_woonplaats_verplicht = filter_input(INPUT_POST, 'veld-woonplaats-verplicht', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_adres = filter_input(INPUT_POST, 'veld-adres', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_adres_verplicht = filter_input(INPUT_POST, 'veld-adres-verplicht', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_uitzenddatum = filter_input(INPUT_POST, 'veld-uitzenddatum', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_uitzenddatum_verplicht = filter_input(INPUT_POST, 'veld-uitzenddatum-verplicht', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_vrijekeus = filter_input(INPUT_POST, 'veld-vrijekeus', FILTER_VALIDATE_BOOL) ?? false;
-	$veld_vrijekeus_verplicht = filter_input(INPUT_POST, 'veld-vrijekeus-verplicht', FILTER_VALIDATE_BOOL) ?? false;
 	$recaptcha = filter_input(INPUT_POST, 'recaptcha', FILTER_VALIDATE_BOOL) ?? false;
 	$emails = explode(',', filter_input(INPUT_POST, 'email'));
 	$emails_geparsed = [];
@@ -76,28 +64,24 @@ function filter_lijst_metadata(): array {
 		'maxkeuzes' => $maxkeuzes,
 		'stemmen_per_ip' => $stemmen_per_ip,
 		'artiest_eenmalig' => $artiest_eenmalig,
-		'veld_telefoonnummer' =>
-			$veld_telefoonnummer << Lijst::VELD_ZICHTBAAR_BIT
-			| $veld_telefoonnummer_verplicht << Lijst::VELD_VERPLICHT_BIT,
-		'veld_email' =>
-			$veld_email << Lijst::VELD_ZICHTBAAR_BIT
-			| $veld_email_verplicht << Lijst::VELD_VERPLICHT_BIT,
-		'veld_woonplaats' =>
-			$veld_woonplaats << Lijst::VELD_ZICHTBAAR_BIT
-			| $veld_woonplaats_verplicht << Lijst::VELD_VERPLICHT_BIT,
-		'veld_adres' =>
-			$veld_adres << Lijst::VELD_ZICHTBAAR_BIT
-			| $veld_adres_verplicht << Lijst::VELD_VERPLICHT_BIT,
-		'veld_uitzenddatum' =>
-			$veld_uitzenddatum << Lijst::VELD_ZICHTBAAR_BIT
-			| $veld_uitzenddatum_verplicht << Lijst::VELD_VERPLICHT_BIT,
-		'veld_vrijekeus' =>
-			$veld_vrijekeus << Lijst::VELD_ZICHTBAAR_BIT
-			| $veld_vrijekeus_verplicht << Lijst::VELD_VERPLICHT_BIT,
 		'recaptcha' => $recaptcha,
 		'email' => $emails_str,
 		'bedankt_tekst' => $bedankt_tekst
 	];
+}
+
+function set_lijst_velden( Lijst $lijst, array $input_velden ) {
+	foreach( $input_velden as $input_id => $input_veld ) {
+		$id = filter_var($input_id, FILTER_VALIDATE_INT);
+		$tonen = filter_var($input_veld['tonen'], FILTER_VALIDATE_BOOL) ?? false;
+		$verplicht = filter_var($input_veld['verplicht'], FILTER_VALIDATE_BOOL) ?? false;
+		$veld = new Veld($id);
+		if ( $tonen ) {
+			$lijst->set_veld($veld, $verplicht);
+		} else {
+			$lijst->remove_veld($veld);
+		}
+	}
 }
 
 /**
@@ -108,6 +92,7 @@ function lijst_opslaan(): void {
 	$lijst = Lijst::maak_uit_request();
 	$data = filter_lijst_metadata();
 	DB::updateMulti('lijsten', $data, "id = {$lijst->get_id()}");
+	set_lijst_velden($lijst, filter_input(INPUT_POST, 'velden', FILTER_DEFAULT, FILTER_FORCE_ARRAY));
 }
 
 /**
@@ -117,7 +102,9 @@ function lijst_opslaan(): void {
 function lijst_maken(): int {
     login();
 	$data = filter_lijst_metadata();
-	return DB::insertMulti('lijsten', $data);
+	$lijst = new Lijst(DB::insertMulti('lijsten', $data));
+	set_lijst_velden($lijst, filter_input(INPUT_POST, 'velden', FILTER_REQUIRE_ARRAY));
+	return $lijst->get_id();
 }
 
 /**
@@ -270,28 +257,7 @@ function stem(): string {
 
 function verwerk_stem( Lijst $lijst ): Stemmer {
 	check_ip_blacklist($_SERVER['REMOTE_ADDR']);
-	$invoer = (object)filter_input_array(INPUT_POST, [
-		'naam' => FILTER_DEFAULT,
-		'woonplaats' => FILTER_DEFAULT,
-		'adres' => FILTER_DEFAULT,
-		'veld_uitzenddatum' => FILTER_DEFAULT,
-		'veld_vrijekeus' => FILTER_DEFAULT
-	]);
-	$invoer->veld_email = filter_input(INPUT_POST, 'veld_email', FILTER_SANITIZE_EMAIL);
-	if ( $invoer->veld_email !== null ) {
-		$invoer->veld_email = strtolower($invoer->veld_email);
-	}
-	$invoer->postcode = filter_input_postcode();
-	$invoer->telefoonnummer = filter_input_telefoonnummer();
 	$stemmer = Stemmer::maak(
-		$invoer->naam,
-		$invoer->adres,
-		$invoer->postcode,
-		$invoer->woonplaats,
-		$invoer->telefoonnummer,
-		$invoer->veld_email,
-		$invoer->veld_uitzenddatum,
-		$invoer->veld_vrijekeus,
 		$_SERVER['REMOTE_ADDR']
 	);
     
@@ -302,15 +268,44 @@ function verwerk_stem( Lijst $lijst ): Stemmer {
         $stemmer->add_stem($nummer, $lijst, $toelichting);
     }
 	
-	// Invoer van extra velden
-	foreach ( $lijst->get_extra_velden() as $extra_veld ) {
-		$waarde = filter_input(INPUT_POST, $extra_veld->get_html_id(), FILTER_DEFAULT);
+	// Invoer van velden
+	$input_velden = filter_input(INPUT_POST, 'velden', FILTER_DEFAULT, FILTER_FORCE_ARRAY);
+	foreach ( $lijst->get_velden() as $veld ) {
+		try {
+			$waarde = $input_velden[$veld->get_id()];
+		} catch ( UndefinedPropertyException ) {
+			$waarde = null;
+		}
+		if ( $veld->get_type() === 'checkbox' ) {
+			$waarde = filter_var($waarde, FILTER_VALIDATE_BOOL);
+		}
+		elseif ( $veld->get_type() === 'date' ) {
+			$waarde = (new \DateTime($waarde))->format('Y-m-d');
+		}
+		elseif ( $veld->get_type() === 'email' ) {
+			$waarde = filter_var($waarde, FILTER_SANITIZE_EMAIL);
+			if ( $waarde !== null ) {
+				$waarde = strtolower($waarde);
+			}
+		}
+		elseif ( $veld->get_type() === 'month' || $veld->get_type() === 'number' || $veld->get_type() === 'week' ) {
+			$waarde = filter_var($waarde, FILTER_VALIDATE_INT);
+		}
+		elseif ( $veld->get_type() === 'postcode' ) {
+			$waarde = filter_postcode($waarde);
+		}
+		elseif ( $veld->get_type() === 'tel' ) {
+			$waarde = filter_telefoonnummer($waarde);
+		}
+		else {
+			$waarde = filter_var($waarde);
+		}
 		if ( $waarde !== false && $waarde !== null ) {
-			$extra_veld->add_waarde($stemmer, $waarde);
-		} elseif ( $extra_veld->is_verplicht() ) {
+			$veld->add_waarde($stemmer, $waarde);
+		} elseif ( $veld->is_verplicht() ) {
 			throw new GebruikersException(sprintf(
 				'Veld %s is verplicht voor de lijst %s',
-				$extra_veld->get_label(),
+				$veld->get_label(),
 				$lijst->get_naam()
 			));
 		}
@@ -418,16 +413,31 @@ function get_stemlijst_frontend_data(): array {
 		throw new GebruikersException('Ongeldige lijst');
 	}
 
-	$velden_str =
-		$lijst->get_veld_naam_html()
-		.$lijst->get_veld_adres_html()
-		.$lijst->get_veld_woonplaats_html()
-		.$lijst->get_veld_telefoonnummer_html()
-		.$lijst->get_veld_email_html()
-		.$lijst->get_veld_uitzenddatum_html()
-		.$lijst->get_veld_vrijekeus_html();
-	foreach ( $lijst->get_extra_velden() as $extra_veld ) {
-		$velden_str .= $extra_veld->get_formulier_html();
+	$velden = [];
+	foreach ( $lijst->get_velden() as $veld ) {
+		$velddata = [
+			'id' => $veld->get_id(),
+			'label' => $veld->get_label(),
+			'leeg_feedback' => $veld->get_leeg_feedback(),
+			'type' => $veld->get_type(),
+			'verplicht' => $veld->is_verplicht()
+		];
+		try {
+			$velddata['max'] = $veld->get_max();
+		} catch ( ObjectEigenschapOntbreekt ) {}
+		try {
+			$velddata['maxlength'] = $veld->get_maxlength();
+		} catch ( ObjectEigenschapOntbreekt ) {}
+		try {
+			$velddata['min'] = $veld->get_min();
+		} catch ( ObjectEigenschapOntbreekt ) {}
+		try {
+			$velddata['minlength'] = $veld->get_minlength();
+		} catch ( ObjectEigenschapOntbreekt ) {}
+		try {
+			$velddata['placeholder'] = $veld->get_placeholder();
+		} catch ( ObjectEigenschapOntbreekt ) {}
+		$velden[] = $velddata;
 	}
 
 	return [
@@ -439,10 +449,34 @@ function get_stemlijst_frontend_data(): array {
 		'heeft_gebruik_recaptcha' => $lijst->heeft_gebruik_recaptcha(),
 		'is_actief' => $lijst->is_actief(),
 		'is_max_stemmen_per_ip_bereikt' => $lijst->is_max_stemmen_per_ip_bereikt(),
-		'formulier_velden' => $velden_str,
+		'velden' => $velden,
 		'recaptcha_sitekey' => Config::get_instelling('recaptcha', 'sitekey'),
 		'privacy_url' => Config::get_instelling('privacy_url')
 	];
+}
+
+function get_resultaten_labels(): array {
+	login();
+	try {
+		$lijst = Lijst::maak_uit_request();
+	} catch ( SQLException ) {
+		throw new GebruikersException('Ongeldige lijst');
+	}
+	$respons = [];
+	foreach ( $lijst->get_velden() as $veld ) {
+		$respons[] = $veld->get_label();
+	}
+	return $respons;
+}
+
+function get_resultaten(): array {
+	login();
+	try {
+		$lijst = Lijst::maak_uit_request();
+	} catch ( SQLException ) {
+		throw new GebruikersException('Ongeldige lijst');
+	}
+	return $lijst->get_resultaten();
 }
 
 try {
@@ -498,6 +532,12 @@ try {
             break;
 		case 'login':
 			login();
+			break;
+		case 'get_resultaten_labels':
+			$data = get_resultaten_labels();
+			break;
+		case 'get_resultaten':
+			$data = get_resultaten();
 			break;
         default:
             throw new Muzieklijsten_Exception("Onbekende ajax-functie: \"{$functie}\"");

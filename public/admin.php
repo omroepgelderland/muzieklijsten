@@ -8,11 +8,11 @@ try {
 
 	login();
 
-	$body_classes = [];
+	$body_classes = ['admin'];
 	try {
 		$lijst = Lijst::maak_uit_request(INPUT_GET);
 		$lijst_id = $lijst->get_id();
-		$lijst_naam = $lijst->get_naam();
+		$lijst_naam = htmlspecialchars($lijst->get_naam());
 		$lijst_query = sprintf('?lijst=%d', $lijst->get_id());
 		$body_classes[] = 'lijst-geselecteerd';
 		$nummers = $lijst->get_nummers();
@@ -79,11 +79,11 @@ try {
 		<title>Muzieklijsten beheer</title>
 		<!-- Scripts prod en dev -->
 		<script src="js/runtime.js" defer></script>
-		<script src="js/admin-fbshare-los_toevoegen-muzieklijst-resultaten.js" defer></script>
-		<script src="js/admin-muzieklijst-resultaten.js" defer></script>
+		<script src="js/admin-fbshare-los_toevoegen-muzieklijst.js" defer></script>
+		<script src="js/admin-muzieklijst.js" defer></script>
 		<script src="js/admin.js" defer></script>
 		<!-- Styles prod -->
-		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst-resultaten.css">
+		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst.css">
 		<link rel="stylesheet" href="css/admin.css">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-192p.png" sizes="192x192">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-16p.png" sizes="16x16">
@@ -94,7 +94,7 @@ try {
 		<link rel="apple-touch-icon" href="afbeeldingen/favicon-152p.png">
 		<link rel="apple-touch-icon" href="afbeeldingen/favicon-167p.png">
 	</head>
-	<body class="<?php echo $body_classes_str; ?>" data-lijst-id="<?php echo $lijst_id; ?>" data-rows-selected="<?php echo $rows_selected; ?>">
+	<body class="<?php echo $body_classes_str; ?>" data-lijst-id="<?php echo $lijst_id; ?>" data-lijst-naam="<?php echo $lijst_naam; ?>" data-rows-selected="<?php echo $rows_selected; ?>">
 
 		<nav class="navbar navbar-default navbar-fixed-top">
 			<div class="container-fluid">
@@ -114,7 +114,7 @@ try {
 							<a href="beheer.php<?php echo $lijst_query; ?>" data-toggle="modal" data-target="#beheer" data-backdrop="static" data-keyboard="false" class="btn btn-primary<?php echo $bewerk_knoppen_disabled; ?>" role="button"<?php echo $bewerk_knoppen_title; ?>>Beheer</a>
 						</td>
 						<td align="right">
-							<a href="iframe.php<?php echo $lijst_query; ?>" data-toggle="modal" data-target="#popup" data-backdrop="static" data-keyboard="false" class="btn btn-primary<?php echo $bewerk_knoppen_disabled; ?>" role="button"<?php echo $bewerk_knoppen_title; ?>>Resultaten</a>
+							<a id="resultaten" href="#" class="btn btn-primary<?php echo $bewerk_knoppen_disabled; ?>" role="button"<?php echo $bewerk_knoppen_title; ?>>Resultaten</a>
 						</td>
 						<!-- <td align="right">
 							<button type="submit" form="beheer-nummers" class="btn btn-primary"<?php echo $bewerk_knoppen_disabled.$bewerk_knoppen_title; ?>>Opslaan</button>
@@ -150,19 +150,6 @@ try {
 				</div>
 			</div>
 		</form>
-
-		<div class="modal fade" id="popup" role="dialog">
-			<div class="modal-dialog">
-				<div class="modal-header modal-top">
-					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-					<h4 class="modal-title">Resultaten van de lijst "<?php echo $lijst_naam; ?>"</h4>
-				</div>
-				<div class="modal-content"></div>
-				<div class="modal-footer modal-end">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Sluiten</button>
-				</div>
-			</div>
-		</div>
 
 		<div class="modal fade lijstinstellingen" id="beheer" role="dialog">
 			<div class="modal-dialog">

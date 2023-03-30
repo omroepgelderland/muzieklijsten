@@ -65,10 +65,10 @@ try {
 		<title>Mijn keuzes</title>
 		<!-- Scripts prod en dev -->
 		<script src="js/runtime.js" defer></script>
-		<script src="js/admin-fbshare-los_toevoegen-muzieklijst-resultaten.js" defer></script>
+		<script src="js/admin-fbshare-los_toevoegen-muzieklijst.js" defer></script>
 		<script src="js/fbshare.js" defer></script>
 		<!-- Styles prod -->
-		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst-resultaten.css">
+		<link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst.css">
 		<link rel="stylesheet" href="css/fbshare.css">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-192p.png" sizes="192x192">
 		<link rel="icon" type="image/png" href="afbeeldingen/favicon-16p.png" sizes="16x16">

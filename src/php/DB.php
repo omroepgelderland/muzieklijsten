@@ -225,35 +225,18 @@ class DB {
 	 */
 	public static function insertMulti( string $table, array $data ) {
 		$db = self::getDB();
-		
-		$columns = [];
-		$values = [];
-		foreach ( $data as $key => $value ) {
-			$columns[] =  "`{$key}`";
-			if ( $value === null ) {
-				$values[] = 'NULL';
-			} elseif ( $value === 'NOW()' ) {
-				$values[] = 'NOW()';
-			} elseif ( $value === true ) {
-				$values[] = '1';
-			} elseif ( $value === false ) {
-				$values[] = '0';
-			} elseif ( is_int($value) || is_float($value) ) {
-				$values[] = $value;
-			} elseif ( $value instanceof \DateTime ) {
-				$values[] = $value->format('"Y-m-d H:i:s"');
-			} else {
-				$values[] = sprintf('"%s"', $db->real_escape_string($value));
-			}
-		}
-		$columnstr = implode(',', $columns);
-		$valuestr = implode(',', $values);
-		$sql = "INSERT INTO `{$table}` ({$columnstr}) VALUES ({$valuestr})";
-		self::query($sql);
+		$data = static::prepareer_data($data);
+		$query = sprintf(
+			'INSERT INTO %s (%s) VALUES (%s)',
+			$table,
+			implode(',', array_keys($data)),
+			implode(',', array_values($data))
+		);
+		static::query($query);
 		if ( $db->affected_rows == 0 ) {
 			throw new SQLException(sprintf(
 				'Toevoegen van rij mislukt. Query: "%s"',
-				$sql
+				$query
 			));
 		}
 		return $db->insert_id;
@@ -270,43 +253,13 @@ class DB {
 	 */
 	public static function updateMulti( string $table, array $data, string $conditions ): int {
 		$db = self::getDB();
-		
-		$datastr = '';
+		$data = static::prepareer_data($data);
+		$updates = [];
 		foreach ( $data as $key => $value ) {
-			if ( strlen($datastr) > 0 ) {
-				$datastr .= ', ';
-			}
-			if ( $value === null ) {
-				$datastr .= sprintf('%s=NULL', $key);
-			} elseif ( $value === 'NOW()' ) {
-				$datastr .= sprintf('%s=NOW()', $key);
-			} elseif ( $value === true ) {
-				$datastr .= sprintf('%s=1', $key);
-			} elseif ( $value === false ) {
-				$datastr .= sprintf('%s=0', $key);
-			} elseif ( is_numeric($value) ) {
-				$datastr .= sprintf('%s=%s', $key, $value);
-			} elseif ( $value instanceof \DateTime ) {
-				$datastr .= sprintf('%s="%s"', $key, $value->format('Y-m-d H:i:s'));
-			} else {
-				$datastr .= sprintf('%s="%s"', $key, $db->real_escape_string($value));
-			}
+			$updates[] = "{$key}={$value}";
 		}
-		if ( $conditions == null ) {
-			$sql = sprintf(
-			'UPDATE %s SET %s',
-				$table,
-				$datastr
-			);
-		} else {
-			$sql = sprintf(
-			'UPDATE %s SET %s WHERE %s',
-				$table,
-				$datastr,
-				$conditions
-			);
-		}
-		DB::query($sql);
+		$updates_str = implode(',', $updates);
+		DB::query("UPDATE {$table} SET {$updates_str} WHERE {$conditions}");
 		return $db->affected_rows;
 	}
 	
@@ -472,6 +425,67 @@ class DB {
 	 */
 	public static function get_max_kolom_lengte( string $tabel, string $kolom ): int {
 		return self::selectSingle("SELECT max(length(`{$kolom}`)) `max_column_length` from `{$tabel}`");
+	}
+	
+	/**
+	 * Voegt een entry toe of update een bestaande entry als de primary keys of unieke velden van de invoer al bestaan in de database.
+	 * PHP types worden naar SQL omgezet. Strings worden ge-escaped
+	 * @param string $table Naam van de tabel waarin de data moet worden geplaatst.
+	 * @param array $data Associatieve array met kolomnamen als keys en in te voegen gegevens als values.
+	 * @returns \stdClass Object met informatie over de uitgevoerde actie en het resultaat.
+	 * @throws SQLException Als de query mislukt.
+	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
+	 */
+	public static function insert_update_multi( string $table, array $data = [] ): \stdClass {
+		$db = static::getDB();
+		$data = static::prepareer_data($data);
+		$update_values = [];
+		foreach ( $data as $key => $value ) {
+			$update_values[] = sprintf('%s=%s', $key, $data[$key]);
+		}
+		static::query(sprintf(
+			'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s',
+			$table,
+			implode(',', array_keys($data)),
+			implode(',', array_values($data)),
+			implode(',', $update_values)
+		));
+		$respons = [
+			'actie' => $db->affected_rows === 1 ? 'insert' : 'update',
+			'veranderd' => $db->affected_rows > 0
+		];
+		if ( $db->affected_rows > 0 ) {
+			$respons['id'] = $db->insert_id;
+		}
+		return (object)$respons;
+	}
+	
+	/**
+	 * Prepareert een associatieve array met keys en values voor gebruik in een SQL-query
+	 * @param array $data Invoer
+	 * @return array uitvoer
+	 */
+	protected static function prepareer_data( array $data ): array {
+		$respons = [];
+		foreach ( $data as $key => $value ) {
+			$key = sprintf('`%s`', $key);
+			if ( $value === null ) {
+				$respons[$key] = 'NULL';
+			} elseif ( $value === 'NOW()' ) {
+				$respons[$key] = 'NOW()';
+			} elseif ( $value === true ) {
+				$respons[$key] = '1';
+			} elseif ( $value === false ) {
+				$respons[$key] = '0';
+			} elseif ( is_numeric($value) ) {
+				$respons[$key] = sprintf('%s', $value);
+			} elseif ( $value instanceof \DateTime ) {
+				$respons[$key] = $value->format('"Y-m-d H:i:s"');
+			} else {
+				$respons[$key] = sprintf('"%s"', static::escape_string($value));
+			}
+		}
+		return $respons;
 	}
 	
 }

@@ -8,8 +8,7 @@ module.exports = {
 		'admin': path.resolve(__dirname, 'src/js/admin.js'),
 		'fbshare': path.resolve(__dirname, 'src/js/fbshare.js'),
 		'los_toevoegen': path.resolve(__dirname, 'src/js/los_toevoegen.js'),
-		'muzieklijst': path.resolve(__dirname, 'src/js/muzieklijst.js'),
-		'resultaten': path.resolve(__dirname, 'src/js/resultaten.js')
+		'muzieklijst': path.resolve(__dirname, 'src/js/muzieklijst.js')
 	},
 	'output': {
 		'path': path.resolve(__dirname, 'public'),

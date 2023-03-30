@@ -168,29 +168,13 @@ class Stemmer {
 	}
 
 	public static function maak(
-		?string $naam,
-		?string $adres,
-		?string $postcode,
-		?string $woonplaats,
-		?string $telefoonnummer,
-		?string $veld_email,
-		?string $veld_uitzenddatum,
-		?string $veld_vrijekeus,
 		string $ip
-	): Stemmer {
+	): static {
 		try {
 			$id = DB::insertMulti('stemmers', [
-				'naam' => $naam,
-				'adres' => $adres,
-				'postcode' => $postcode,
-				'woonplaats' => $woonplaats,
-				'telefoonnummer' => $telefoonnummer,
-				'emailadres' => $veld_email,
-				'uitzenddatum' => $veld_uitzenddatum,
-				'vrijekeus' => $veld_vrijekeus,
 				'ip' => $ip
 			]);
-			return new self($id);
+			return new static($id);
 		} catch ( SQLException_DataTooLong ) {
 			throw new GebruikersException('De invoer van een van de tekstvelden is te lang.');
 		}
@@ -275,14 +259,14 @@ class Stemmer {
 		}
 		$stemmer_gegevens_str = implode("\n", $stemmer_gegevens);
 		
-		// Extra velden
-		$extra_velden = [];
-		foreach ( $lijst->get_extra_velden() as $extra_veld ) {
+		// Velden
+		$velden = [];
+		foreach ( $lijst->get_velden() as $veld ) {
 			try {
-				$extra_velden[] = "{$extra_veld->get_label()}: {$extra_veld->get_stemmer_waarde($this)}";
+				$velden[] = "{$veld->get_label()}: {$veld->get_stemmer_waarde($this)}";
 			} catch ( Muzieklijsten_Exception $e ) {}
 		}
-		$extra_velden_str = implode("\n", $extra_velden);
+		$velden_str = implode("\n", $velden);
 
 		$nummers_lijst = [];
 		foreach ( $this->get_stemmen($lijst) as $stem ) {
@@ -296,7 +280,7 @@ class Stemmer {
 		Ontvangen van:
 
 		{$stemmer_gegevens_str}
-		{$extra_velden_str}
+		{$velden_str}
 
 		{$nummers_str}
 		EOT;

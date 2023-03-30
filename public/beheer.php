@@ -123,6 +123,60 @@ try {
 	$recaptcha_checked = $recaptcha
 		? ' checked'
 		: '';
+
+	$query = <<<EOT
+	SELECT
+		v.id,
+		ev.lijst_id IS NOT NULL AS tonen,
+		ev.verplicht,
+		v.label
+	FROM velden v
+	LEFT JOIN lijsten_velden ev ON
+		v.id = ev.veld_id
+		AND ev.lijst_id = 31;
+	EOT;
+	$kolom1 = '';
+	$kolom2 = '';
+	foreach( DB::query($query) as ['id' => $id, 'tonen' => $tonen, 'verplicht' => $verplicht, 'label' => $label] ) {
+		$tonen_checked = $tonen ? ' checked': '';
+		$tonen_hidden_value = $tonen ? 'true': 'false';
+		$verplicht_checked = $verplicht ? ' checked': '';
+		$verplicht_disabled = !$tonen ? ' disabled': '';
+		$verplicht_hidden_value = $verplicht ? 'true' : 'false';
+		$label = htmlspecialchars($label);
+		$kolom1 .= <<<EOT
+		<input
+			type="checkbox"
+			id="veld-{$id}"
+			name="veld-{$id}"
+			data-input-verplicht="veld-{$id}-verplicht"
+			data-hidden-id="veld-{$id}-hidden"
+			{$tonen_checked}
+			class="check-met-hidden">
+		<input
+			id="veld-{$id}-hidden"
+			type="hidden"
+			name="velden[{$id}][tonen]"
+			value={$tonen_hidden_value}>
+		{$label}<br>
+		EOT;
+		$kolom2 .= <<<EOT
+		<input
+			type="checkbox"
+			id="veld-{$id}-verplicht"
+			name="veld-{$id}-verplicht"
+			data-hidden-id="veld-{$id}-verplicht-hidden"
+			{$verplicht_checked}
+			{$verplicht_disabled}
+			class="check-met-hidden">
+		<input
+			id="veld-{$id}-verplicht-hidden"
+			type="hidden"
+			name="velden[{$id}][verplicht]"
+			value="{$verplicht_hidden_value}">
+		Verplicht<br>
+		EOT;
+	}
 } catch ( \Throwable $e ) {
 	Log::err($e);
 	throw $e;
@@ -157,21 +211,11 @@ try {
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="velden">Velden tonen:</label>
 			<div class="col-sm-2">
-				<input type="checkbox" id="veld-telefoonnummer" name="veld-telefoonnummer" data-input-verplicht="veld-telefoonnummer-verplicht"<?php echo $veld_telefoonnummer_checked; ?>> Telefoonnummer<br>
-				<input type="checkbox" id="veld-email" name="veld-email" data-input-verplicht="veld-email-verplicht"<?php echo $veld_email_checked; ?>> E-mailadres<br>
-				<input type="checkbox" id="veld-woonplaats" name="veld-woonplaats" data-input-verplicht="veld-woonplaats-verplicht"<?php echo $veld_woonplaats_checked; ?>> Woonplaats<br>
-				<input type="checkbox" id="veld-adres" name="veld-adres" data-input-verplicht="veld-adres-verplicht"<?php echo $veld_adres_checked; ?>> Adres<br>
-				<input type="checkbox" id="veld-uitzenddatum" name="veld-uitzenddatum" data-input-verplicht="veld-uitzenddatum-verplicht"<?php echo $veld_uitzenddatum_checked; ?>> Uitzenddatum<br>
-				<input type="checkbox" id="veld-vrijekeus" name="veld-vrijekeus" data-input-verplicht="veld-vrijekeus-verplicht"<?php echo $veld_vrijekeus_checked; ?>> Vrije keuze<br>
+				<?php echo $kolom1; ?>
 				<input type="checkbox" id="recaptcha" name="recaptcha"<?php echo $recaptcha_checked; ?>> Re-Captcha<br>
 			</div>
 			<div class="col-sm-8">
-				<input type="checkbox" id="veld-telefoonnummer-verplicht" name="veld-telefoonnummer-verplicht"<?php echo $veld_telefoonnummer_verplicht_checked; echo $veld_telefoonnummer_verplicht_disabled; ?>> Verplicht<br>
-				<input type="checkbox" id="veld-email-verplicht" name="veld-email-verplicht"<?php echo $veld_email_verplicht_checked; echo $veld_email_verplicht_disabled; ?>> Verplicht<br>
-				<input type="checkbox" id="veld-woonplaats-verplicht" name="veld-woonplaats-verplicht"<?php echo $veld_woonplaats_verplicht_checked; echo $veld_woonplaats_verplicht_disabled; ?>> Verplicht<br>
-				<input type="checkbox" id="veld-adres-verplicht" name="veld-adres-verplicht"<?php echo $veld_adres_verplicht_checked; echo $veld_adres_verplicht_disabled; ?>> Verplicht<br>
-				<input type="checkbox" id="veld-uitzenddatum-verplicht" name="veld-uitzenddatum-verplicht"<?php echo $veld_uitzenddatum_verplicht_checked; echo $veld_uitzenddatum_verplicht_disabled; ?>> Verplicht<br>
-				<input type="checkbox" id="veld-vrijekeus-verplicht" name="veld-vrijekeus-verplicht"<?php echo $veld_vrijekeus_verplicht_checked; echo $veld_vrijekeus_verplicht_disabled; ?>> Verplicht<br>
+				<?php echo $kolom2; ?>
 			</div>
 		</div>
 		<div class="separator"></div>

@@ -2,14 +2,18 @@
 
 namespace muzieklijsten;
 
-class Extra_Veld {
+class Veld {
 	
 	private int $id;
 	private string $label;
-	private string $placeholder;
-	private string $type;
 	private string $leeg_feedback;
-	private bool $verplicht;
+	private ?int $max;
+	private ?int $maxlength;
+	private ?int $min;
+	private ?int $minlength;
+	private ?string $placeholder;
+	private string $type;
+	private ?bool $verplicht;
 	private Lijst $lijsten;
 	private bool $db_props_set;
 	
@@ -19,7 +23,7 @@ class Extra_Veld {
 	 * @param ?array $data Metadata uit de databasevelden (optioneel).
 	 * @param boolean $verplicht Of het veld verplicht is (optioneel)
 	 */
-	public function __construct( int $id, ?array $data = null, ?bool $verplicht=null ) {
+	public function __construct( int $id, ?array $data = null, ?bool $verplicht = null ) {
 		$this->id = $id;
 		$this->db_props_set = false;
 		$this->verplicht = $verplicht;
@@ -37,12 +41,12 @@ class Extra_Veld {
 	}
 	
 	/**
-	 * Geeft aan of twee extra velden dezelfde zijn. Wanneer $obj geen Extra_Veld is wordt false gegeven.
+	 * Geeft aan of twee velden dezelfde zijn. Wanneer $obj geen Veld is wordt false gegeven.
 	 * @param mixed $obj Object om deze instantie mee te vergelijken
-	 * @return bool Of $obj hetzelfde extra veld is als deze instantie
+	 * @return bool Of $obj hetzelfde veld is als deze instantie
 	 */
 	public function equals( $obj ): bool {
-		return ( $obj instanceof Extra_Veld && $obj->get_id() == $this->id );
+		return ( $obj instanceof Veld && $obj->get_id() == $this->id );
 	}
 	
 	/**
@@ -57,9 +61,13 @@ class Extra_Veld {
 	/**
 	 * 
 	 * @return string
+	 * @throws ObjectEigenschapOntbreekt
 	 */
 	public function get_placeholder(): string {
 		$this->set_db_properties();
+		if ( !isset($this->placeholder) ) {
+			throw new ObjectEigenschapOntbreekt();
+		}
 		return $this->placeholder;
 	}
 	
@@ -95,14 +103,14 @@ class Extra_Veld {
 	}
 	
 	/**
-	 * Geeft alle lijsten waar dit een extra veld is.
+	 * Geeft alle lijsten waar dit een veld is.
 	 * return Muzieklijst[]
 	 */
 	public function get_lijsten(): array {
 		if ( !isset($this->lijsten) ) {
 			$this->lijsten = [];
 			$sql = sprintf(
-				'SELECT lijst_id FROM lijsten_extra_velden WHERE extra_veld_id = %d',
+				'SELECT lijst_id FROM lijsten_velden WHERE veld_id = %d',
 				$this->get_id()
 			);
 			foreach ( DB::selectSingleColumn($sql) as $lijst_id ) {
@@ -117,12 +125,13 @@ class Extra_Veld {
 	 * @return string
 	 */
 	public function get_html_id(): string {
-		return sprintf('extra-veld-%d', $this->get_id());
+		return sprintf('veld-%d', $this->get_id());
 	}
 	
 	/**
 	 * Geeft een stukje HTML voor het invoerveld binnen een formulier.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_formulier_html(): string {
 		$id = $this->get_html_id();
@@ -165,7 +174,7 @@ class Extra_Veld {
 	public function get_stemmer_waarde( Stemmer $stemmer ) {
 		try {
 			$waarde = DB::selectSingle(sprintf(
-				'SELECT waarde FROM stemmers_extra_velden WHERE stemmer_id = %d AND extra_veld_id = %d',
+				'SELECT waarde FROM stemmers_velden WHERE stemmer_id = %d AND veld_id = %d',
 				$stemmer->get_id(),
 				$this->get_id()
 			));
@@ -188,7 +197,7 @@ class Extra_Veld {
 	private function set_db_properties(): void {
 		if ( !$this->db_props_set ) {
 			$this->set_data(DB::selectSingleRow(sprintf(
-				'SELECT * FROM extra_velden WHERE id = %d',
+				'SELECT * FROM velden WHERE id = %d',
 				$this->get_id()
 			)));
 		}
@@ -200,17 +209,69 @@ class Extra_Veld {
 	 */
 	private function set_data( array $data ): void {
 		$this->label = $data['label'];
+		$this->leeg_feedback = $data['leeg_feedback'];
+		$this->max = $data['max'];
+		$this->maxlength = $data['maxlength'];
+		$this->min = $data['min'];
+		$this->minlength = $data['minlength'];
 		$this->placeholder = $data['placeholder'];
 		$this->type = $data['type'];
-		$this->leeg_feedback = $data['leeg_feedback'];
 		$this->db_props_set = true;
 	}
 
 	public function add_waarde( Stemmer $stemmer, string $waarde ): void {
-		$id = DB::insertMulti('stemmers_extra_velden', [
+		DB::insertMulti('stemmers_velden', [
 			'stemmer_id' => $stemmer->get_id(),
-			'extra_veld_id' => $this->get_id(),
+			'veld_id' => $this->get_id(),
 			'waarde' => $waarde
 		]);
+	}
+
+	/**
+	 * @return int
+	 * @throws ObjectEigenschapOntbreekt
+	 */
+	public function get_max(): int {
+		$this->set_db_properties();
+		if ( !isset($this->max) ) {
+			throw new ObjectEigenschapOntbreekt();
+		}
+		return $this->max;
+	}
+
+	/**
+	 * @return int
+	 * @throws ObjectEigenschapOntbreekt
+	 */
+	public function get_maxlength(): int {
+		$this->set_db_properties();
+		if ( !isset($this->maxlength) ) {
+			throw new ObjectEigenschapOntbreekt();
+		}
+		return $this->maxlength;
+	}
+
+	/**
+	 * @return int
+	 * @throws ObjectEigenschapOntbreekt
+	 */
+	public function get_min(): int {
+		$this->set_db_properties();
+		if ( !isset($this->min) ) {
+			throw new ObjectEigenschapOntbreekt();
+		}
+		return $this->min;
+	}
+
+	/**
+	 * @return int
+	 * @throws ObjectEigenschapOntbreekt
+	 */
+	public function get_minlength(): int {
+		$this->set_db_properties();
+		if ( !isset($this->minlength) ) {
+			throw new ObjectEigenschapOntbreekt();
+		}
+		return $this->minlength;
 	}
 }

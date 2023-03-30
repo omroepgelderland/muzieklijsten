@@ -119,3 +119,62 @@ export function get_instant_promise(...args) {
   export function login() {
     return post('login', {});
   }
+
+/**
+ * Maakt DOM-elementen van een door html-loader geïmporteerd template.
+ * @param {string} geimporteerd_template 
+ * @returns {HTMLCollection}
+ */
+export function get_html_template( geimporteerd_template ) {
+  let template = document.createElement('template');
+  template.innerHTML = geimporteerd_template.trim();
+  return template.content.children;
+}
+
+/**
+ * Triggert een event op een element.
+ * @param {HTMLElement} elem 
+ * @param {string} type 
+ * @param {any} data 
+ */
+export function trigger(elem, type, data) {
+  if ( data !== undefined ) {
+      data = {
+          'detail': data
+      }
+  }
+  elem.dispatchEvent(new CustomEvent(type, data));
+}
+
+/**
+ * Plaatst (non breaking) spaties in een Nederlands internationaal telefoonnummer
+ * voor de leesbaarheid.
+ * @param {string} telefoonnummer Origineel telefoonnummer
+ * @returns {string}
+ */
+export function format_telefoonnummer( telefoonnummer ) {
+	const patronen = [
+		// Viercijferige netnummers
+		/^(\+31)((?:11|16|17|18|22|25|29|31|32|34|41|44|47|47|48|49|51|52|54|56|57|59|67|80|90)[0-9])([0-9]{2})([0-9]{2})([0-9]{2})$/,
+		// Eencijferige netnummers
+		/^(\+31)(6)([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})$/,
+		// Tweecijferige netnummers
+		/^(\+31)([0-9]{2})([0-9]{3})([0-9]{2})([0-9]{2})$/
+	];
+	for ( const patroon of patronen ) {
+        let m = telefoonnummer.match(patroon);
+		if ( m !== null && m.length > 0 ) {
+			m.shift();
+            return m.join(' ');
+		}
+	}
+	return telefoonnummer;
+}
+
+export function get_random_string(lengte) {
+  let respons = '';
+  while ( respons.length < lengte ) {
+    respons += Math.floor(Math.random()*Number.MAX_SAFE_INTEGER).toString(36);
+  }
+  return respons.substring(0, lengte);
+}

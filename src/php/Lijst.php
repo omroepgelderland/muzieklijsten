@@ -24,8 +24,8 @@ class Lijst {
 	/** @var string[] */
 	private array $notificatie_email_adressen;
 	private string $bedankt_tekst;
-	/** @var Extra_Veld[] */
-	private array $extra_velden;
+	/** @var Veld[] */
+	private array $velden;
 	/** @var Nummer[] */
 	private array $nummers;
 	private bool $db_props_set;
@@ -133,6 +133,7 @@ class Lijst {
 	 * Geeft de HTML van het invoerveld voor de naam.
 	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_veld_naam_html(): string {
 		if ( $this->heeft_veld_naam() ) {
@@ -171,6 +172,7 @@ class Lijst {
 	 * Geeft de HTML van het invoerveld voor het telefoonnummer.
 	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_veld_telefoonnummer_html(): string {
 		if ( $this->heeft_veld_telefoonnummer() ) {
@@ -209,6 +211,7 @@ class Lijst {
 	 * Geeft de HTML van het invoerveld voor het e-mailadres.
 	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_veld_email_html(): string {
 		if ( $this->heeft_veld_email() ) {
@@ -247,6 +250,7 @@ class Lijst {
 	 * Geeft de HTML van het invoerveld voor de woonplaats.
 	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_veld_woonplaats_html(): string {
 		if ( $this->heeft_veld_adres() || $this->heeft_veld_woonplaats() ) {
@@ -285,6 +289,7 @@ class Lijst {
 	 * Geeft de HTML van het invoerveld voor het adres.
 	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_veld_adres_html(): string {
 		if ( $this->heeft_veld_adres() ) {
@@ -331,6 +336,7 @@ class Lijst {
 	 * Geeft de HTML van het invoerveld voor de uitzenddatum.
 	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_veld_uitzenddatum_html(): string {
 		if ( $this->heeft_veld_uitzenddatum() ) {	
@@ -338,9 +344,7 @@ class Lijst {
 			<div class="form-group">
 				<label class="control-label col-sm-2">Uitzenddatum</label>
 				<div class="col-sm-10">
-					<div class="input-group date" id="datetimepicker">
-						<input type="date" class="form-control" placeholder="selecteer een datum" data-leeg-feedback="Vul de uitzenddatum in a.u.b.">
-					</div>
+					<input type="date" class="form-control" placeholder="selecteer een datum" data-leeg-feedback="Vul de uitzenddatum in a.u.b.">
 				</div>
 			</div>
 			EOT;
@@ -384,6 +388,7 @@ class Lijst {
 	 * Geeft de HTML van het invoerveld voor de vrije keuze.
 	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
 	 * @return string
+	 * @deprecated
 	 */
 	public function get_veld_vrijekeus_html(): string {
 		if ( $this->heeft_veld_vrijekeus() ) {
@@ -420,24 +425,25 @@ class Lijst {
 	}
 	
 	/**
-	 * Geeft alle extra velden die bij de lijst horen.
-	 * return Extra_Veld[]
+	 * Geeft alle velden die bij de lijst horen.
+	 * @return Veld[]
 	 */
-	public function get_extra_velden(): array {
-		if ( !isset($this->extra_velden) ) {
-			$this->extra_velden = [];
+	public function get_velden(): array {
+		if ( !isset($this->velden) ) {
+			$this->velden = [];
 			$query = <<<EOT
-				SELECT extra_veld_id, verplicht
-				FROM lijsten_extra_velden
+				SELECT veld_id, verplicht
+				FROM lijsten_velden
 				WHERE lijst_id = {$this->get_id()}
+				ORDER BY veld_id
 			EOT;
 			foreach ( DB::query($query) as $entry ) {
-				$id = $entry['extra_veld_id'];
+				$id = $entry['veld_id'];
 				$verplicht = $entry['verplicht'] == 1;
-				$this->extra_velden[] = new Extra_Veld($id, null, $verplicht);
+				$this->velden[] = new Veld($id, null, $verplicht);
 			}
 		}
-		return $this->extra_velden;
+		return $this->velden;
 	}
 	
 	/**
@@ -638,7 +644,7 @@ class Lijst {
 	}
 	
 	/**
-	 * Verwijdert de lijst. Koppelingen met nummers, extra velden, stemmen e.d. worden ook verwijderd
+	 * Verwijdert de lijst. Koppelingen met nummers, velden, stemmen e.d. worden ook verwijderd
 	 */
 	public function remove(): void {
 		DB::query(sprintf(
@@ -737,15 +743,15 @@ class Lijst {
 		DB::query($query);
 		$nieuw_id = DB::getDB()->insert_id;
 
-		// Extra velden koppelen
+		// Velden koppelen
 		$query = <<<EOT
-			INSERT INTO lijsten_extra_velden
-				(lijst_id, extra_veld_id, verplicht)
+			INSERT INTO lijsten_velden
+				(lijst_id, veld_id, verplicht)
 				SELECT
 					{$nieuw_id},
-					extra_veld_id,
+					veld_id,
 					verplicht
-				FROM lijsten_extra_velden
+				FROM lijsten_velden
 				WHERE lijst_id = {$this->get_id()}
 		EOT;
 		DB::query($query);
@@ -909,6 +915,121 @@ class Lijst {
 			$e_input->appendChild($doc->createAttribute('required'));
 		}
 		return $doc->saveHTML();
+	}
+
+	public function set_veld( Veld $veld, bool $verplicht ): void {
+		DB::insert_update_multi('lijsten_velden', [
+			'lijst_id' => $this->get_id(),
+			'veld_id' => $veld->get_id(),
+			'verplicht' => $verplicht
+		]);
+	}
+
+	public function remove_veld( Veld $veld ): void {
+		$query = <<<EOT
+		DELETE
+		FROM lijsten_velden
+		WHERE
+			lijst_id = {$this->get_id()}
+			AND veld_id = {$veld->get_id()}
+		EOT;
+		DB::query($query);
+	}
+
+	public function get_resultaten(): array {
+		$query = <<<EOT
+		SELECT
+			stemmen.nummer_id,
+			n.titel,
+			n.artiest,
+			stemmers.id AS stemmer_id,
+			stemmers.ip,
+			stemmen.behandeld,
+			stemmen.toelichting,
+			stemmers.timestamp,
+			stemmers.is_geanonimiseerd,
+			v.id AS veld_id,
+			v.type,
+			sv.waarde
+		FROM stemmen
+		INNER JOIN nummers n ON
+			n.id = stemmen.nummer_id
+		INNER JOIN stemmers ON
+			stemmers.id = stemmen.stemmer_id
+		INNER JOIN lijsten_velden lv ON
+			lv.lijst_id = 31
+		INNER JOIN velden v ON
+			v.id = lv.veld_id
+		LEFT JOIN stemmers_velden sv ON
+			sv.stemmer_id = stemmers.id
+			AND sv.veld_id = v.id
+		INNER JOIN (
+			SELECT
+				nummer_id,
+				COUNT(nummer_id) AS aantal
+			FROM stemmen
+			WHERE lijst_id = 31
+			GROUP BY nummer_id
+		) a ON
+			a.nummer_id = stemmen.nummer_id
+		WHERE
+			stemmen.lijst_id = 31
+		ORDER BY
+			a.aantal DESC,
+			n.id,
+			stemmers.timestamp ASC,
+			stemmers.id,
+			v.id,
+			RAND()
+		EOT;
+		$nummers = [];
+		foreach ( DB::query($query) as [
+			'nummer_id' => $nummer_id,
+			'titel' => $titel,
+			'artiest' => $artiest,
+			'stemmer_id' => $stemmer_id,
+			'ip' => $ip,
+			'behandeld' => $is_behandeld,
+			'toelichting' => $toelichting,
+			'timestamp' => $timestamp,
+			'is_geanonimiseerd' => $is_geanonimiseerd,
+			'veld_id' => $veld_id,
+			'type' => $type,
+			'waarde' => $waarde
+		]) {
+			$nummer_id = (int)$nummer_id;
+			$stemmer_id = (int)$stemmer_id;
+			$is_behandeld = $is_behandeld == 1;
+			$is_geanonimiseerd = $is_geanonimiseerd == 1;
+			$veld_id = (int)$veld_id;
+			if ( $is_geanonimiseerd ) {
+				$ip = $toelichting = $waarde = '🔒';
+				$type = 'text';
+			}
+
+			$nummers[$nummer_id]['nummer'] = [
+				'id' => $nummer_id,
+				'titel' => $titel,
+				'artiest' => $artiest
+			];
+			$nummers[$nummer_id]['stemmen'][$stemmer_id]['stemmer_id'] = $stemmer_id;
+			$nummers[$nummer_id]['stemmen'][$stemmer_id]['ip'] = $ip;
+			$nummers[$nummer_id]['stemmen'][$stemmer_id]['is_behandeld'] = $is_behandeld;
+			$nummers[$nummer_id]['stemmen'][$stemmer_id]['toelichting'] = $toelichting;
+			$nummers[$nummer_id]['stemmen'][$stemmer_id]['timestamp'] = $timestamp;
+			// $nummers[$nummer_id]['stemmen'][$stemmer_id]['is_geanonimiseerd'] = $is_geanonimiseerd;
+			$nummers[$nummer_id]['stemmen'][$stemmer_id]['velden'][$veld_id] = [
+				'type' => $type,
+				'waarde' => $waarde
+			];
+		}
+		foreach ( $nummers as $nummer_id => $nummer ) {
+			foreach ( $nummers[$nummer_id]['stemmen'] as $stemmer_id => $stemmer ) {
+				$nummers[$nummer_id]['stemmen'][$stemmer_id]['velden'] = array_values($stemmer['velden']);
+			}
+			$nummers[$nummer_id]['stemmen'] = array_values($nummers[$nummer_id]['stemmen']);
+		}
+		return array_values($nummers);
 	}
 
 }

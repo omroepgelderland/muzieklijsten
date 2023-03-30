@@ -1,8 +1,8 @@
 #!/bin/bash
 
-node_versie="18.14.1"
-npm_versie="9.5.0"
-md5sum --status -c package-lock.json.md5 2>/dev/null
+node_versie="18.15.0"
+npm_versie="9.6.2"
+md5sum --status -c package.md5 2>/dev/null
 npm_onveranderd=$?
 vorige_git_hash=$(git rev-parse HEAD)
 
@@ -18,7 +18,14 @@ else
 fi
 
 if [[ $env == "prod" || $env == "staging" ]]; then
+	deploy_md5_voor=$(md5sum deploy.sh 2>/dev/null)
 	git pull || exit 1
+	deploy_md5_na=$(md5sum deploy.sh 2>/dev/null)
+	if [[ $deploy_md5_voor != $deploy_md5_na ]]; then
+		# Deploy script zelf is veranderd.
+		./deploy.sh
+		exit
+	fi
 fi
 $composercmd check-platform-reqs || exit 1
 $composercmd install || exit 1
@@ -37,7 +44,7 @@ if [[ $npm_onveranderd != 0 ]]; then
 	else
 		nvm exec $node_versie npm ci || exit 1
 	fi
-	md5sum package-lock.json >package-lock.json.md5
+	md5sum package.json package-lock.json >package.md5
 fi
 if [[ $env == "dev" ]]; then
 	rm -rf \

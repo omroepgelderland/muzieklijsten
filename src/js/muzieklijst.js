@@ -72,6 +72,82 @@ class Nummer {
 
 }
 
+/**
+ * Een invoerveld met info over de stemmer.
+ */
+class Invoerveld {
+
+  /** @type {HTMLDivElement} */
+  e_form_group;
+
+  constructor({
+    id,
+    label,
+    leeg_feedback,
+    max,
+    maxlength,
+    min,
+    minlength,
+    placeholder,
+    type,
+    verplicht
+  }) {
+    const id_str = `veld-${id}`;
+    const naam = `velden[${id}]`;
+
+    this.e_form_group = document.createElement('div');
+    this.e_form_group.classList.add('form-group', 'row');
+
+    let e_label = document.createElement('label');
+    this.e_form_group.appendChild(e_label);
+    e_label.classList.add('control-label', 'col-sm-2');
+    e_label.setAttribute('for', id_str);
+    e_label.appendChild(document.createTextNode(label));
+
+    let e_col = document.createElement('div');
+    this.e_form_group.appendChild(e_col);
+    e_col.classList.add('col-sm-10');
+
+    let e_input;
+    if ( type === 'textarea' ) {
+      e_input = document.createElement('textarea');
+      e_input.rows = 5;
+    } else {
+      e_input = document.createElement('input');
+      if ( type === 'postcode' ) {
+        e_input.type = 'text';
+        e_input.classList.add('postcode');
+      } else {
+        e_input.type = type;
+      }
+      if ( Number.isInteger(max) ) {
+        e_input.max = max;
+      }
+      if ( Number.isInteger(min) ) {
+        e_input.min = min;
+      }
+    }
+    e_col.appendChild(e_input);
+    e_input.classList.add('form-control');
+    e_input.id = id_str;
+    e_input.name = naam;
+    e_input.setAttribute('data-leeg-feedback', leeg_feedback);
+    if ( Number.isInteger(maxlength) ) {
+      e_input.maxLength = maxlength;
+    }
+    if ( Number.isInteger(minlength) ) {
+      e_input.minLength = minlength;
+    }
+    if ( typeof placeholder === 'string' ) {
+      e_input.placeholder = placeholder;
+    }
+    e_input.required = verplicht;
+
+    document.getElementById('formulier-velden').appendChild(this.e_form_group);
+  }
+
+}
+
 class StemView {
 
   /** @type {number} */
@@ -200,7 +276,9 @@ class StemView {
       this.e_body.classList.add('max-ip-bereikt');
     }
     this.e_keuzeformulier.elements.lijst.value = this.lijst_id;
-    document.getElementById('formulier-velden').innerHTML = serverdata.formulier_velden;
+    for ( const velddata of serverdata.velden ) {
+      new Invoerveld(velddata);
+    }
     for ( const e_captcha of document.querySelectorAll('.g-recaptcha') ) {
       e_captcha.setAttribute('data-sitekey', serverdata.recaptcha_sitekey);
       let e_script = document.createElement('script');

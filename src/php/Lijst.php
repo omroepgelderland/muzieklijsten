@@ -957,7 +957,7 @@ class Lijst {
 		INNER JOIN stemmers ON
 			stemmers.id = stemmen.stemmer_id
 		INNER JOIN lijsten_velden lv ON
-			lv.lijst_id = 31
+			lv.lijst_id = {$this->get_id()}
 		INNER JOIN velden v ON
 			v.id = lv.veld_id
 		LEFT JOIN stemmers_velden sv ON
@@ -968,12 +968,12 @@ class Lijst {
 				nummer_id,
 				COUNT(nummer_id) AS aantal
 			FROM stemmen
-			WHERE lijst_id = 31
+			WHERE lijst_id = {$this->get_id()}
 			GROUP BY nummer_id
 		) a ON
 			a.nummer_id = stemmen.nummer_id
 		WHERE
-			stemmen.lijst_id = 31
+			stemmen.lijst_id = {$this->get_id()}
 		ORDER BY
 			a.aantal DESC,
 			n.id,

@@ -66,3 +66,8 @@ class OngeldigeInvoer extends GebruikersException {}
 class BlacklistException extends Muzieklijsten_Exception {}
 
 class ObjectEigenschapOntbreekt extends Muzieklijsten_Exception {}
+
+/**
+ * Ongeldig lijst-ID
+ */
+class GeenLijstException extends GebruikersException {}

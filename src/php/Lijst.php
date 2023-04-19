@@ -784,15 +784,15 @@ class Lijst {
 	 * Maakt een object uit een id aangeleverd door HTTP GET of POST.
 	 * @param int $type INPUT_GET of INPUT_POST. Standaard is INPUT_POST.
 	 * @return Lijst
-	 * @throws Muzieklijsten_Exception
+	 * @throws GeenLijstException
 	 */
 	public static function maak_uit_request( int $type = INPUT_POST ): Lijst {
 		$id = filter_input($type, 'lijst', FILTER_VALIDATE_INT);
 		if ( $id === null ) {
-			throw new Muzieklijsten_Exception('Geen lijst in invoer');
+			throw new GeenLijstException('Geen lijst in invoer');
 		}
 		if ( $id === false ) {
-			throw new Muzieklijsten_Exception(sprintf(
+			throw new GeenLijstException(sprintf(
 				'Ongeldige muzieklijst id: %s',
 				filter_input($type, 'lijst')
 			));

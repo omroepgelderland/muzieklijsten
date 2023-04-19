@@ -100,7 +100,7 @@ class Stem {
 	 * Maakt een object uit een id aangeleverd door HTTP GET of POST.
 	 * @param int $type INPUT_GET of INPUT_POST. Standaard is INPUT_POST.
 	 * @return Stem
-	 * @throws Muzieklijsten_Exception
+	 * @throws GeenLijstException
 	 */
 	public static function maak_uit_request( int $type = INPUT_POST ): Stem {
 		return new static(

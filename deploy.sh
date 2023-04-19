@@ -1,7 +1,7 @@
 #!/bin/bash
 
 node_versie="18.15.0"
-npm_versie="9.6.2"
+npm_versie="9.6.4"
 md5sum --status -c package.md5 2>/dev/null
 npm_onveranderd=$?
 vorige_git_hash=$(git rev-parse HEAD)

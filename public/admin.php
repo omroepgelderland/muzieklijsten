@@ -24,7 +24,7 @@ try {
 			$lijst_id
 		));
 		$iframe_code = htmlspecialchars("<iframe src=\"{$iframe_url}\" frameborder=\"0\" height=\"3000\" style=\"width: 100%; height: 3000px; border: none;\">");
-	} catch ( Muzieklijsten_Exception $e ) {
+	} catch ( GeenLijstException $e ) {
 		$lijst = null;
 		$lijst_id = '';
 		$lijst_naam = 'Nieuwe lijst';

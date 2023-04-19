@@ -19,7 +19,8 @@
 		"pear/mail_mime": "^1.10",
 		"pear/mail": "^1.4",
 		"google/recaptcha": "^1.2",
-		"laminas/laminas-log": "^2.16"
+		"laminas/laminas-log": "^2.16",
+		"ext-mysqli": "*"
 	},
 	"autoload": {
 		"psr-4": {

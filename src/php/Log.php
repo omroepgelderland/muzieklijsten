@@ -84,7 +84,7 @@ class Log {
 	 */
 	protected function get_pad( ?string $bestandsnaam=null ): string {
 		$bestandsnaam ??= pathinfo(get_hoofdscript_pad())['filename'];
-		return path_join(
+		$pad = path_join(
 			__DIR__,
 			'..',
 			'..',
@@ -96,6 +96,10 @@ class Log {
 				(new \DateTime())->format('Y-m-d')
 			)
 		);
+		if ( !is_dir(dirname($pad)) ) {
+			mkdir(dirname($pad), 0775, true);
+		}
+		return $pad;
 	}
 
 	/**

@@ -188,6 +188,7 @@ class SSP {
 	 * sending back to the client.
 	 *
 	 *  @return array          Server-side processing response array
+	 * @throws GeenLijstException
 	 */
 	public function simple (): array
 	{
@@ -454,7 +455,7 @@ class SSP {
 
 	/**
 	 * 
-	 * @throws Muzieklijsten_Exception
+	 * @throws GeenLijstException
 	 */
 	private function get_lijst(): Lijst {
 		$this->lijst ??= Lijst::maak_uit_request($this->input_type);

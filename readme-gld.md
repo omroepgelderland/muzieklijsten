@@ -1,30 +1,33 @@
 # Muzieklijsten module
 Webapp waarmee bezoekers nummers kunnen aanvragen en kunnen stemmen op toplijsten.
 
+De productieomgeving is muzieklijsten@app.gld.nl:/home/muzieklijsten/prod/
+De stagingomgeving is muzieklijsten@app.gld.nl:/home/muzieklijsten/staging/
+
 ## Interfaces
 Stemlijst
-[url root]/index.php?lijst=[lijst id]
-[url root]?lijst=[lijst id]
+https://web.gld.nl/muzieklijsten/index.php?lijst=[lijst id]
+https://web.gld.nl/muzieklijsten?lijst=[lijst id]
 
 Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten.
-[url root]/admin.php
+https://web.gld.nl/muzieklijsten/admin.php
 
-Losse nummers toevoegen aan de database.
-[url root]/los_toevoegen.html
+Losse nummers toevoegen aan de database, buiten Powergold om
+https://web.gld.nl/muzieklijsten/los_toevoegen.html
 
 ## Installatie
 Alleen voor Linux.
 Benodigde paketten:
+    - composer
     - PHP 8.1 of hoger
     - PHP mysqli
-    - Composer
-    - MySQL- of MariaDB-server
+    - MySQL- of MariaDBserver
 Installatie van dependencies op Ubuntu 22.04:
 ```sh
 sudo apt install composer php mariadb-server php-mysql acl
 ```
 Voer het installatiescript install/install.sh uit.
-Configureer je webserver.
+Configureer je webserver
 Importeer nummers.
 
 ## Nummers invoeren
@@ -41,14 +44,12 @@ Beheerders kunnen losse nummers toevoegen op de pagina los_toevoegen.html
 Nieuwe nummers kunnen worden ingevoerd in de tabel nummers.
 
 ## Scheduled commands
-Je kunt gebruik maken van MySQL scheduled events om een stemlijst op een specifieke tijd aan of uit te zetten.
-
-### Lijst activeren:
+Lijst activeren:
 ```mysql
 CREATE EVENT muzieklijsten_stemmen_aan_[lijst id] ON SCHEDULE AT '1999-12-31 23:59:59' ON COMPLETION NOT PRESERVE ENABLE DO UPDATE lijsten SET actief=1 WHERE id=[lijst id];
 ```
 
-### Lijst deactiveren:
+Lijst deactiveren:
 ```mysql
 CREATE EVENT muzieklijsten_stemmen_uit_[lijst id] ON SCHEDULE AT '1999-12-31 23:59:59' ON COMPLETION NOT PRESERVE ENABLE DO UPDATE lijsten SET actief=0 WHERE id=[lijst id];
 ```

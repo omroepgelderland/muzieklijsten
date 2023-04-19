@@ -32,7 +32,7 @@ try {
 		$recaptcha = $lijst->heeft_gebruik_recaptcha();
 		$email = htmlspecialchars(implode(',', $lijst->get_notificatie_email_adressen()));
 		$bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
-	} catch ( Muzieklijsten_Exception $e ) {
+	} catch ( GeenLijstException $e ) {
 		$lijst_id = '';
 		$naam = '';
 		$is_actief = true;

@@ -6,6 +6,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 
 /**
  * Lijst verwijderen vanuit de beheerdersinterface.
+ * @throws GeenLijstException
  */
 function verwijder_lijst() {
     login();
@@ -86,6 +87,7 @@ function set_lijst_velden( Lijst $lijst, array $input_velden ) {
 
 /**
  * Bestaande lijst opslaan in de beheerdersinterface.
+ * @throws GeenLijstException
  */
 function lijst_opslaan(): void {
     login();
@@ -172,6 +174,7 @@ function ajax_get_lijsten(): array {
 
 /**
  * Instellen dat een stem is behandeld door de redactie.
+ * @throws GeenLijstException
  */
 function stem_set_behandeld(): void {
     login();
@@ -182,6 +185,7 @@ function stem_set_behandeld(): void {
 
 /**
  * Verwijderen van een stem in de resultateninterface.
+ * @throws GeenLijstException
  */
 function verwijder_stem(): void {
     login();
@@ -196,6 +200,7 @@ function verwijder_stem(): void {
 
 /**
  * Verwijderen van een nummer in de resultateninterface.
+ * @throws GeenLijstException
  */
 function verwijder_nummer(): void {
     login();
@@ -205,6 +210,7 @@ function verwijder_nummer(): void {
 
 /**
  * Geeft het totaal aantal stemmers op een lijst.
+ * @throws GeenLijstException
  */
 function get_totaal_aantal_stemmers(): int {
     login();
@@ -217,6 +223,7 @@ function get_totaal_aantal_stemmers(): int {
 /**
  * Verwerk een stem van een bezoeker.
  * @return string HTML-respons.
+ * @throws GeenLijstException
  */
 function stem(): string {
     $lijst = Lijst::maak_uit_request();
@@ -317,6 +324,7 @@ function verwerk_stem( Lijst $lijst ): Stemmer {
 
 /**
  * Voegt een nummer toe aan een stemlijst.
+ * @throws GeenLijstException
  */
 function lijst_nummer_toevoegen(): void {
     login();
@@ -328,6 +336,7 @@ function lijst_nummer_toevoegen(): void {
 
 /**
  * Haalt een nummer weg uit een stemlijst.
+ * @throws GeenLijstException
  */
 function lijst_nummer_verwijderen(): void {
     login();
@@ -377,6 +386,9 @@ function get_selected_html(): string {
     EOT;
 }
 
+/**
+ * @throws GeenLijstException
+ */
 function vul_datatables(): array {
     $ssp = new SSP(
         INPUT_POST,
@@ -404,6 +416,7 @@ function vul_datatables(): array {
 /**
  * Geeft data over de stemlijst voor de stempagina.
  * @return array
+ * @throws GeenLijstException
  */
 function get_stemlijst_frontend_data(): array {
 	try {

@@ -7,7 +7,7 @@ Stemlijst
 [url root]?lijst=[lijst id]
 
 Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten.
-[url root]/admin.php
+[url root]/admin.html
 
 Losse nummers toevoegen aan de database.
 [url root]/los_toevoegen.html
@@ -21,7 +21,7 @@ Benodigde paketten:
     - MySQL- of MariaDB-server
 Installatie van dependencies op Ubuntu 22.04:
 ```sh
-sudo apt install composer php mariadb-server php-mysql acl
+sudo apt install composer php mariadb-server php-mysql acl cron
 ```
 Voer het installatiescript install/install.sh uit.
 Configureer je webserver.

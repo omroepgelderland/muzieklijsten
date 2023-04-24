@@ -129,43 +129,6 @@ class Veld {
 	}
 	
 	/**
-	 * Geeft een stukje HTML voor het invoerveld binnen een formulier.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_formulier_html(): string {
-		$id = $this->get_html_id();
-
-		$template = <<<EOT
-		<div class="form-group">
-			<label class="control-label col-sm-2"></label>
-			<div class="col-sm-10">
-				<input class="form-control">
-			</div>
-		</div>
-		EOT;
-		$doc = new HTMLTemplate($template);
-		/** @var \DOMElement */
-		$e_label = $doc->getElementsByTagName('label')->item(0);
-		/** @var \DOMElement */
-		$e_input = $doc->getElementsByTagName('input')->item(0);
-		$e_label->appendChild($doc->createTextNode($this->get_label()));
-		$e_label->setAttribute('for', $id);
-		$e_input->setAttribute('type', $this->get_type());
-		$e_input->setAttribute('id', $id);
-		$e_input->setAttribute('name', $id);
-		$e_input->setAttribute('placeholder', $this->get_placeholder());
-		$e_input->setAttribute('data-leeg-feedback', $this->get_leeg_feedback());
-		if ( in_array($this->get_type(), ['text', 'search', 'url', 'tel', 'email', 'password']) ) {
-			$e_input->setAttribute('maxlength', 1024);
-		}
-		if ( $this->is_verplicht() ) {
-			$e_input->appendChild($doc->createAttribute('required'));
-		}
-		return $doc->saveHTML();
-	}
-	
-	/**
 	 * Geeft het antwoord dat een stemmer hier heeft ingevuld.
 	 * @throws Muzieklijsten_Exception als er geen antwoord is.
 	 * @param Stemmer $stemmer

@@ -21,6 +21,9 @@ function readline_met_default( string $prompt, bool $mag_leeg = true, string $de
 
 // Configuratiebestand genereren.
 $root_url = readline_met_default('Root-URL naar deze installatie van muzieklijsten', false);
+echo "Vul de gegevens van de Google Recaptcha in. Je hebt de legacy-keys nodig. (https://cloud.google.com/recaptcha-enterprise/docs/create-key#find-key)\n";
+$recaptcha_sitekey = readline_met_default('Recaptcha site key', false);
+$recaptcha_secret = readline_met_default('Recaptcha secret', false);
 $root_url = rtrim($root_url, '/').'/';
 $config = [
 	'organisatie' => readline_met_default('Naam organisatie/bedrijf'),
@@ -40,6 +43,10 @@ $config = [
 	'mail' => [
 		'sendmail_path' => '/usr/sbin/sendmail',
 		'afzender' => readline_met_default('Afzender voor e-mails naar de redactie', false)
+	],
+	'recaptcha' => [
+		'sitekey' => $recaptcha_sitekey,
+		'secret' => $recaptcha_secret
 	]
 ];
 
@@ -132,7 +139,7 @@ Stemmodule voor publiek:
 {$root_url}index.php?lijst=[lijst id]
 
 Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten:
-{$root_url}admin.php
+{$root_url}admin.html
 
 Losse nummers toevoegen aan de database, buiten Powergold om:
 {$root_url}los_toevoegen.html

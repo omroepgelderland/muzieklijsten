@@ -196,20 +196,21 @@ class Stemmer {
 	}
 	
 	/**
-	 * Maakt een object uit een id aangeleverd door HTTP GET of POST.
-	 * @param int $type INPUT_GET of INPUT_POST. Standaard is INPUT_POST.
+	 * Maakt een object uit een id aangeleverd door HTTP POST.
+	 * @param \stdClass $request HTTP-request.
 	 * @return Stemmer
 	 * @throws Muzieklijsten_Exception
 	 */
-	public static function maak_uit_request( int $type = INPUT_POST ): Stemmer {
-		$id = filter_input($type, 'stemmer', FILTER_VALIDATE_INT);
-		if ( $id === null ) {
+	public static function maak_uit_request( \stdClass $request ): Stemmer {
+		try {
+			$id = filter_var($request->stemmer, FILTER_VALIDATE_INT);
+		} catch ( UndefinedPropertyException ) {
 			throw new Muzieklijsten_Exception('Geen stemmer in invoer');
 		}
 		if ( $id === false ) {
 			throw new Muzieklijsten_Exception(sprintf(
 				'Ongeldig stemmer id: %s',
-				filter_input($type, 'stemmer')
+				filter_var($request->stemmer)
 			));
 		}
 		return new static($id);

@@ -154,20 +154,21 @@ class Nummer {
 	}
 
 	/**
-	 * Maakt een object uit een id aangeleverd door HTTP GET of POST.
-	 * @param int $type INPUT_GET of INPUT_POST. Standaard is INPUT_POST.
+	 * Maakt een object uit een id aangeleverd door HTTP POST.
+     * @param \stdClass $request HTTP-request.
 	 * @return Nummer
 	 * @throws Muzieklijsten_Exception
 	 */
-	public static function maak_uit_request( int $type = INPUT_POST ): Nummer {
-		$id = filter_input($type, 'nummer', FILTER_VALIDATE_INT);
-		if ( $id === null ) {
+	public static function maak_uit_request( \stdClass $request ): Nummer {
+		try {
+			$id = filter_var($request->nummer, FILTER_VALIDATE_INT);
+		} catch ( UndefinedPropertyException ) {
 			throw new Muzieklijsten_Exception('Geen nummer in invoer');
 		}
 		if ( $id === false ) {
 			throw new Muzieklijsten_Exception(sprintf(
 				'Ongeldige nummer id: %s',
-				filter_input($type, 'nummer')
+				filter_var($request->nummer)
 			));
 		}
 		return new static($id);

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS `lijsten` (
  `email` varchar(100) DEFAULT NULL,
  `bedankt_tekst` varchar(4096) NOT NULL DEFAULT 'Bedankt voor je keuze.',
  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=318 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
 CREATE TABLE IF NOT EXISTS `nummers` (
  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `nummers` (
  PRIMARY KEY (`id`),
  UNIQUE KEY `muziek_id` (`muziek_id`),
  UNIQUE KEY `artiest` (`artiest`,`titel`,`jaar`)
-) ENGINE=InnoDB AUTO_INCREMENT=193672 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
 CREATE TABLE IF NOT EXISTS `lijsten_nummers` (
  `nummer_id` int(10) unsigned NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS`stemmers` (
  `timestamp` timestamp NOT NULL DEFAULT current_timestamp(),
  `is_geanonimiseerd` tinyint(3) unsigned NOT NULL DEFAULT 0,
  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
 CREATE TABLE IF NOT EXISTS `stemmen` (
  `nummer_id` int(10) unsigned NOT NULL,
@@ -89,16 +89,16 @@ CREATE TABLE IF NOT EXISTS `velden` (
  `placeholder` varchar(128) DEFAULT NULL,
  `type` varchar(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'text',
  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
-INSERT IGNORE INTO `velden` (`id`, `label`, `leeg_feedback`, `max`, `maxlength`, `min`, `minlength`, `placeholder`, `type`) VALUES
-(1, 'Naam', 'Vul uw naam in a.u.b.', NULL, 100, NULL, NULL, '', 'text'),
-(2, 'Adres', 'Vul uw adres in a.u.b.', NULL, 100, NULL, NULL, '', 'text'),
-(3, 'Postcode', 'Vul uw postcode in a.u.b.', NULL, 100, NULL, NULL, '', 'postcode'),
-(4, 'Woonplaats', 'Vul uw woonplaats in a.u.b.', NULL, 100, NULL, NULL, '', 'text'),
-(5, 'Telefoonnummer', 'Vul uw telefoonnummer in a.u.b.', NULL, 100, NULL, NULL, '', 'tel'),
-(6, 'E‑mailadres', 'Vul uw e-mailadres in a.u.b.', NULL, 100, NULL, NULL, '', 'email'),
-(8, 'Vrije keuze', 'Vul een eigen keuze in a.u.b.', NULL, NULL, NULL, NULL, 'Vul hier je eigen favoriet in.', 'text');
+INSERT IGNORE INTO `velden` (`label`, `leeg_feedback`, `max`, `maxlength`, `min`, `minlength`, `placeholder`, `type`) VALUES
+('Naam', 'Vul uw naam in a.u.b.', NULL, 100, NULL, NULL, '', 'text'),
+('Adres', 'Vul uw adres in a.u.b.', NULL, 100, NULL, NULL, '', 'text'),
+('Postcode', 'Vul uw postcode in a.u.b.', NULL, 100, NULL, NULL, '', 'postcode'),
+('Woonplaats', 'Vul uw woonplaats in a.u.b.', NULL, 100, NULL, NULL, '', 'text'),
+('Telefoonnummer', 'Vul uw telefoonnummer in a.u.b.', NULL, 100, NULL, NULL, '', 'tel'),
+('E‑mailadres', 'Vul uw e-mailadres in a.u.b.', NULL, 100, NULL, NULL, '', 'email'),
+('Vrije keuze', 'Vul een eigen keuze in a.u.b.', NULL, NULL, NULL, NULL, 'Vul hier je eigen favoriet in.', 'text');
 
 CREATE TABLE IF NOT EXISTS `stemmers_velden` (
  `stemmer_id` int(10) unsigned NOT NULL,

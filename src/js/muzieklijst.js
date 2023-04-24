@@ -3,7 +3,6 @@ import 'bootstrap';
 import 'datatables.net-dt';
 
 // Project js
-import './favicons.js';
 import * as functies from './functies.js';
 
 // Libraries css

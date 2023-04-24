@@ -97,16 +97,16 @@ class Stem {
 	}
 
 	/**
-	 * Maakt een object uit een id aangeleverd door HTTP GET of POST.
-	 * @param int $type INPUT_GET of INPUT_POST. Standaard is INPUT_POST.
+	 * Maakt een object uit een id aangeleverd door HTTP POST.
+	 * @param \stdClass $request HTTP-request.
 	 * @return Stem
 	 * @throws GeenLijstException
 	 */
-	public static function maak_uit_request( int $type = INPUT_POST ): Stem {
+	public static function maak_uit_request( \stdClass $request ): Stem {
 		return new static(
-			Nummer::maak_uit_request($type),
-			Lijst::maak_uit_request($type),
-			Stemmer::maak_uit_request($type)
+			Nummer::maak_uit_request($request),
+			Lijst::maak_uit_request($request),
+			Stemmer::maak_uit_request($request)
 		);
 	}
 

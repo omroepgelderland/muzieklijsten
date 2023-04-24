@@ -3,7 +3,6 @@ import 'bootstrap';
 import 'datatables.net-dt';
 
 // Project js
-import './favicons.js';
 import * as functies from './functies.js';
 
 // Libraries css
@@ -19,22 +18,42 @@ import '../scss/admin.scss';
 import html_resultaten_modal from '../html/admin-resultaten-modal.html';
 import html_resultaten_nummer from '../html/admin-resultaten-nummer.html';
 import html_resultaten_stem from '../html/admin-resultaten-stem.html';
+import html_beheer_modal from '../html/admin-beheer-modal.html';
+import { data } from 'jquery';
 
 class Main {
 
-  /** @type {number} */
+  /** @type {?number} */
   lijst_id;
-  /** @type {string} */
-  lijst_naam;
+  /** @type {HTMLBodyElement} */
+  e_body;
+  /** @type {HTMLSelectElement} */
+  e_lijst_select;
+  /** @type {HTMLTableSectionElement} */
+  e_geselecteerd_lijst;
+  /** @type {HTMLSpanElement} */
+  e_aantal_geselecteerde_nummers;
   geselecteerde_nummers;
   tabel;
 
   constructor() {
+    this.e_body = document.getElementsByTagName('body').item(0);
+    this.e_lijst_select = document.getElementById('lijstselect');
+    this.e_geselecteerd_lijst = document.getElementById('geselecteerd-lijst');
+    this.e_aantal_geselecteerde_nummers = document.getElementById('aantal-geselecteerde-nummers');
 
-    this.lijst_id = $('body').data('lijst-id');
-    this.lijst_naam = $('body').data('lijst-naam');
+    this.vul_metadata().then(() => {
+      let params = new URLSearchParams(document.location.search);
+      let lijst_id = params.get('lijst');
+      for ( const e_option of this.e_lijst_select.options ) {
+        if ( e_option.value == lijst_id ) {
+          e_option.selected = true;
+          this.set_lijst(lijst_id);
+          break;
+        }
+      }
+    });
 
-    this.geselecteerde_nummers = $('body').data('rows-selected');
     this.tabel = $('#beschikbare-nummers').DataTable({
       'processing': true,
       'serverSide': true,
@@ -72,30 +91,66 @@ class Main {
     // Gebruiker klikt op een rij van de beschikbare nummers.
     $('#beschikbare-nummers').on('click', 'tbody>tr', this.checkbox_handler.bind(this));
 
+    document.getElementById('lijstselect').addEventListener('change', this.lijst_select_handler.bind(this));
+
+    // Bestaande lijst wijzigen
+    document.getElementById('beheerknop').addEventListener('click', this.beheer_knop_handler.bind(this));
+
+    // Nieuwe lijst maken
+    document.getElementById('nieuwknop').addEventListener('click', this.nieuw_knop_handler.bind(this));
+
+    // Resultaten dialoogvenster openen
+    document.getElementById('resultatenknop').addEventListener('click', this.resultaten_knop_handler.bind(this));
+  }
+
+  set_lijst(lijst_id) {
+    this.lijst_id = lijst_id;
+    let url = new URL(location.href);
+    let params = url.searchParams;
+    params.set('lijst', this.lijst_id);
+    url.params = params;
+    window.history.replaceState(null, null, url);
+
+    this.vul_lijst_metadata();
+
+    this.e_body.classList.add('lijst-geselecteerd');
+    for ( const bewerkknop of document.getElementsByClassName('bewerk-knop') ) {
+      bewerkknop.removeAttribute('title');
+    }
+    this.tabel.draw();
+  }
+
+  async vul_metadata() {
+    const data = await functies.post('get_metadata');
+    for ( const e_organisatie of document.getElementsByClassName('organisatie') ) {
+      e_organisatie.innerText = data.organisatie;
+    }
+    for ( const lijst of data.lijsten ) {
+      this.e_lijst_select.add(new Option(lijst.naam, lijst.id));
+    }
+    document.getElementById('totaal-aantal-nummers').innerText = data.totaal_aantal_nummers;
+    for ( const e_nimbus_url of document.getElementsByClassName('nimbus-url') ) {
+      e_nimbus_url.href = data.nimbus_url;
+    }
+  }
+
+  async vul_lijst_metadata() {
+    const data = await functies.post('get_lijst_metadata', {'lijst': this.lijst_id});
+    for ( const e_naam of document.getElementsByClassName('lijst-naam') ) {
+      e_naam.innerText = data.naam;
+    }
+    document.getElementsByTagName('title').item(0).innerText = `Muzieklijsten beheer – ${data.naam}`;
+    for ( const e_iframe_url of document.getElementsByClassName('iframe-url') ) {
+      e_iframe_url.value = data.iframe_url;
+    }
+    for ( const e_iframe_code of document.getElementsByClassName('iframe-code') ) {
+      e_iframe_code.value = `<iframe src="${data.iframe_url}" frameborder="0" height="3000" style="width: 100%; height: 3000px; border: none;">`;
+    }
+    this.geselecteerde_nummers = data.nummer_ids;
     // Vult de tabel met geselecteerde nummers.
     this.vul_lijst_geselecteerde_nummers();
     $('#beschikbare-nummers_length select').addClass('form-control');
     $('#beschikbare-nummers_filter input').addClass('form-control');
-
-    $('#lijstselect').on('change', this.set_lijst.bind(this));
-
-    // Bestaande lijst wijzigen
-    $('#beheer').on('submit', 'form#beheer-lijst', this.wijzig_lijst.bind(this));
-
-    // Nieuwe lijst maken
-    $('#nieuw').on('submit', 'form#beheer-lijst', this.maak_lijst.bind(this));
-
-    // Lijst verwijderen
-    $('#beheer').on('click', '#verwijder-lijst', this.verwijder_lijst.bind(this));
-
-    // Verplicht enablen/disablen na check/uncheck tonen
-    $('#beheer').on('change', 'form#beheer-lijst input[type="checkbox"]', this.check_verplicht.bind(this));
-
-    // Checks overzetten naar hidden inputs
-    $('#beheer').on('change', 'form#beheer-lijst input.check-met-hidden', this.check_met_hidden_handler.bind(this));
-
-    // Resultaten dialoogvenster openen
-    document.getElementById('resultaten').addEventListener('click', this.resultaten_knop_handler.bind(this));
   }
 
   checkbox_handler(e) {
@@ -134,55 +189,12 @@ class Main {
 
   /**
    * Gebruiker kiest een lijst in de dropdown.
-   * Voert een page reload uit.
    */
-  set_lijst(e) {
-    let params = new URLSearchParams(location.search);
-    params.set('lijst', e.target.value);
-    location.search = params;
-  }
-
-  /**
-   * Lijst metadata opslaan onder knop beheer.
-   */
-  wijzig_lijst(e) {
-    e.preventDefault();
-    let fd = new FormData(document.getElementById('beheer-lijst'));
-    functies.lijst_opslaan(fd).then(() => {
-      $('#beheer').modal('hide');
-    }, (msg) => {
-      alert(msg);
-    });
-  }
-
-  /**
-   * Nieuwe lijst aanmaken.
-   */
-  maak_lijst(e) {
-    e.preventDefault();
-    let fd = new FormData(document.getElementById('beheer-lijst'));
-    functies.lijst_maken(fd).then((lijst_id) => {
-      this.lijst_id = lijst_id;
-      $('#nieuw').modal('hide');
-      let params = new URLSearchParams(location.search);
-      params.set('lijst', this.lijst_id);
-      location.search = params;
-    }, (msg) => {
-      alert(msg);
-    });
-  }
-
-  verwijder_lijst(e) {
-    const vraag = 'Deze lijst verwijderen?\nOok alle stemmen op nummers uit deze lijst worden verwijderd.';
-    if ( confirm(vraag) ) {
-      functies.verwijder_lijst(this.lijst_id).then(() => {
-        $('#beheer').modal('hide');
-        let params = new URLSearchParams(location.search);
-        params.set('lijst', '');
-        location.search = params;
-      }, (msg) => {
-        alert(msg);
-      });
+  lijst_select_handler(e) {
+    if ( e.target.value > 0 ) {
+      this.set_lijst(e.target.value);
+    } else {
+      this.unset_lijst();
     }
   }
 
@@ -223,43 +235,26 @@ class Main {
    * De hele inhoud van het element wordt vervangen.
    */
   vul_lijst_geselecteerde_nummers() {
-    return functies.get_selected_html(this.lijst_id).then((data) => {
-      $('#result').html(data);
-    }, (msg) => {
-      alert(msg);
-    });
-  }
-
-  /**
-   * Handler voor wanneer er een vinkje verandert in de invoervelden.
-   * Wanneer een vinkje wordt uitgezet wordt het bijbehorende 'verplicht'-vinkje
-   * uitgezet en disabled.
-   * @param {Event} e 
-   */
-  check_verplicht(e) {
-    let verplicht_id = e.target.getAttribute('data-input-verplicht');
-    let verplicht_elem = document.getElementById(verplicht_id);
-    if ( verplicht_elem instanceof HTMLInputElement ) {
-      if ( e.target.checked ) {
-        verplicht_elem.disabled = false;
-      } else {
-        verplicht_elem.disabled = true;
-        verplicht_elem.checked = false;
-        const hidden_id = verplicht_elem.getAttribute('data-hidden-id');
-        const hidden_elem = document.getElementById(hidden_id);
-        hidden_elem.value = false;
-      }
+    let nummers_promise = functies.get_geselecteerde_nummers(this.lijst_id);
+    while ( this.e_geselecteerd_lijst.firstChild ) {
+      this.e_geselecteerd_lijst.removeChild(this.e_geselecteerd_lijst.firstChild);
     }
-  }
-
-  /**
-   * 
-   * @param {Event} e 
-   */
-  check_met_hidden_handler(e) {
-    const hidden_id = e.target.getAttribute('data-hidden-id');
-    const hidden_elem = document.getElementById(hidden_id);
-    hidden_elem.value = e.target.checked;
+    return nummers_promise.then((nummers) => {
+      this.e_aantal_geselecteerde_nummers.innerText = nummers.length;
+      for ( const nummer of nummers ) {
+        let e_tr = document.createElement('tr');
+        this.e_geselecteerd_lijst.appendChild(e_tr);
+        let e_titel = document.createElement('td');
+        e_tr.appendChild(e_titel);
+        e_titel.appendChild(document.createTextNode(nummer.titel));
+        let e_artiest = document.createElement('td');
+        e_tr.appendChild(e_artiest);
+        e_artiest.appendChild(document.createTextNode(nummer.artiest));
+        let e_jaar = document.createElement('td');
+        e_tr.appendChild(e_jaar);
+        e_jaar.appendChild(document.createTextNode(nummer.jaar ?? ''));
+      }
+    });
   }
 
   /**
@@ -267,9 +262,59 @@ class Main {
    * @param {Event} e 
    */
   resultaten_knop_handler(e) {
+    e.preventDefault();
     new ResultatenModal(this.lijst_id, this.lijst_naam);
   }
 
+  nieuw_knop_handler(e) {
+    e.preventDefault();
+    let modal = new BeheerModal();
+    modal.eventer.addEventListener('lijst_gemaakt', this.lijst_veranderd.bind(this, true));
+  }
+
+  beheer_knop_handler(e) {
+    e.preventDefault();
+    let modal = new BeheerModal(this.lijst_id);
+    modal.eventer.addEventListener('lijst_veranderd', this.lijst_veranderd.bind(this, false));
+    modal.eventer.addEventListener('lijst_verwijderd', this.lijst_verwijderd.bind(this));
+  }
+
+  /**
+   * 
+   * @param {boolean} is_nieuw 
+   * @param {Event} event 
+   */
+  lijst_veranderd(is_nieuw, event) {
+    if ( is_nieuw ) {
+      this.e_lijst_select.add(new Option(event.detail.naam, event.detail.id, false, true));
+      this.set_lijst(event.detail.id);
+    } else {
+      const e_option = this.e_lijst_select.item(this.e_lijst_select.selectedIndex);
+      e_option.text = event.detail.naam;
+    }
+  }
+
+  lijst_verwijderd() {
+    this.e_lijst_select.remove(this.e_lijst_select.selectedIndex);
+    this.unset_lijst();
+  }
+
+  unset_lijst(event) {
+    this.lijst_id = undefined;
+
+    let url = new URL(location.href);
+    let params = url.searchParams;
+    params.delete('lijst');
+    url.params = params;
+    window.history.replaceState(null, null, url);
+
+    this.e_body.classList.remove('lijst-geselecteerd');
+
+    document.getElementsByTagName('title').item(0).innerText = 'Muzieklijsten beheer';
+    this.geselecteerde_nummers = [];
+    // Vult de tabel met geselecteerde nummers.
+    this.vul_lijst_geselecteerde_nummers();
+  }
 }
 
 class ResultatenModal {
@@ -324,7 +369,8 @@ class ResultatenModal {
     // this.e_modal.addEventListener('hidden.bs.modal', e => {
     //   this.e_modal.parentNode.removeChild(this.e_modal);
     // });
-    this.$modal = $(this.e_modal).modal({
+    this.$modal = $(this.e_modal);
+    this.$modal.modal({
         'backdrop': true,
         'focus': true,
         'keyboard': true
@@ -333,8 +379,7 @@ class ResultatenModal {
       this.e_modal.parentNode.removeChild(this.e_modal);
     });
     
-    this.$modal.show();
-
+    this.$modal.modal('show');
   }
 
   async maak_resultaten_tabel() {
@@ -762,6 +807,218 @@ class ResultatenStem {
       this.e_tr.classList.add('verborgen');
     }
     return filter_ok;
+  }
+
+}
+
+class BeheerModal {
+
+  /** @type {?number} */
+  lijst_id;
+  /** @type {HTMLUnknownElement} */
+  eventer;
+  /** @type {HTMLDivElement} */
+  e_modal;
+  /** @type {jQuery} */
+  $modal;
+  /** @type {HTMLFormElement} */
+  e_form;
+  /** @type {HTMLDivElement} */
+  e_velden_zichtbaar_kolom;
+  /** @type {HTMLDivElement} */
+  e_velden_verplicht_kolom;
+
+  constructor(lijst_id) {
+    this.lijst_id = lijst_id;
+    this.eventer = document.createElement(null);
+
+    this.e_modal = functies.get_html_template(html_beheer_modal).item(0);
+    this.e_form = this.e_modal.getElementsByTagName('form').item(0);
+    this.e_velden_zichtbaar_kolom = this.e_modal.getElementsByClassName('velden-zichtbaar-kolom').item(0);
+    this.e_velden_verplicht_kolom = this.e_modal.getElementsByClassName('velden-verplicht-kolom').item(0);
+
+    if ( this.is_nieuw() ) {
+      this.e_modal.classList.add('is-nieuw');
+      this.maak_lege_veld_checks();
+    } else {
+      this.vul_data();
+    }
+    document.getElementsByTagName('body').item(0).appendChild(this.e_modal);
+
+    // Lijst opslaan
+    this.e_form.addEventListener('submit', this.opslaan.bind(this));
+
+    // Lijst verwijderen
+    this.e_form.elements['verwijder-lijst'].addEventListener('click', this.verwijder_lijst.bind(this));
+
+    //// Voor bootstrap 5
+    // this.modal = new Modal(this.e_modal, {
+    //   'backdrop': true,
+    //   'focus': true,
+    //   'keyboard': true
+    // });
+    // this.e_modal.addEventListener('hidden.bs.modal', e => {
+    //   this.e_modal.parentNode.removeChild(this.e_modal);
+    // });
+    this.$modal = $(this.e_modal);
+    this.$modal.modal({
+        'backdrop': true,
+        'focus': true,
+        'keyboard': true
+      });
+    this.$modal.on('hidden.bs.modal', this.destroy.bind(this));
+    
+    this.$modal.modal('show');
+  }
+
+  /**
+   * 
+   * @returns {boolean}
+   */
+  is_nieuw() {
+    return this.lijst_id === undefined;
+  }
+
+  async vul_data() {
+    this.e_form.elements.lijst.value = this.lijst_id;
+    const data = await functies.post('get_beheer_lijstdata', {'lijst': this.lijst_id});
+
+    for ( const e_lijst_naam of this.e_modal.querySelectorAll('.lijst-naam') ) {
+      e_lijst_naam.appendChild(document.createTextNode(data.naam));
+    }
+    this.e_form.elements['is-actief'].checked = data.is_actief;
+    this.e_form.elements.naam.value = data.naam;
+    this.e_form.elements.minkeuzes.value = data.minkeuzes;
+    this.e_form.elements.maxkeuzes.value = data.maxkeuzes;
+    this.e_form.elements['stemmen-per-ip'].value = data.stemmen_per_ip;
+    this.e_form.elements['artiest-eenmalig'].checked = data.artiest_eenmalig;
+    this.e_form.elements.recaptcha.checked = data.recaptcha;
+    this.e_form.elements.email.value = data.email;
+    this.e_form.elements['bedankt-tekst'].value = data.bedankt_tekst;
+
+    for ( const veld of data.velden ) {
+      this.maak_veld_checks(veld);
+    }
+  }
+
+  async maak_lege_veld_checks() {
+    const velden = await functies.post('get_alle_velden');
+    for ( const veld of velden ) {
+      this.maak_veld_checks(veld);
+    }
+  }
+
+  maak_veld_checks(veld) {
+    const zichtbaar_id = functies.get_random_string(16);
+    const verplicht_id = functies.get_random_string(16);
+
+    let e_zichtbaar_container = document.createElement('div');
+    let e_zichtbaar_label = document.createElement('label');
+    let e_zichtbaar_check = document.createElement('input');
+    let e_zichtbaar_label_tekst = document.createTextNode(veld.label);
+    let e_verplicht_container = document.createElement('div');
+    let e_verplicht_label = document.createElement('label');
+    let e_verplicht_check = document.createElement('input');
+    let e_verplicht_label_tekst = document.createTextNode('Verplicht');
+
+    this.e_velden_zichtbaar_kolom.appendChild(e_zichtbaar_container);
+    e_zichtbaar_container.appendChild(e_zichtbaar_label);
+    e_zichtbaar_label.appendChild(e_zichtbaar_check);
+    e_zichtbaar_label.appendChild(e_zichtbaar_label_tekst);
+    this.e_velden_verplicht_kolom.appendChild(e_verplicht_container);
+    e_verplicht_container.appendChild(e_verplicht_label);
+    e_verplicht_label.appendChild(e_verplicht_check);
+    e_verplicht_label.appendChild(e_verplicht_label_tekst);
+
+    e_zichtbaar_container.classList.add('checkbox');
+    e_verplicht_container.classList.add('checkbox');
+    
+    e_zichtbaar_check.type = 'checkbox';
+    e_zichtbaar_check.id = zichtbaar_id;
+    e_zichtbaar_check.name = `velden[${veld.id}][tonen]`;
+    e_zichtbaar_check.checked = veld.tonen;
+    e_zichtbaar_check.setAttribute('data-input-verplicht', verplicht_id);
+    // Verplicht enablen/disablen na check/uncheck tonen
+    e_zichtbaar_check.addEventListener('change', this.check_verplicht.bind(this));
+    
+    e_zichtbaar_label.for = zichtbaar_id;
+
+    e_verplicht_check.type = 'checkbox';
+    e_verplicht_check.id = verplicht_id;
+    e_verplicht_check.name = `velden[${veld.id}][verplicht]`;
+    e_verplicht_check.checked = veld.verplicht;
+    e_verplicht_check.disabled = !veld.tonen;
+    
+    e_verplicht_label.for = verplicht_id;
+  }
+
+  /**
+   * Lijst metadata opslaan.
+   */
+  async opslaan(e) {
+    e.preventDefault();
+    let fd = new FormData(this.e_form);
+    if ( this.is_nieuw() ) {
+      try {
+        const lijst_id = await functies.lijst_maken(fd);
+        functies.trigger(this.eventer, 'lijst_gemaakt', {
+          'id': lijst_id,
+          'naam': fd.get('naam')
+        });
+        this.$modal.modal('hide');
+      } catch (msg) {
+        alert(msg);
+      }
+    } else {
+      try {
+        await functies.lijst_opslaan(fd);
+        functies.trigger(this.eventer, 'lijst_veranderd', {
+          'id': this.lijst_id,
+          'naam': fd.get('naam')
+        });
+        this.$modal.modal('hide');
+      } catch (msg) {
+        alert(msg);
+      }
+    }
+  }
+
+  async verwijder_lijst(e) {
+    const vraag = 'Deze lijst verwijderen?\nOok alle stemmen op nummers uit deze lijst worden verwijderd.';
+    if ( confirm(vraag) ) {
+      try {
+        await functies.verwijder_lijst(this.lijst_id)
+        functies.trigger(this.eventer, 'lijst_verwijderd', {
+          'id': this.lijst_id
+        });
+        this.$modal.modal('hide');
+      } catch (msg) {
+        alert(msg);
+      }
+    }
+  }
+
+  /**
+   * Handler voor wanneer er een vinkje verandert in de invoervelden.
+   * Wanneer een vinkje wordt uitgezet wordt het bijbehorende 'verplicht'-vinkje
+   * uitgezet en disabled.
+   * @param {Event} e 
+   */
+  check_verplicht(e) {
+    let verplicht_id = e.target.getAttribute('data-input-verplicht');
+    let verplicht_elem = document.getElementById(verplicht_id);
+    if ( verplicht_elem instanceof HTMLInputElement ) {
+      if ( e.target.checked ) {
+        verplicht_elem.disabled = false;
+      } else {
+        verplicht_elem.disabled = true;
+        verplicht_elem.checked = false;
+      }
+    }
+  }
+
+  destroy() {
+    this.e_modal.parentNode.removeChild(this.e_modal);
   }
 
 }

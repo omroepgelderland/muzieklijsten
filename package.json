@@ -1,6 +1,6 @@
 {
   "name": "muzieklijsten",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "Stemmodule voor radioredacties",
   "main": "index.js",
   "scripts": {
@@ -35,6 +35,8 @@
     "html-webpack-plugin": "^5.5.0",
     "jquery": "^1.12.4",
     "mini-css-extract-plugin": "^2.6.1",
+    "node": "^18.15.0",
+    "npm": "^9.6.4",
     "sass": "^1.54.3",
     "sass-loader": "^12.6.0",
     "style-loader": "^3.3.1",

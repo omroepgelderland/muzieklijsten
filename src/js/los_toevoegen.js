@@ -4,7 +4,6 @@ import 'angular';
 import 'angular-route';
 
 // Project js
-import './favicons.js';
 import * as functies from './functies.js';
 
 // Libraries css
@@ -13,8 +12,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Project css
 import '../scss/los_toevoegen.scss';
-
-var app = angular.module('losseNummers', []);
 
 class Nummer {
 
@@ -60,6 +57,8 @@ async function get_lijsten() {
   }
   return lijsten;
 }
+
+var app = angular.module('losseNummers', []);
 
 app.controller('MainCtrl', [
 	'$scope', '$http',

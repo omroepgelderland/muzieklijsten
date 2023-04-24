@@ -1,0 +1,74 @@
+<div class="modal fade lijstinstellingen beheer-modal" id="beheer" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-header modal-top">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <h4 class="modal-title">
+        <span class="not-is-nieuw">Beheer van de lijst "<span class="lijst-naam"></span>"</span>
+        <span class="is-nieuw">Nieuwe muzieklijst</span>
+      </h4>
+    </div>
+    <div class="modal-content"><div class="container-fluid beheercontainer">
+      <form class="form-horizontal" role="form" method="post" id="beheer-lijst">
+        <input type="hidden" name="lijst">
+        <div class="separator"></div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="naam">Naam lijst:</label>
+          <div class="col-sm-10">	
+            <input type="text" class="form-control" id="naam" name="naam" required>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="email">E-mailadressen voor reacties: <span class="glyphicon glyphicon-info-sign pointer" title="Meerdere e-mailadressen scheiden door een komma ( , )"></span></label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" id="email" name="email">
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="bedankt-tekst">Tekst voor bezoekers na het stemmen: <span class="glyphicon glyphicon-info-sign pointer" title="De tekst die de stemmers te zien krijgen nadat ze hun stem hebben ingediend."></span></label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" id="bedankt-tekst" name="bedankt-tekst" value="Bedankt voor je keuze." required>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="velden">Velden tonen:</label>
+          <div class="col-sm-2 velden-zichtbaar-kolom"></div>
+          <div class="col-sm-8 velden-verplicht-kolom"></div>
+        </div>
+        <div class="separator"></div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="velden">Opties:</label>
+          <div class="col-sm-10">
+            Minimum aantal keuzes <input type="number" class="form-control" id="minkeuzes" name="minkeuzes" min="1" required><br>
+            Maximum aantal keuzes <input type="number" class="form-control" id="maxkeuzes" name="maxkeuzes" min="1" required><br>
+            Aantal stemmen per IP (leeglaten voor onbeperkt) <input type="number" class="form-control" id="stemmen-per-ip" name="stemmen-per-ip" min="1"><br>
+            <input type="checkbox" id="is-actief" name="is-actief"> Lijst is actief (stemmen staat aan)<br>
+            <input type="checkbox" id="artiest-eenmalig" name="artiest-eenmalig"> Artiesten eenmalig te selecteren <br>
+            <input type="checkbox" id="recaptcha" name="recaptcha"> Re-Captcha<br>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="form-group">
+          <div class="col-sm-2"></div>
+          <div class="col-sm-10">
+            <input type="submit" class="btn btn-primary" value="Opslaan">
+          </div>
+        </div>
+        <div class="form-group beheer-bestaand">
+          <div class="col-sm-2"></div>
+          <div class="col-sm-10">
+            <input type="button" name="verwijder-lijst" class="btn btn-danger not-is-nieuw" value="Lijst verwijderen">
+          </div>
+        </div>
+        <div class="separator beheer-bestaand"></div>
+      </form>
+    </div></div>
+    <div class="modal-footer modal-end">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+	

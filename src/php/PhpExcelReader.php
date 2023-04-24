@@ -126,6 +126,14 @@ class PhpExcelReader {
         0x2c => '$%1.2f',   //"$#,##0.00;($#,##0.00)",
         0x30 => '%1.0f'];   //"##0.0E0";
 
+    public $_encoderFunction;
+    public $nineteenFour;
+    public $sn;
+    public $rectype;
+    public $multiplier;
+    public $numRows;
+    public $curformat;
+
     /**
      * Constructor
      *

@@ -5,7 +5,20 @@ namespace muzieklijsten;
 use function muzieklijsten\GetInt4d;
 
 class OLERead {
+
     public $data = '';
+    public $error;
+    public $numBigBlockDepotBlocks;
+    public $sbdStartBlock;
+    public $rootStartBlock;
+    public $extensionBlock;
+    public $numExtensionBlocks;
+    public $bigBlockChain;
+    public $smallBlockChain;
+    public $entry;
+    public $props;
+    public $wrkbook;
+    public $rootentry;
 
     function read($sFileName){
       // check if file exist and is readable (Darko Miljanovic)

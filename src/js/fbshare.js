@@ -2,7 +2,6 @@
 import 'bootstrap';
 
 // Project js
-import './favicons.js';
 // import * as functies from './functies.js';
 
 // Libraries css

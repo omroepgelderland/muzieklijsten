@@ -21,19 +21,19 @@ use mysqli_result;
 
 class SSP {
 
-	private int $input_type;
+	private \stdClass $request;
 	private string $tabel;
 	private string $primary_key;
 	private array $kolommen;
 	private Lijst $lijst;
 
 	public function __construct(
-		int $input_type,
+		\stdClass $request,
 		string $tabel,
 		string $primary_key,
 		array $kolommen
 	) {
-		$this->input_type = $input_type;
+		$this->request = $request;
 		$this->tabel = $tabel;
 		$this->primary_key = $primary_key;
 		$this->kolommen = $kolommen;
@@ -67,8 +67,8 @@ class SSP {
 	 */
 	protected function limit()
 	{
-		$start = filter_input($this->input_type, 'start', FILTER_VALIDATE_INT);
-		$length = filter_input($this->input_type, 'length', FILTER_VALIDATE_INT);
+		$start = filter_var($this->request->start, FILTER_VALIDATE_INT);
+		$length = filter_var($this->request->length, FILTER_VALIDATE_INT);
 		if ( $start !== false && $start !== null && $length !== -1 ) {
 			return "LIMIT {$start}, {$length}";
 		} else {
@@ -85,24 +85,21 @@ class SSP {
 	 *  @return string SQL order by clause
 	 */
 	protected function order() {
-		$order_request = filter_input($this->input_type, 'order', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
-		$columns_request = filter_input($this->input_type, 'columns', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
-		
-		if ( isset($order_request) && count($order_request) > 0 ) {
+		if ( isset($this->request->order) && count($this->request->order) > 0 ) {
 			$orderBy = [];
 			$dtColumns = self::pluck( $this->kolommen, 'dt' );
 
-			foreach ( $order_request as $kolom_order ) {
+			foreach ( $this->request->order as $kolom_order ) {
 			// for ( $i=0, $ien=count($order_request) ; $i<$ien ; $i++ ) {
 				// Convert the column index into the column data property
-				$columnIdx = filter_var($kolom_order['column'], FILTER_VALIDATE_INT);
-				$requestColumn = $columns_request[$columnIdx];
+				$columnIdx = filter_var($kolom_order->column, FILTER_VALIDATE_INT);
+				$requestColumn = $this->request->columns[$columnIdx];
 
-				$columnIdx = array_search( $requestColumn['data'], $dtColumns );
+				$columnIdx = array_search( $requestColumn->data, $dtColumns );
 				$column = $this->kolommen[$columnIdx];
 
-				if ( $requestColumn['orderable'] == 'true' ) {
-					$dir = $kolom_order['dir'] === 'asc' ?
+				if ( filter_var($requestColumn->orderable, FILTER_VALIDATE_BOOLEAN) ) {
+					$dir = $kolom_order->dir === 'asc' ?
 						'ASC' :
 						'DESC';
 
@@ -129,32 +126,30 @@ class SSP {
 	 *  @return string SQL where clause
 	 */
 	protected function filter (): string {
-		$search_request = filter_input($this->input_type, 'search', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
-		$search_value = DB::escape_string($search_request['value']);
-		$columns_request = filter_input($this->input_type, 'columns', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+		$search_value = DB::escape_string($this->request->search->value);
 		$globalSearch = [];
 		$columnSearch = [];
 		$dtColumns = self::pluck( $this->kolommen, 'dt' );
 
-		if ( isset($search_request) && $search_value != '' ) {
-			foreach ( $columns_request as $requestColumn ) {
-				$columnIdx = array_search($requestColumn['data'], $dtColumns);
+		if ( isset($this->request->search) && $search_value != '' ) {
+			foreach ( $this->request->columns as $requestColumn ) {
+				$columnIdx = array_search($requestColumn->data, $dtColumns);
 				$column = $this->kolommen[$columnIdx];
 
-				if ( $requestColumn['searchable'] == 'true' ) {
+				if ( $requestColumn->searchable ) {
 					$globalSearch[] = "`{$column['db']}` LIKE \"%{$search_value}%\"";
 				}
 			}
 		}
 
 		// Individual column filtering
-		foreach( $columns_request as $requestColumn ) {
-			$columnIdx = array_search($requestColumn['data'], $dtColumns);
+		foreach( $this->request->columns as $requestColumn ) {
+			$columnIdx = array_search($requestColumn->data, $dtColumns);
 			$column = $this->kolommen[$columnIdx];
 
-			$str = DB::escape_string($requestColumn['search']['value']);
+			$str = DB::escape_string($requestColumn->search->value);
 
-			if ( $requestColumn['searchable'] == 'true' && $str != '' ) {
+			if ( $requestColumn->searchable && $str != '' ) {
 				$columnSearch[] = "`{$column['db']}` LIKE \"%{$str}%\"";
 			}
 		}
@@ -251,7 +246,7 @@ class SSP {
 
 		// Output
 		return [
-			'draw'            => filter_input($this->input_type, 'draw', FILTER_VALIDATE_INT),
+			'draw'            => filter_var($this->request->draw, FILTER_VALIDATE_INT),
 			'recordsTotal'    => $recordsTotal,
 			'recordsFiltered' => $recordsFiltered,
 			'data'            => $this->data_output($data)
@@ -458,7 +453,7 @@ class SSP {
 	 * @throws GeenLijstException
 	 */
 	private function get_lijst(): Lijst {
-		$this->lijst ??= Lijst::maak_uit_request($this->input_type);
+		$this->lijst ??= Lijst::maak_uit_request($this->request);
 		return $this->lijst;
 	}
 }

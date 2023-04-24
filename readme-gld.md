@@ -10,7 +10,7 @@ https://web.gld.nl/muzieklijsten/index.php?lijst=[lijst id]
 https://web.gld.nl/muzieklijsten?lijst=[lijst id]
 
 Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten.
-https://web.gld.nl/muzieklijsten/admin.php
+https://web.gld.nl/muzieklijsten/admin.html
 
 Losse nummers toevoegen aan de database, buiten Powergold om
 https://web.gld.nl/muzieklijsten/los_toevoegen.html

@@ -162,3 +162,10 @@ table.dataTable.select tbody tr, table.dataTable thead th:first-child {
     }
 
 }
+
+.beheer-modal {
+    &:not(.is-nieuw) .is-nieuw,
+    &.is-nieuw .not-is-nieuw {
+        display: none;
+    }
+}

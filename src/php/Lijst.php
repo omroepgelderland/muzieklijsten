@@ -130,27 +130,6 @@ class Lijst {
 	}
 
 	/**
-	 * Geeft de HTML van het invoerveld voor de naam.
-	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_veld_naam_html(): string {
-		if ( $this->heeft_veld_naam() ) {
-			return $this->get_formulier_html(
-				'naam',
-				'Naam',
-				'text',
-				'Vul uw naam in a.u.b.',
-				$this->is_veld_naam_verplicht(),
-				100
-			);
-		} else {
-			return '';
-		}
-	}
-	
-	/**
 	 * 
 	 * @return bool
 	 */
@@ -166,27 +145,6 @@ class Lijst {
 	public function is_veld_telefoonnummer_verplicht(): bool {
 		$this->set_db_properties();
 		return ($this->veld_telefoonnummer & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
-	/**
-	 * Geeft de HTML van het invoerveld voor het telefoonnummer.
-	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_veld_telefoonnummer_html(): string {
-		if ( $this->heeft_veld_telefoonnummer() ) {
-			return $this->get_formulier_html(
-				'telefoonnummer',
-				'Telefoonnummer',
-				'tel',
-				'Vul uw telefoonnummer in a.u.b.',
-				$this->is_veld_telefoonnummer_verplicht(),
-				100
-			);
-		} else {
-			return '';
-		}
 	}
 	
 	/**
@@ -208,27 +166,6 @@ class Lijst {
 	}
 	
 	/**
-	 * Geeft de HTML van het invoerveld voor het e-mailadres.
-	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_veld_email_html(): string {
-		if ( $this->heeft_veld_email() ) {
-			return $this->get_formulier_html(
-				'veld_email',
-				'E-mailadres',
-				'email',
-				'Vul uw e-mailadres in a.u.b.',
-				$this->is_veld_email_verplicht(),
-				100
-			);
-		} else {
-			return '';
-		}
-	}
-	
-	/**
 	 * 
 	 * @return bool
 	 */
@@ -244,27 +181,6 @@ class Lijst {
 	public function is_veld_woonplaats_verplicht(): bool {
 		$this->set_db_properties();
 		return ($this->veld_woonplaats & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
-	/**
-	 * Geeft de HTML van het invoerveld voor de woonplaats.
-	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_veld_woonplaats_html(): string {
-		if ( $this->heeft_veld_adres() || $this->heeft_veld_woonplaats() ) {
-			return $this->get_formulier_html(
-				'woonplaats',
-				'Woonplaats',
-				'text',
-				'Vul uw woonplaats in a.u.b.',
-				$this->is_veld_adres_verplicht() || $this->is_veld_woonplaats_verplicht(),
-				100
-			);
-		} else {
-			return '';
-		}
 	}
 	
 	/**
@@ -286,35 +202,6 @@ class Lijst {
 	}
 
 	/**
-	 * Geeft de HTML van het invoerveld voor het adres.
-	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_veld_adres_html(): string {
-		if ( $this->heeft_veld_adres() ) {
-			return $this->get_formulier_html(
-				'adres',
-				'Adres',
-				'text',
-				'Vul uw adres in a.u.b.',
-				$this->is_veld_adres_verplicht(),
-				100
-			)
-			.$this->get_formulier_html(
-				'postcode',
-				'Postcode',
-				'text',
-				'Vul uw postcode in a.u.b.',
-				$this->is_veld_adres_verplicht(),
-				100
-			);
-		} else {
-			return '';
-		}
-	}
-	
-	/**
 	 * 
 	 * @return bool
 	 */
@@ -333,40 +220,6 @@ class Lijst {
 	}
 	
 	/**
-	 * Geeft de HTML van het invoerveld voor de uitzenddatum.
-	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_veld_uitzenddatum_html(): string {
-		if ( $this->heeft_veld_uitzenddatum() ) {	
-			$template = <<<EOT
-			<div class="form-group">
-				<label class="control-label col-sm-2">Uitzenddatum</label>
-				<div class="col-sm-10">
-					<input type="date" class="form-control" placeholder="selecteer een datum" data-leeg-feedback="Vul de uitzenddatum in a.u.b.">
-				</div>
-			</div>
-			EOT;
-			$id = 'veld_uitzenddatum';
-			$doc = new HTMLTemplate($template);
-			/** @var \DOMElement */
-			$e_label = $doc->getElementsByTagName('label')->item(0);
-			/** @var \DOMElement */
-			$e_input = $doc->getElementsByTagName('input')->item(0);
-			$e_label->setAttribute('for', $id);
-			$e_input->setAttribute('id', $id);
-			$e_input->setAttribute('name', $id);
-			if ( $this->is_veld_uitzenddatum_verplicht() ) {
-				$e_input->appendChild($doc->createAttribute('required'));
-			}
-			return $doc->saveHTML();
-		} else {
-			return '';
-		}
-	}
-	
-	/**
 	 * 
 	 * @return bool
 	 */
@@ -382,28 +235,6 @@ class Lijst {
 	public function is_veld_vrijekeus_verplicht(): bool {
 		$this->set_db_properties();
 		return ($this->veld_vrijekeus & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
-	/**
-	 * Geeft de HTML van het invoerveld voor de vrije keuze.
-	 * Dit is leeg als in de lijst is ingesteld dat dit veld niet getoond wordt.
-	 * @return string
-	 * @deprecated
-	 */
-	public function get_veld_vrijekeus_html(): string {
-		if ( $this->heeft_veld_vrijekeus() ) {
-			return $this->get_formulier_html(
-				'veld_vrijekeus',
-				'Vrije keuze',
-				'text',
-				'Vul een eigen keuze in a.u.b.',
-				$this->is_veld_vrijekeus_verplicht(),
-				null,
-				'Vul hier je eigen favoriet in.'
-			);
-		} else {
-			return '';
-		}
 	}
 	
 	/**
@@ -444,6 +275,36 @@ class Lijst {
 			}
 		}
 		return $this->velden;
+	}
+
+	public function get_alle_velden_data(): array {
+		$respons = [];
+		$query = <<<EOT
+		SELECT
+			v.id,
+			v.label,
+			!ISNULL(lv.lijst_id) AS tonen,
+			IFNULL(lv.verplicht, 0) AS verplicht
+		FROM velden v
+		LEFT JOIN lijsten_velden lv ON
+			lv.lijst_id = {$this->get_id()}
+			AND lv.veld_id = v.id
+		ORDER BY v.id
+		EOT;
+		foreach ( DB::query($query) as [
+			'id' => $id,
+			'label' => $label,
+			'tonen' => $tonen,
+			'verplicht' => $verplicht
+		] ) {
+			$respons[] = [
+				'id' => (int)$id,
+				'tonen' => $tonen == 1,
+				'label' => $label,
+				'verplicht' => $verplicht == 1
+			];
+		}
+		return $respons;
 	}
 	
 	/**
@@ -782,19 +643,20 @@ class Lijst {
 
 	/**
 	 * Maakt een object uit een id aangeleverd door HTTP GET of POST.
-	 * @param int $type INPUT_GET of INPUT_POST. Standaard is INPUT_POST.
+ 	 * @param \stdClass $request HTTP-request.
 	 * @return Lijst
 	 * @throws GeenLijstException
 	 */
-	public static function maak_uit_request( int $type = INPUT_POST ): Lijst {
-		$id = filter_input($type, 'lijst', FILTER_VALIDATE_INT);
-		if ( $id === null ) {
+	public static function maak_uit_request( \stdClass $request ): Lijst {
+		try {
+			$id = filter_var($request->lijst, FILTER_VALIDATE_INT);
+		} catch ( UndefinedPropertyException ) {
 			throw new GeenLijstException('Geen lijst in invoer');
 		}
 		if ( $id === false ) {
 			throw new GeenLijstException(sprintf(
 				'Ongeldige muzieklijst id: %s',
-				filter_input($type, 'lijst')
+				filter_var($request->lijst)
 			));
 		}
 		return new static($id);

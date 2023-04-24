@@ -158,20 +158,10 @@ function GetInt4d( $data, $pos ) {
 	return $value;
 }
 
-function is_captcha_ok(): bool {
+function is_captcha_ok( string $g_recaptcha_response ): bool {
 	$recaptcha = Config::get_recaptcha();
-	$resp = $recaptcha->verify($_POST['g-recaptcha-response'], $_SERVER['REMOTE_ADDR']);
+	$resp = $recaptcha->verify($g_recaptcha_response, $_SERVER['REMOTE_ADDR']);
 	return $resp->isSuccess();
-}
-
-/**
- * Haalt een postcode uit de gebruikersinvoer.
- * @param $type int INPUT_GET of INPUT_POST (standaard INPUT_POST)
- * @param string $var_name Naam van de key in de invoer (standaard "postcode")
- * @return ?string De geparste postcode of null als de invoer leeg is.
- */
-function filter_input_postcode( int $type = INPUT_POST, string $var_name = 'postcode' ): ?string {
-	return filter_postcode(filter_input($type, $var_name));
 }
 
 /**
@@ -195,19 +185,6 @@ function filter_postcode( $postcode ): ?string {
 	} else {
 		throw new OngeldigeInvoer("Ongeldige postcode: \"{$postcode}\"");
 	}
-}
-
-/**
- * Haalt een telefoonnummer uit de gebruikersinvoer.
- * Leestekens worden weggefilterd.
- * Lokale nummers worden internationaal gemaakt.
- * Nederlands nummers worden gecheckt op geldige prefix en lengte.
- * @param $type int INPUT_GET of INPUT_POST (standaard INPUT_POST)
- * @param string $var_name Naam van de key in de invoer (standaard "telefoonnummer")
- * @return ?string Het geparste telefoonnummer of null als de invoer leeg is.
- */
-function filter_input_telefoonnummer( int $type = INPUT_POST, string $var_name = 'telefoonnummer' ): ?string {
-	return filter_telefoonnummer(filter_input($type, $var_name));
 }
 
 /**
@@ -272,8 +249,8 @@ function verwijder_stemmers_zonder_stemmen(): void {
 	DB::query($query);
 }
 
-function filter_input_van_tot( string $var_name ): ?\DateTime {
-	$str = filter_input(INPUT_POST, $var_name);
+function filter_van_tot( string $waarde ): ?\DateTime {
+	$str = filter_var($waarde);
     if ( isset($str) ) {
         return \DateTime::createFromFormat('d-m-Y', $str);
     } else {
@@ -382,4 +359,16 @@ function check_ip_blacklist( string $ip ): void {
 	if ( DB::recordBestaat("SELECT ip FROM blacklist WHERE ip = \"{$ip}\"") ) {
 		throw new BlacklistException();
 	}
+}
+
+/**
+ * @return Veld[]
+ */
+function get_velden(): array {
+	$velden = [];
+	$query = 'SELECT * FROM velden ORDER BY id';
+	foreach ( DB::query($query) as $entry ) {
+		$velden[] = new Veld($entry['id'], $entry);
+	}
+	return $velden;
 }

@@ -53,6 +53,11 @@ module.exports = {
 			'filename': 'los_toevoegen.html',
 			'chunks': ['los_toevoegen'],
 			'template': path.resolve(__dirname, 'src', 'html', 'los_toevoegen.html')
+		}),
+		new HtmlWebpackPlugin({
+			'filename': 'admin.html',
+			'chunks': ['admin'],
+			'template': path.resolve(__dirname, 'src', 'html', 'admin.html')
 		})
 	],
 	'optimization': {

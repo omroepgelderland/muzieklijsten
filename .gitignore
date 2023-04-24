@@ -62,9 +62,5 @@ node_modules
 /*.md5
 /test/*.xls
 
-public/afbeeldingen/**
-public/css/**
-public/fonts/**
-public/js/**
-public/index.html
-public/los_toevoegen.html
+/public/**
+!/public/*.php

@@ -4,32 +4,16 @@ node_versie="18.15.0"
 npm_versie="9.6.4"
 md5sum --status -c package.md5 2>/dev/null
 npm_onveranderd=$?
-vorige_git_hash=$(git rev-parse HEAD)
 
-if [[ "$(hostname)" == "app.gld.nl" && "$PWD" == "/home/muzieklijsten/prod" ]]; then
-	env="prod"
-	composercmd="composer"
-elif [[ "$(hostname)" == "app.gld.nl" && "$PWD" == "/home/muzieklijsten/staging" ]]; then
-	env="staging"
-	composercmd="composer"
+if [[ $1 == "" ]]; then
+	mode="dev"
 else
-	env="dev"
-	composercmd="/usr/local/bin/composer8.1"
+	mode="$1"
 fi
 
-if [[ $env == "prod" || $env == "staging" ]]; then
-	deploy_md5_voor=$(md5sum deploy.sh 2>/dev/null)
-	git pull || exit 1
-	deploy_md5_na=$(md5sum deploy.sh 2>/dev/null)
-	if [[ $deploy_md5_voor != $deploy_md5_na ]]; then
-		# Deploy script zelf is veranderd.
-		./deploy.sh
-		exit
-	fi
-fi
-$composercmd check-platform-reqs || exit 1
-$composercmd install || exit 1
-$composercmd dump-autoload
+/usr/local/bin/composer8.1 check-platform-reqs || exit 1
+/usr/local/bin/composer8.1 install || exit 1
+/usr/local/bin/composer8.1 dump-autoload || exit 1
 if [ ! -f ~/.nvm/nvm.sh ]; then
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 fi
@@ -38,21 +22,32 @@ if [[ $npm_onveranderd != 0 ]]; then
 	nvm install $node_versie || exit 1
 	. ~/.nvm/nvm.sh
 	nvm exec $node_versie npm install npm@$npm_versie -g || exit 1
-	if [[ $env == "dev" ]]; then
-		nvm exec $node_versie npx browserslist@latest --update-db
-		nvm exec $node_versie npm install || exit 1
-	else
-		nvm exec $node_versie npm ci || exit 1
-	fi
+	nvm exec $node_versie npx browserslist@latest --update-db || exit 1
+	nvm exec $node_versie npm install || exit 1
 	md5sum package.json package-lock.json >package.md5
 fi
-if [[ $env == "dev" ]]; then
-	rm -rf \
-		public/afbeeldingen/ \
-		public/css/ \
-		public/fonts/ \
-		public/js/ \
-		public/index.html \
-		public/los_toevoegen.html
+rm -rf \
+  public/afbeeldingen/ \
+  public/css/ \
+  public/fonts/ \
+  public/js/ \
+  public/*.html
+nvm exec $node_versie npx webpack --config webpack.$mode.js || exit 1
+
+if [[ $2 == "release" ]]; then
+	git branch -D release 2>/dev/null
+	git push origin --delete release 2>/dev/null
+	git push github --delete release 2>/dev/null
+	git checkout -b release || exit 1
+	echo "Versienummer? (vX.X.X) "
+	read versie
+	git add -f public/ || exit 1
+	git add -f vendor/ || exit 1
+	git commit -m "[build] $releaseVersion" || exit 1
+	git checkout master
+	git tag "$versie" release
+	git push origin "$version"
+	git push origin release
+	git push github "$version"
+	git push github release
 fi
-nvm exec $node_versie npx webpack --config webpack.$env.js || exit 1

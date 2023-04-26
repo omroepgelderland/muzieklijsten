@@ -46,10 +46,12 @@ if [[ $mode == "production" || $mode == "staging" ]]; then
 	git add -f vendor/ || exit 1
 	git commit -m "[build] $git_versie" || exit 1
 	git checkout "$deze_branch" || exit 1
-	git tag "$git_versie" $mode || exit 1
-	git push origin "$git_versie" || exit 1
+	if [[ $mode == "production" ]]; then
+		git tag "$git_versie" $mode || exit 1
+		git push origin "$git_versie" || exit 1
+		git push github "$git_versie" || exit 1
+	fi
 	git push origin $mode || exit 1
-	git push github "$git_versie" || exit 1
 	git push github $mode || exit 1
 	rm -rf \
 		public/afbeeldingen/ \

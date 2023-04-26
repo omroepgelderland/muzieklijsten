@@ -17,14 +17,14 @@ Alleen voor Linux.
 Benodigde paketten:
     - PHP 8.1 of hoger
     - PHP mysqli
-    - Composer
+    - php-intl
     - MySQL- of MariaDB-server
 Installatie van dependencies op Ubuntu 22.04:
 ```sh
-sudo apt install composer php mariadb-server php-mysql acl cron
+sudo apt install php mariadb-server php-mysql php-intl acl cron
 ```
 Voer het installatiescript install/install.sh uit.
-Configureer je webserver.
+Configureer je webserver. Zorg dat apache leesrechten heeft op de projectmap.
 Importeer nummers.
 
 ## Nummers invoeren

@@ -3,15 +3,12 @@
 scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 projectdir="$(dirname "$scriptdir")"
 mkdir -p "$projectdir/data/log"
-chmod -R o+r "$projectdir/public/" "$projectdir/src/"
+chmod -R o+r "$projectdir/public/" "$projectdir/src/" "$projectdir/vendor/"
 setfacl -R \
     -m u:$USER:rwx,u:www-data:rwx \
     -dm u:$USER:rwX,u:www-data:rwX \
     data
-find "$projectdir/public/" "$projectdir/src/" -type d -exec chmod +x {} \;
-(cd "$projectdir" && composer check-platform-reqs) || exit 1
-(cd "$projectdir" && composer install) || exit 1
-(cd "$projectdir" && composer dump-autoload) || exit 1
+find "$projectdir/public/" "$projectdir/src/" "$projectdir/vendor/" -type d -exec chmod +x {} \;
 (cd "$projectdir" && php install/install.php) || exit 1
 setfacl -R \
     -m u:www-data:rX \

@@ -135,17 +135,14 @@ function lijst_maken( \stdClass $request ): int {
  */
 function losse_nummers_toevoegen( \stdClass $request ): array {
     login();
-    $nummers = filter_var($request->nummers, FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
-    $lijsten = filter_var($request->lijsten, FILTER_VALIDATE_INT, FILTER_REQUIRE_ARRAY);
-	if ( !isset($lijsten) ) {
-		$lijsten = [];
-	}
+	$request->nummers ??= [];
+	$request->lijsten ??= [];
     $json = [];
 	$json['toegevoegd'] = 0;
 	$json['dubbel'] = 0;
-	foreach( $nummers as $nummer ) {
-		$artiest = trim($nummer['artiest']);
-		$titel = trim($nummer['titel']);
+	foreach( $request->nummers as $nummer ) {
+		$artiest = trim($nummer->artiest);
+		$titel = trim($nummer->titel);
 		if ( $titel !== '' && $artiest !== '' ) {
 			$zoekartiest = DB::escape_string(strtolower(str_replace(' ', '', $artiest)));
 			$zoektitel = DB::escape_string(strtolower(str_replace(' ', '', $titel)));
@@ -165,7 +162,7 @@ function losse_nummers_toevoegen( \stdClass $request ): array {
                     'titel' => $titel,
                     'artiest' => $artiest
                 ]);
-				foreach( $lijsten as $lijst ) {
+				foreach( $request->lijsten as $lijst ) {
                     DB::insertMulti('lijsten_nummers', [
                         'nummer_id' => $nummer_id,
                         'lijst_id' => $lijst

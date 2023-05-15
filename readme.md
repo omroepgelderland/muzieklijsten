@@ -1,36 +1,39 @@
-# Muzieklijsten module
+# Muzieklijstenmodule
 Webapp waarmee bezoekers nummers kunnen aanvragen en kunnen stemmen op toplijsten.
 
 ## Interfaces
-Stemlijst
-[url root]/index.php?lijst=[lijst id]
-[url root]?lijst=[lijst id]
+Stemlijst  
+index.html?lijst=[lijst id]
 
-Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten.
-[url root]/admin.html
+Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten.  
+admin.html
 
-Losse nummers toevoegen aan de database.
-[url root]/los_toevoegen.html
+Losse nummers toevoegen aan de database.  
+los_toevoegen.html
 
 ## Installatie
-Alleen voor Linux.
+Alleen voor Linux.  
 Benodigde paketten:
-    - PHP 8.1 of hoger
-    - PHP mysqli
-    - php-intl
-    - MySQL- of MariaDB-server
+- PHP 8.1 of hoger
+- PHP mysqli
+- php-intl
+- MySQL- of MariaDB-server
+
 Installatie van dependencies op Ubuntu 22.04:
 ```sh
 sudo apt install php mariadb-server php-mysql php-intl acl cron
 ```
-Voer het installatiescript install/install.sh uit.
-Configureer je webserver. Zorg dat apache leesrechten heeft op de projectmap.
+Voer het installatiescript install/install.sh uit.  
+Configureer je webserver. Zorg dat apache leesrechten heeft op de projectmap.  
 Importeer nummers.
+
+## Updaten
+Haal de nieuwste versie van github binnen door `./update.sh` in de projectroot uit te voeren.
 
 ## Nummers invoeren
 
 ### Uit powergold
-Exporteer de database uit Powergold in Excel (xls) formaat.
+Exporteer de database uit Powergold in Excel (xls) formaat.  
 Roep aan vanaf de commandline:
 `php [projectdir]/import_powergold.php [pad naar excelsheet]`
 

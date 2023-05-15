@@ -11,12 +11,6 @@ CREATE TABLE IF NOT EXISTS `lijsten` (
  `maxkeuzes` int(2) unsigned NOT NULL DEFAULT 0,
  `stemmen_per_ip` int(2) unsigned DEFAULT NULL,
  `artiest_eenmalig` tinyint(1) unsigned NOT NULL DEFAULT 0,
- `veld_telefoonnummer` tinyint(1) unsigned NOT NULL DEFAULT 0,
- `veld_email` tinyint(3) unsigned NOT NULL DEFAULT 0,
- `veld_woonplaats` tinyint(3) unsigned NOT NULL DEFAULT 1,
- `veld_adres` tinyint(1) unsigned NOT NULL DEFAULT 0,
- `veld_uitzenddatum` tinyint(3) unsigned NOT NULL DEFAULT 0,
- `veld_vrijekeus` tinyint(3) unsigned NOT NULL DEFAULT 0,
  `recaptcha` tinyint(3) unsigned NOT NULL DEFAULT 1,
  `email` varchar(100) DEFAULT NULL,
  `bedankt_tekst` varchar(4096) NOT NULL DEFAULT 'Bedankt voor je keuze.',
@@ -48,14 +42,6 @@ CREATE TABLE IF NOT EXISTS `lijsten_nummers` (
 
 CREATE TABLE IF NOT EXISTS`stemmers` (
  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
- `naam` varchar(100) DEFAULT NULL,
- `adres` varchar(100) DEFAULT NULL,
- `postcode` varchar(100) CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL,
- `woonplaats` varchar(100) DEFAULT NULL,
- `telefoonnummer` varchar(100) CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL,
- `emailadres` varchar(100) DEFAULT NULL,
- `uitzenddatum` varchar(20) DEFAULT NULL,
- `vrijekeus` text DEFAULT NULL,
  `ip` varchar(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  `timestamp` timestamp NOT NULL DEFAULT current_timestamp(),
  `is_geanonimiseerd` tinyint(3) unsigned NOT NULL DEFAULT 0,
@@ -119,3 +105,8 @@ CREATE TABLE IF NOT EXISTS `lijsten_velden` (
  CONSTRAINT `lijsten_velden_ibfk_1` FOREIGN KEY (`lijst_id`) REFERENCES `lijsten` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
  CONSTRAINT `lijsten_velden_ibfk_2` FOREIGN KEY (`veld_id`) REFERENCES `velden` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+
+CREATE TABLE IF NOT EXISTS `versie` (
+ `versie` int unsigned NOT NULL,
+ PRIMARY KEY (`versie`)
+);

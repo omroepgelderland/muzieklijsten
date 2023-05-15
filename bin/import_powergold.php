@@ -1,4 +1,10 @@
 <?php
+/**
+ * Importscript voor nummers uit Powergold.
+ * 
+ * @author Remy Glaser <rglaser@gld.nl>
+ * @package muzieklijsten
+ */
 
 namespace muzieklijsten;
 

@@ -1,4 +1,10 @@
 <?php
+/**
+ * 
+ * @author Remy Glaser <rglaser@gld.nl>
+ * @author Sander Otten <sotten@gld.nl>
+ * @package muzieklijsten
+ */
 
 namespace muzieklijsten;
 

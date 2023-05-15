@@ -131,6 +131,22 @@ $db = DB::getDB();
 $db->multi_query(file_get_contents(path_join(__DIR__, 'install.sql')));
 do {} while ( $db->next_result() );
 
+// Haal de hoogste databaseversie op en plaatst deze in de database als de
+// database nog geen versienummer heeft.
+// (dit kan in principe ook in install.sql worden gedaan, maar dan moet het
+// databaseversienummer op twee plekken tegelijk worden bijgehouden)
+$db_versie = 0;
+foreach ( get_class_methods('\muzieklijsten\DBUpdates') as $update_functie ) {
+	if ( preg_match('~^update_([0-9]+)$~', $update_functie, $m) === 1 ) {
+		$db_versie = max($db_versie, (int)$m[1]);
+	}
+}
+$db->query(<<<EOT
+INSERT INTO versie (versie)
+SELECT {$db_versie}
+WHERE NOT EXISTS (SELECT * FROM versie)
+EOT);
+
 echo <<<EOT
 Installatie voltooid. Nadat je je webserver hebt ingesteld zijn de volgende interfaces bereikbaar:
 

@@ -1,4 +1,9 @@
 <?php
+/**
+ * 
+ * @author Sander Otten <sotten@gld.nl>
+ * @package muzieklijsten
+ */
 
 namespace muzieklijsten;
 

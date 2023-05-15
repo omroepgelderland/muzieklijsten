@@ -1,18 +1,15 @@
 <?php
+/**
+ * 
+ * @author Remy Glaser <rglaser@gld.nl>
+ * @package muzieklijsten
+ */
 
 namespace muzieklijsten;
 
 class Stemmer {
 	
 	private int $id;
-	private ?string $naam;
-	private ?string $adres;
-	private ?string $postcode;
-	private ?string $woonplaats;
-	private ?string $telefoonnummer;
-	private ?string $emailadres;
-	private ?string $uitzenddatum;
-	private ?string $vrijekeus;
 	private string $ip;
 	private \DateTime $tijdstip;
 	private bool $db_props_set;
@@ -44,78 +41,6 @@ class Stemmer {
 	 */
 	public function equals( $obj ): bool {
 		return ( $obj instanceof Stemmer && $obj->get_id() == $this->id );
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_naam(): ?string {
-		$this->set_db_properties();
-		return $this->naam;
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_adres(): ?string {
-		$this->set_db_properties();
-		return $this->adres;
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_postcode(): ?string {
-		$this->set_db_properties();
-		return $this->postcode;
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_woonplaats(): ?string {
-		$this->set_db_properties();
-		return $this->woonplaats;
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_telefoonnummer(): ?string {
-		$this->set_db_properties();
-		return $this->telefoonnummer;
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_emailadres(): ?string {
-		$this->set_db_properties();
-		return $this->emailadres;
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_uitzenddatum(): ?string {
-		$this->set_db_properties();
-		return $this->uitzenddatum;
-	}
-	
-	/**
-	 * 
-	 * @return string|null
-	 */
-	public function get_vrijekeus(): ?string {
-		$this->set_db_properties();
-		return $this->vrijekeus;
 	}
 	
 	/**
@@ -153,14 +78,6 @@ class Stemmer {
 	 * @param array $data Data.
 	 */
 	private function set_data( array $data ): void {
-		$this->naam = $data['naam'];
-		$this->adres = $data['adres'];
-		$this->postcode = $data['postcode'];
-		$this->woonplaats = $data['woonplaats'];
-		$this->telefoonnummer = $data['telefoonnummer'];
-		$this->emailadres = $data['emailadres'];
-		$this->uitzenddatum = $data['uitzenddatum'];
-		$this->vrijekeus = $data['vrijekeus'];
 		$this->ip = $data['ip'];
 		
 		$this->tijdstip = $data['timestamp'];
@@ -232,34 +149,6 @@ class Stemmer {
 	 * @param Lijst $lijst
 	 */
 	public function mail_redactie( Lijst $lijst ): void {
-
-		$stemmer_gegevens = [];
-		if ( $this->get_naam() !== null ) {
-			$stemmer_gegevens[] = "Naam: {$this->get_naam()}";
-		}
-		if ( $this->get_adres() !== null ) {
-			$stemmer_gegevens[] = "Adres: {$this->get_adres()}";
-		}
-		if ( $this->get_postcode() !== null ) {
-			$stemmer_gegevens[] = "Postcode: {$this->get_postcode()}";
-		}
-		if ( $this->get_woonplaats() !== null ) {
-			$stemmer_gegevens[] = "Woonplaats: {$this->get_woonplaats()}";
-		}
-		if ( $this->get_telefoonnummer() !== null ) {
-			$stemmer_gegevens[] = "Telefoonnummer: {$this->get_telefoonnummer()}";
-		}
-		if ( $this->get_emailadres() !== null ) {
-			$stemmer_gegevens[] = "E-mailadres: {$this->get_emailadres()}";
-		}
-		if ( $this->get_uitzenddatum() !== null ) {
-			$stemmer_gegevens[] = "Uitzenddatum: {$this->get_uitzenddatum()}";
-		}
-		if ( $this->get_vrijekeus() !== null ) {
-			$stemmer_gegevens[] = "Vrije keus: {$this->get_vrijekeus()}";
-		}
-		$stemmer_gegevens_str = implode("\n", $stemmer_gegevens);
-		
 		// Velden
 		$velden = [];
 		foreach ( $lijst->get_velden() as $veld ) {
@@ -280,17 +169,12 @@ class Stemmer {
 		$tekst_bericht = <<<EOT
 		Ontvangen van:
 
-		{$stemmer_gegevens_str}
 		{$velden_str}
 
 		{$nummers_str}
 		EOT;
 
-		if ( $lijst->heeft_veld_uitzenddatum() ) {
-			$onderwerp = "Er is gestemd - {$lijst->get_naam()} - Uitzenddatum: {$this->get_uitzenddatum()}";
-		} else {
-			$onderwerp = "Er is gestemd - {$lijst->get_naam()}";
-		}
+		$onderwerp = "Er is gestemd - {$lijst->get_naam()}";
 
 		if ( count($lijst->get_notificatie_email_adressen()) > 0 ) {
 			stuur_mail(

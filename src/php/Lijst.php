@@ -1,4 +1,9 @@
 <?php
+/**
+ * 
+ * @author Remy Glaser <rglaser@gld.nl>
+ * @package muzieklijsten
+ */
 
 namespace muzieklijsten;
 
@@ -14,12 +19,6 @@ class Lijst {
 	private int $maxkeuzes;
 	private ?int $stemmen_per_ip;
 	private bool $artiest_eenmalig;
-	private int $veld_telefoonnummer;
-	private int $veld_email;
-	private int $veld_woonplaats;
-	private int $veld_adres;
-	private int $veld_uitzenddatum;
-	private int $veld_vrijekeus;
 	private bool $recaptcha;
 	/** @var string[] */
 	private array $notificatie_email_adressen;
@@ -129,114 +128,6 @@ class Lijst {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @return bool
-	 */
-	public function heeft_veld_telefoonnummer(): bool {
-		$this->set_db_properties();
-		return ($this->veld_telefoonnummer & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
-	}
-
-	/**
-	 * Geeft aan of het veld "telefoonnummer" verplicht is.
-	 * @return bool
-	 */
-	public function is_veld_telefoonnummer_verplicht(): bool {
-		$this->set_db_properties();
-		return ($this->veld_telefoonnummer & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
-	/**
-	 * 
-	 * @return bool
-	 */
-	public function heeft_veld_email(): bool {
-		$this->set_db_properties();
-		return ($this->veld_email & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
-	}
-
-	/**
-	 * Geeft aan of het veld "e-mail" verplicht is.
-	 * @return bool
-	 */
-	public function is_veld_email_verplicht(): bool {
-		$this->set_db_properties();
-		return ($this->veld_email & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
-	/**
-	 * 
-	 * @return bool
-	 */
-	public function heeft_veld_woonplaats(): bool {
-		$this->set_db_properties();
-		return ($this->veld_woonplaats & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
-	}
-
-	/**
-	 * Geeft aan of het veld "woonplaats" verplicht is.
-	 * @return bool
-	 */
-	public function is_veld_woonplaats_verplicht(): bool {
-		$this->set_db_properties();
-		return ($this->veld_woonplaats & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
-	/**
-	 * 
-	 * @return bool
-	 */
-	public function heeft_veld_adres(): bool {
-		$this->set_db_properties();
-		return ($this->veld_adres & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
-	}
-
-	/**
-	 * Geeft aan of het veld "adres" verplicht is.
-	 * @return bool
-	 */
-	public function is_veld_adres_verplicht(): bool {
-		$this->set_db_properties();
-		return ($this->veld_adres & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-
-	/**
-	 * 
-	 * @return bool
-	 */
-	public function heeft_veld_uitzenddatum(): bool {
-		$this->set_db_properties();
-		return ($this->veld_uitzenddatum & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
-	}
-
-	/**
-	 * Geeft aan of het veld "uitzenddatum" verplicht is.
-	 * @return bool
-	 */
-	public function is_veld_uitzenddatum_verplicht(): bool {
-		$this->set_db_properties();
-		return ($this->veld_uitzenddatum & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
-	/**
-	 * 
-	 * @return bool
-	 */
-	public function heeft_veld_vrijekeus(): bool {
-		$this->set_db_properties();
-		return ($this->veld_vrijekeus & (1 << self::VELD_ZICHTBAAR_BIT)) > 0;
-	}
-
-	/**
-	 * Geeft aan of het veld "vrije keuze" verplicht is.
-	 * @return bool
-	 */
-	public function is_veld_vrijekeus_verplicht(): bool {
-		$this->set_db_properties();
-		return ($this->veld_vrijekeus & (1 << self::VELD_VERPLICHT_BIT)) > 0;
-	}
-	
 	/**
 	 * 
 	 * @return bool
@@ -538,12 +429,6 @@ class Lijst {
 		$this->maxkeuzes = $data['maxkeuzes'];
 		$this->stemmen_per_ip = $data['stemmen_per_ip'];
 		$this->artiest_eenmalig = $data['artiest_eenmalig'] == 1;
-		$this->veld_telefoonnummer = $data['veld_telefoonnummer'];
-		$this->veld_email = $data['veld_email'];
-		$this->veld_woonplaats = $data['veld_woonplaats'];
-		$this->veld_adres = $data['veld_adres'];
-		$this->veld_uitzenddatum = $data['veld_uitzenddatum'];
-		$this->veld_vrijekeus = $data['veld_vrijekeus'];
 		$this->recaptcha = $data['recaptcha'] == 1;
 		$this->notificatie_email_adressen = [];
 		foreach ( explode(',', $data['email']) as $adres ) {
@@ -572,12 +457,6 @@ class Lijst {
 					maxkeuzes,
 					stemmen_per_ip,
 					artiest_eenmalig,
-					veld_telefoonnummer,
-					veld_email,
-					veld_woonplaats,
-					veld_adres,
-					veld_uitzenddatum,
-					veld_vrijekeus,
 					recaptcha,
 					email,
 					bedankt_tekst
@@ -589,12 +468,6 @@ class Lijst {
 					maxkeuzes,
 					stemmen_per_ip,
 					artiest_eenmalig,
-					veld_telefoonnummer,
-					veld_email,
-					veld_woonplaats,
-					veld_adres,
-					veld_uitzenddatum,
-					veld_vrijekeus,
 					recaptcha,
 					email,
 					bedankt_tekst

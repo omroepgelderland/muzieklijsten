@@ -14,9 +14,7 @@ module.exports = merge(common, {
 					'options': {
 						'presets': [
 							['@babel/preset-env', {
-								'targets': {
-									'chrome': '110'
-								}
+								'targets': 'last 2 Chrome versions, last 2 ChromeAndroid versions'
 							}]
 						]
 					}

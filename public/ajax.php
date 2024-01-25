@@ -31,6 +31,7 @@ function filter_lijst_metadata( \stdClass $request ): array {
 	$is_actief = isset($request->{'is-actief'});
 	$minkeuzes = filter_var($request->minkeuzes, FILTER_VALIDATE_INT);
 	$maxkeuzes = filter_var($request->maxkeuzes, FILTER_VALIDATE_INT);
+	$vrijekeuzes = filter_var($request->vrijekeuzes, FILTER_VALIDATE_INT);
 	$stemmen_per_ip = filter_var($request->{'stemmen-per-ip'}, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 	$artiest_eenmalig = isset($request->{'artiest-eenmalig'});
 	$recaptcha = isset($request->recaptcha);
@@ -62,6 +63,9 @@ function filter_lijst_metadata( \stdClass $request ): array {
 	if ( $maxkeuzes < $minkeuzes ) {
 		throw new GebruikersException('Het maximum aantal keuzes kan niet lager zijn dan het minimum.');
 	}
+	if ( $vrijekeuzes === false ) {
+		$vrijekeuzes = 0;
+	}
 	if ( $stemmen_per_ip < 1 ) {
 		$stemmen_per_ip = null;
 	}
@@ -70,6 +74,7 @@ function filter_lijst_metadata( \stdClass $request ): array {
 		'actief'=> $is_actief,
 		'minkeuzes' => $minkeuzes,
 		'maxkeuzes' => $maxkeuzes,
+		'vrijekeuzes' => $vrijekeuzes,
 		'stemmen_per_ip' => $stemmen_per_ip,
 		'artiest_eenmalig' => $artiest_eenmalig,
 		'recaptcha' => $recaptcha,
@@ -308,6 +313,16 @@ function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
 		$toelichting = filter_var($input_nummer->toelichting);
         $stemmer->add_stem($nummer, $lijst, $toelichting);
     }
+	// Invoer van (optionele) vrije keuzes
+	foreach ( $request->vrijekeuzes as $vrijekeus_invoer ) {
+		try {
+			$nummer = Nummer::vrijekeuze_toevoegen(
+				$vrijekeus_invoer->artiest,
+				$vrijekeus_invoer->titel
+			);
+			$stemmer->add_stem($nummer, $lijst, $vrijekeus_invoer->toelichting, true);
+		} catch ( LegeVrijeKeuze ) {}
+	}
 	
 	// Invoer van velden
 	foreach ( $lijst->get_velden() as $veld ) {
@@ -403,13 +418,17 @@ function get_geselecteerde_nummers( \stdClass $request ): array {
 
 /**
  * @param \stdClass $request HTTP-request.
+ * @return array{
+ * draw: int,
+ * recordsTotal: int,
+ * recordsFiltered: int,
+ * data: array<string[]>
+ * }
  * @throws GeenLijstException
  */
 function vul_datatables( \stdClass $request ): array {
     $ssp = new SSP(
         $request,
-        'nummers',
-        'id',
         [
             [
                 'db' => 'id',
@@ -426,7 +445,8 @@ function vul_datatables( \stdClass $request ): array {
             ]
         ]
     );
-    return $ssp->simple();
+    $res = $ssp->simple();
+	return $res;
 }
 
 /**
@@ -473,6 +493,7 @@ function get_stemlijst_frontend_data( \stdClass $request ): array {
 	return [
 		'minkeuzes' => $lijst->get_minkeuzes(),
 		'maxkeuzes' => $lijst->get_maxkeuzes(),
+		'vrijekeuzes' => $lijst->get_vrijekeuzes(),
 		'is_artiest_eenmalig' => $lijst->is_artiest_eenmalig(),
 		'organisatie' => Config::get_instelling('organisatie'),
 		'lijst_naam' => $lijst->get_naam(),
@@ -573,6 +594,7 @@ function get_beheer_lijstdata( \stdClass $request ): array {
 		'is_actief' => $lijst->is_actief(),
 		'minkeuzes' => $lijst->get_minkeuzes(),
 		'maxkeuzes' => $lijst->get_maxkeuzes(),
+		'vrijekeuzes' => $lijst->get_vrijekeuzes(),
 		'stemmen_per_ip' => $lijst->get_max_stemmen_per_ip(),
 		'artiest_eenmalig' => $lijst->is_artiest_eenmalig(),
 		'recaptcha' => $lijst->heeft_gebruik_recaptcha(),

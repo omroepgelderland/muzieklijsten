@@ -179,4 +179,40 @@ class Nummer {
 		return new static($id);
 	}
 
+	/**
+	 * Maakt een nieuw nummer aan als vrije keuze van een stemmer.
+	 * Als er al een nummer bestaat met deze artiest en titel dan wordt het
+	 * bestaan de nummer teruggegeven.
+	 * @return static Het bestaande of nieuw toegevoegde nummer.
+	 * @throws LegeVrijeKeuze Als de artiest of titel leeg is.
+	 */
+	public static function vrijekeuze_toevoegen( string $artiest, string $titel ): static {
+		$artiest = trim($artiest);
+		$titel = trim($titel);
+		if ( $artiest === '' || $titel === '' ) {
+			throw new LegeVrijeKeuze();
+		}
+		$q_artiest = DB::escape_string($artiest);
+		$q_titel = DB::escape_string($titel);
+		$query = <<<EOT
+		SELECT id
+		FROM nummers
+		WHERE
+			artiest LIKE "{$q_artiest}"
+			AND titel LIKE "{$q_titel}"
+		EOT;
+		$nummers = DB::selectObjectLijst($query, static::class);
+		if ( count($nummers) > 0 ) {
+			return $nummers[0];
+		}
+
+		$id = DB::insertMulti('nummers', [
+			'artiest' => $artiest,
+			'titel' => $titel,
+			'is_vrijekeuze' => true
+		]);
+		return new static($id);
+	}
+
+
 }

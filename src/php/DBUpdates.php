@@ -51,4 +51,11 @@ class DBUpdates {
 		EOT);
 	}
 
+	public static function update_3(): void {
+		DB::query('ALTER TABLE `lijsten` ADD `vrijekeuzes` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `maxkeuzes`;');
+		DB::query('ALTER TABLE `nummers` ADD `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `opener`');
+		DB::query('ALTER TABLE stemmen DROP FOREIGN KEY stemmen_ibfk_5');
+		DB::query('ALTER TABLE `stemmen` ADD `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `behandeld`');
+	}
+
 }

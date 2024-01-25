@@ -25,6 +25,8 @@ class Main {
 
   /** @type {?number} */
   lijst_id;
+  /** @type {Promise<string>} */
+  lijst_naam_promise;
   /** @type {HTMLBodyElement} */
   e_body;
   /** @type {HTMLSelectElement} */
@@ -41,6 +43,7 @@ class Main {
     this.e_lijst_select = document.getElementById('lijstselect');
     this.e_geselecteerd_lijst = document.getElementById('geselecteerd-lijst');
     this.e_aantal_geselecteerde_nummers = document.getElementById('aantal-geselecteerde-nummers');
+    this.lijst_naam_promise = Promise.resolve('?');
 
     this.vul_metadata().then(() => {
       let params = new URLSearchParams(document.location.search);
@@ -57,7 +60,10 @@ class Main {
     this.tabel = $('#beschikbare-nummers').DataTable({
       'processing': true,
       'serverSide': true,
-      'ajax': functies.vul_datatables,
+      'ajax': (data, callback, settings) => {
+        data.is_vrijekeuze = false;
+        functies.vul_datatables(data, callback, settings);
+      },
       'columnDefs': [{
         'targets': 0,
         'searchable': false,
@@ -103,7 +109,12 @@ class Main {
     document.getElementById('resultatenknop').addEventListener('click', this.resultaten_knop_handler.bind(this));
   }
 
-  set_lijst(lijst_id) {
+  /**
+   * 
+   * @param {number} lijst_id 
+   * @return {Promise<void>}
+   */
+  async set_lijst(lijst_id) {
     this.lijst_id = lijst_id;
     let url = new URL(location.href);
     let params = url.searchParams;
@@ -111,12 +122,17 @@ class Main {
     url.params = params;
     window.history.replaceState(null, null, url);
 
-    this.vul_lijst_metadata();
-
     this.e_body.classList.add('lijst-geselecteerd');
     for ( const bewerkknop of document.getElementsByClassName('bewerk-knop') ) {
       bewerkknop.removeAttribute('title');
     }
+
+    const lijst_data_promise = this.vul_lijst_metadata();
+    this.lijst_naam_promise = lijst_data_promise.then((lijst_data) => {
+      return lijst_data.naam;
+    });
+    await lijst_data_promise;
+
     this.tabel.draw();
   }
 
@@ -134,6 +150,10 @@ class Main {
     }
   }
 
+  /**
+   * 
+   * @returns {Promise<unknown>}
+   */
   async vul_lijst_metadata() {
     const data = await functies.post('get_lijst_metadata', {'lijst': this.lijst_id});
     for ( const e_naam of document.getElementsByClassName('lijst-naam') ) {
@@ -151,6 +171,7 @@ class Main {
     this.vul_lijst_geselecteerde_nummers();
     $('#beschikbare-nummers_length select').addClass('form-control');
     $('#beschikbare-nummers_filter input').addClass('form-control');
+    return data;
   }
 
   checkbox_handler(e) {
@@ -261,9 +282,9 @@ class Main {
    * 
    * @param {Event} e 
    */
-  resultaten_knop_handler(e) {
+  async resultaten_knop_handler(e) {
     e.preventDefault();
-    new ResultatenModal(this.lijst_id, this.lijst_naam);
+    new ResultatenModal(this.lijst_id, await this.lijst_naam_promise);
   }
 
   nieuw_knop_handler(e) {
@@ -338,6 +359,11 @@ class ResultatenModal {
   /** @type {number} */
   totaal_aantal_stemmen;
 
+  /**
+   * 
+   * @param {number} lijst_id 
+   * @param {string} lijst_naam 
+   */
   constructor(lijst_id, lijst_naam) {
     this.lijst_id = lijst_id;
     this.resultaten_nummers = [];
@@ -356,7 +382,7 @@ class ResultatenModal {
     this.maak_resultaten_tabel();
 
     for ( const e_lijst_naam of this.e_modal.querySelectorAll('.lijst-naam') ) {
-      e_lijst_naam.appendChild(document.createTextNode(lijst_naam));
+      e_lijst_naam.textContent = lijst_naam;
     }
 
     document.getElementsByTagName('body').item(0).appendChild(this.e_modal);
@@ -499,6 +525,11 @@ class ResultatenNummer {
   /** @type {string} */
   artiest;
 
+  /**
+   * 
+   * @param {ResultatenModal} resultaten_modal 
+   * @param {HTMLTableSectionElement} e_container 
+   */
   constructor(resultaten_modal, e_container) {
     this.resultaten_modal = resultaten_modal;
     this.e_container = e_container;
@@ -523,7 +554,7 @@ class ResultatenNummer {
     this.e_container.appendChild(this.e_tr_gegevens);
   }
 
-  set_nummer({id, titel, artiest}) {
+  set_nummer({id, titel, artiest, is_vrijekeuze}) {
     this.nummer_id = id;
     this.titel = titel;
     this.artiest = artiest;
@@ -533,6 +564,9 @@ class ResultatenNummer {
     }
     for ( const e_nummer_artiest of this.e_tr_uitklap.getElementsByClassName('nummer-artiest') ) {
       e_nummer_artiest.appendChild(document.createTextNode(this.artiest));
+    }
+    if ( is_vrijekeuze ) {
+      this.e_tr_uitklap.classList.add('vrijekeuze');
     }
   }
 
@@ -884,12 +918,13 @@ class BeheerModal {
     const data = await functies.post('get_beheer_lijstdata', {'lijst': this.lijst_id});
 
     for ( const e_lijst_naam of this.e_modal.querySelectorAll('.lijst-naam') ) {
-      e_lijst_naam.appendChild(document.createTextNode(data.naam));
+      e_lijst_naam.textContent = data.naam;
     }
     this.e_form.elements['is-actief'].checked = data.is_actief;
     this.e_form.elements.naam.value = data.naam;
     this.e_form.elements.minkeuzes.value = data.minkeuzes;
     this.e_form.elements.maxkeuzes.value = data.maxkeuzes;
+    this.e_form.elements.vrijekeuzes.value = data.vrijekeuzes;
     this.e_form.elements['stemmen-per-ip'].value = data.stemmen_per_ip;
     this.e_form.elements['artiest-eenmalig'].checked = data.artiest_eenmalig;
     this.e_form.elements.recaptcha.checked = data.recaptcha;

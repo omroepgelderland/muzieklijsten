@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `lijsten` (
  `naam` varchar(255) NOT NULL,
  `minkeuzes` int(2) unsigned NOT NULL DEFAULT 0,
  `maxkeuzes` int(2) unsigned NOT NULL DEFAULT 0,
+ `vrijekeuzes` INT UNSIGNED NOT NULL DEFAULT 0,
  `stemmen_per_ip` int(2) unsigned DEFAULT NULL,
  `artiest_eenmalig` tinyint(1) unsigned NOT NULL DEFAULT 0,
  `recaptcha` tinyint(3) unsigned NOT NULL DEFAULT 1,
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS `nummers` (
  `categorie` varchar(256) DEFAULT NULL,
  `map` varchar(256) DEFAULT NULL,
  `opener` tinyint(3) unsigned NOT NULL DEFAULT 0,
+ `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0,
  PRIMARY KEY (`id`),
  UNIQUE KEY `muziek_id` (`muziek_id`),
  UNIQUE KEY `artiest` (`artiest`,`titel`,`jaar`)
@@ -54,13 +56,13 @@ CREATE TABLE IF NOT EXISTS `stemmen` (
  `stemmer_id` int(10) unsigned NOT NULL,
  `toelichting` text DEFAULT NULL,
  `behandeld` tinyint(3) unsigned NOT NULL DEFAULT 0,
+ `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0,
  PRIMARY KEY (`nummer_id`,`lijst_id`,`stemmer_id`),
  KEY `lijst_id` (`lijst_id`),
  KEY `stemmer_id` (`stemmer_id`),
  KEY `lijst_id_2` (`lijst_id`,`nummer_id`),
  CONSTRAINT `stemmen_ibfk_2` FOREIGN KEY (`lijst_id`) REFERENCES `lijsten` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
  CONSTRAINT `stemmen_ibfk_4` FOREIGN KEY (`nummer_id`) REFERENCES `nummers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
- CONSTRAINT `stemmen_ibfk_5` FOREIGN KEY (`lijst_id`, `nummer_id`) REFERENCES `lijsten_nummers` (`lijst_id`, `nummer_id`) ON DELETE CASCADE ON UPDATE CASCADE,
  CONSTRAINT `stemmen_ibfk_6` FOREIGN KEY (`stemmer_id`) REFERENCES `stemmers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 

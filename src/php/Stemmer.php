@@ -97,13 +97,19 @@ class Stemmer {
 		}
 	}
 
-	public function add_stem( Nummer $nummer, Lijst $lijst, string $toelichting ): Stem {
+	public function add_stem(
+		Nummer $nummer,
+		Lijst $lijst,
+		string $toelichting,
+		bool $is_vrijekeuze = false
+	): Stem {
 		try {
 			DB::insertMulti('stemmen', [
 				'nummer_id' => $nummer->get_id(),
 				'lijst_id' => $lijst->get_id(),
 				'stemmer_id' => $this->get_id(),
-				'toelichting' => $toelichting
+				'toelichting' => $toelichting,
+				'is_vrijekeuze' => $is_vrijekeuze
 			]);
 			return new Stem($nummer, $lijst, $this);
 		} catch ( SQLException_DataTooLong ) {

@@ -21,20 +21,15 @@ use mysqli_result;
 class SSP {
 
 	private \stdClass $request;
-	private string $tabel;
-	private string $primary_key;
 	private array $kolommen;
 	private Lijst $lijst;
+	private ?bool $is_vrijekeuze;
 
 	public function __construct(
 		\stdClass $request,
-		string $tabel,
-		string $primary_key,
 		array $kolommen
 	) {
 		$this->request = $request;
-		$this->tabel = $tabel;
-		$this->primary_key = $primary_key;
 		$this->kolommen = $kolommen;
 	}
 
@@ -130,6 +125,11 @@ class SSP {
 		$columnSearch = [];
 		$dtColumns = self::pluck( $this->kolommen, 'dt' );
 
+		if ( $this->is_vrijekeuze() !== null ) {
+			$is_vrijekeuze = (int)$this->is_vrijekeuze();
+			$columnSearch[] = "is_vrijekeuze = {$is_vrijekeuze}";
+		}
+
 		if ( isset($this->request->search) && $search_value != '' ) {
 			foreach ( $this->request->columns as $requestColumn ) {
 				$columnIdx = array_search($requestColumn->data, $dtColumns);
@@ -196,7 +196,7 @@ class SSP {
 		try {
 			$lijst = $this->get_lijst();
 			$basis_query = <<<EOT
-				FROM `{$this->tabel}` n
+				FROM nummers n
 				INNER JOIN lijsten_nummers l ON
 					n.id = l.nummer_id
 					AND l.lijst_id = {$lijst->get_id()}
@@ -218,7 +218,7 @@ class SSP {
 			EOT;
 		} catch ( Muzieklijsten_Exception $e ) {
 			$select = implode("`, `", self::pluck($this->kolommen, 'db'));
-			$basis_query = "FROM `{$this->tabel}`";
+			$basis_query = "FROM nummers";
 			// Resultaten
 			$query = <<<EOT
 				SELECT `{$select}`
@@ -226,13 +226,13 @@ class SSP {
 			EOT;
 			// Aantal resultaten
 			$count_query = <<<EOT
-				SELECT COUNT(`{$this->primary_key}`)
+				SELECT COUNT(id)
 				{$basis_query} {$where}
 			EOT;
 			// Total data set length
 			$total_length_query = <<<EOT
-				SELECT COUNT(`{$this->primary_key}`)
-				FROM `$this->tabel`
+				SELECT COUNT(id)
+				FROM nummers
 			EOT;
 		}
 		$data = DB::query($query);
@@ -252,164 +252,6 @@ class SSP {
 		];
 	}
 
-
-	// /**
-	//  * The difference between this method and the `simple` one, is that you can
-	//  * apply additional `where` conditions to the SQL queries. These can be in
-	//  * one of two forms:
-	//  *
-	//  * * 'Result condition' - This is applied to the result set, but not the
-	//  *   overall paging information query - i.e. it will not effect the number
-	//  *   of records that a user sees they can have access to. This should be
-	//  *   used when you want apply a filtering condition that the user has sent.
-	//  * * 'All condition' - This is applied to all queries that are made and
-	//  *   reduces the number of records that the user can access. This should be
-	//  *   used in conditions where you don't want the user to ever have access to
-	//  *   particular records (for example, restricting by a login id).
-	//  *
-	//  *  @param  array $request Data sent to server by DataTables
-	//  *  @param  array|PDO $conn PDO connection resource or connection parameters array
-	//  *  @param  string $table SQL table to query
-	//  *  @param  string $primaryKey Primary key of the table
-	//  *  @param  array $columns Column information array
-	//  *  @param  string $whereResult WHERE condition to apply to the result set
-	//  *  @param  string $whereAll WHERE condition to apply to all queries
-	//  *  @return array          Server-side processing response array
-	//  */
-	// static function complex ( $request, $conn, $table, $primaryKey, $columns, $whereResult=null, $whereAll=null )
-	// {
-	// 	$bindings = [];
-	// 	$db = self::db( $conn );
-	// 	$localWhereResult = [];
-	// 	$localWhereAll = [];
-	// 	$whereAllSql = '';
-
-	// 	// Build the SQL query string from the request
-	// 	$limit = self::limit( $request, $columns );
-	// 	$order = self::order( $request, $columns );
-	// 	$where = self::filter( $request, $columns, $bindings );
-
-	// 	$whereResult = self::_flatten( $whereResult );
-	// 	$whereAll = self::_flatten( $whereAll );
-
-	// 	if ( $whereResult ) {
-	// 		$where = $where ?
-	// 			$where .' AND '.$whereResult :
-	// 			'AND '.$whereResult;
-	// 	}
-
-	// 	if ( $whereAll ) {
-	// 		$where = $where ?
-	// 			$where .' AND '.$whereAll :
-	// 			'AND '.$whereAll;
-
-	// 		$whereAllSql = 'AND '.$whereAll;
-	// 	}
-
-	// 	$lijst = (int)$_GET['lijst'];
-	// 	if ( $lijst != 0 ) {
-	// 	// Main query to actually get the data
-	// 	$data = self::sql_exec( $db, $bindings,
-	// 		"SELECT SQL_CALC_FOUND_ROWS n.id, n.titel, n.artiest, n.jaar 
-	// 		 FROM lijsten_nummers l, nummers n 
-	// 		 WHERE n.id = l.nummer_id AND l.lijst_id = ".$lijst." 
-	// 		 $where
-	// 		 $order
-	// 		 $limit"
-	// 	);
-	// 	} else {
-	// 	// Main query to actually get the data
-	// 	$data = self::sql_exec( $db, $bindings,
-	// 		"SELECT SQL_CALC_FOUND_ROWS `".implode("`, `", self::pluck($columns, 'db'))."`
-	// 		 FROM `$table`
-	// 		 WHERE 1 
-	// 		 $where
-	// 		 $order
-	// 		 $limit"
-	// 	);
-	// 	}
-
-	// 	// Data set length after filtering
-	// 	$resFilterLength = self::sql_exec( $db,
-	// 		"SELECT FOUND_ROWS()"
-	// 	);
-	// 	$recordsFiltered = $resFilterLength[0][0];
-
-	// 	if ( $lijst != 0 ) {
-	// 	// Total data set length
-	// 	$resTotalLength = self::sql_exec( $db, $bindings,
-	// 		"SELECT COUNT(*) 
-	// 		 FROM lijsten_nummers l, nummers n 
-	// 		 WHERE n.id = l.nummer_id AND l.lijst_id = ".$lijst 
-	// 	);
-	// 	$recordsTotal = $resTotalLength[0][0];
-		
-	// 	} else {
-	// 	// Total data set length
-	// 	$resTotalLength = self::sql_exec( $db, $bindings,
-	// 		"SELECT COUNT(`{$primaryKey}`)
-	// 		 FROM   `$table` ".
-	// 		$whereAllSql
-	// 	);
-	// 	$recordsTotal = $resTotalLength[0][0];
-	// 	}
-		
-	// 	/*
-	// 	 * Output
-	// 	 */
-	// 	return [
-	// 		"draw"            => intval( $request['draw'] ),
-	// 		"recordsTotal"    => intval( $recordsTotal ),
-	// 		"recordsFiltered" => intval( $recordsFiltered ),
-	// 		"data"            => self::data_output( $columns, $data )
-	// 	];
-	// }
-
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 * Internal methods
-	 */
-
-	// /**
-	//  * Throw a fatal error.
-	//  *
-	//  * This writes out an error message in a JSON string which DataTables will
-	//  * see and show to the user in the browser.
-	//  *
-	//  * @param  string $msg Message to send to the client
-	//  */
-	// static function fatal ( $msg )
-	// {
-	// 	echo json_encode( [ 
-	// 		"error" => $msg
-	// 	] );
-
-	// 	exit(0);
-	// }
-
-	// /**
-	//  * Create a PDO binding key which can be used for escaping variables safely
-	//  * when executing a query with sql_exec()
-	//  *
-	//  * @param  array &$a    Array of bindings
-	//  * @param  *      $val  Value to bind
-	//  * @param  int    $type PDO field type
-	//  * @return string       Bound key to be used in the SQL where this parameter
-	//  *   would be used.
-	//  */
-	// static function bind ( &$a, $val, $type )
-	// {
-	// 	$key = ':binding_'.count( $a );
-
-	// 	$a[] = [
-	// 		'key' => $key,
-	// 		'val' => $val,
-	// 		'type' => $type
-	// 	];
-
-	// 	return $key;
-	// }
-
-
 	/**
 	 * Pull a particular property from each assoc. array in a numeric array, 
 	 * returning and array of the property values from each item.
@@ -428,25 +270,6 @@ class SSP {
 		return $out;
 	}
 
-
-	// /**
-	//  * Return a string from an array or a string
-	//  *
-	//  * @param  array|string $a Array to join
-	//  * @param  string $join Glue for the concatenation
-	//  * @return string Joined string
-	//  */
-	// static function _flatten ( $a, $join = ' AND ' )
-	// {
-	// 	if ( ! $a ) {
-	// 		return '';
-	// 	}
-	// 	else if ( $a && is_array($a) ) {
-	// 		return implode( $join, $a );
-	// 	}
-	// 	return $a;
-	// }
-
 	/**
 	 * 
 	 * @throws GeenLijstException
@@ -454,5 +277,21 @@ class SSP {
 	private function get_lijst(): Lijst {
 		$this->lijst ??= Lijst::maak_uit_request($this->request);
 		return $this->lijst;
+	}
+
+	/**
+	 * Geeft aan of vrije keuzenummers mogen voorkomen in het resultaat.
+	 * @return bool True is alleen vrije keuzes, False is geen vrije keuzes,
+	 * null is geen filter.
+	 */
+	private function is_vrijekeuze(): bool | null {
+		if ( !isset($this->is_vrijekeuze) ) {
+			try {
+				$this->is_vrijekeuze = $this->request->is_vrijekeuze;
+			} catch ( UndefinedPropertyException ) {
+				$this->is_vrijekeuze = null;
+			}
+		}
+		return $this->is_vrijekeuze;
 	}
 }

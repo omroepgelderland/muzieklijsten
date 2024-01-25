@@ -136,6 +136,10 @@ table.dataTable.select tbody tr, table.dataTable thead th:first-child {
     .behandeld {
         background: #ee7f01;
     }
+
+    .table-striped>tbody>tr.vrijekeuze {
+        background-color: hsl(327 78% 94% / 1);
+    }
     
     .bs-callout {
         margin: 20px 0;

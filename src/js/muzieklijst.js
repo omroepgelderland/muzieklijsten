@@ -7,6 +7,7 @@ import * as functies from './functies.js';
 
 // Libraries css
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'datatables.net-dt/css/jquery.dataTables.min.css';
 
 // Project css
 import '../scss/algemeen.scss';
@@ -201,6 +202,7 @@ class StemView {
       'serverSide': true,
       'ajax': (data, callback, settings) => {
         data.lijst = this.lijst_id;
+        data.is_vrijekeuze = false;
         functies.vul_datatables(data, callback, settings);
       },
       'bLengthChange': false,
@@ -277,6 +279,9 @@ class StemView {
     this.e_keuzeformulier.elements.lijst.value = this.lijst_id;
     for ( const velddata of serverdata.velden ) {
       new Invoerveld(velddata);
+    }
+    for ( let i = 0; i < serverdata.vrijekeuzes; i++ ) {
+      this.vrijkeuze_toevoegen(i, serverdata.vrijekeuzes);
     }
     for ( const e_captcha of document.querySelectorAll('.g-recaptcha') ) {
       e_captcha.setAttribute('data-sitekey', serverdata.recaptcha_sitekey);
@@ -431,6 +436,62 @@ class StemView {
     } else {
       this.e_body.classList.remove('heeft-nummers-geselecteerd');
     }
+  }
+
+  /**
+   * Voegt een veld met titel en artiest voor een optionele vrije keuze.
+   * @param {number} nummer Volgnummer van de vrije keuze.
+   * @param {number} totaal Totaal aantal vrije keuzes.
+   * @return {void}
+   */
+  vrijkeuze_toevoegen(nummer, totaal) {
+    const label = totaal === 1 ? 'Vrije keuze' : `Vrije keuze ${nummer + 1}`;
+
+    const e_artiest_col = this.vrijkeuze_toevoegen_veld('Artiest', nummer, 3, 128);
+    const e_titel_col = this.vrijkeuze_toevoegen_veld('Titel', nummer, 3, 128);
+    const e_toelichting_col = this.vrijkeuze_toevoegen_veld('Toelichting', nummer, 4, 512);
+
+    const e_form_group = document.createElement('div');
+    e_form_group.classList.add('form-group', 'row');
+
+    const e_label = document.createElement('label');
+    e_form_group.appendChild(e_label);
+    e_label.classList.add('control-label', 'col-sm-2');
+    e_label.setAttribute('for', e_artiest_col.querySelector('input').id);
+    e_label.appendChild(document.createTextNode(label));
+
+    e_form_group.appendChild(e_artiest_col);
+    e_form_group.appendChild(e_titel_col);
+    e_form_group.appendChild(e_toelichting_col);
+
+    document.getElementById('formulier-velden').appendChild(e_form_group);
+  }
+
+  /**
+   * Titel- of artiestveld maken.
+   * @param {'Titel' | 'Artiest' | 'Toelichting'} veld 
+   * @param {number} nummer Volgnummer van de vrije keuze.
+   * @param {number} breedte Breedte van de kolom.
+   * @param {number} max_length
+   * @returns {HTMLDivElement} Kolomelement.
+   */
+  vrijkeuze_toevoegen_veld(veld, nummer, breedte, max_length) {
+    const veld_intern = veld.toLowerCase();
+    const id_str = `vrijekeuze-${veld_intern}-${nummer}`;
+    const naam = `vrijekeuzes[${nummer}][${veld_intern}]`;
+
+    const e_col = document.createElement('div');
+    e_col.classList.add(`col-sm-${breedte}`);
+
+    const e_input = document.createElement('input');
+    e_input.type = 'text';
+    e_col.appendChild(e_input);
+    e_input.classList.add('form-control');
+    e_input.id = id_str;
+    e_input.name = naam;
+    e_input.maxLength = max_length;
+    e_input.placeholder = veld;
+    return e_col;
   }
 
   /**

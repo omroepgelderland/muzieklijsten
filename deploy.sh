@@ -39,7 +39,7 @@ fi
 if [[ $mode == "dev" ]]; then
     if [[ $2 != "kort" ]]; then
         npm install npm@latest -g || exit 1
-        npx browserslist@latest --update-db || exit 1
+        npx update-browserslist-db@latest || exit 1
         npm audit fix
         npm install || exit 1
         export COMPOSER_NO_DEV=0

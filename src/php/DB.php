@@ -190,15 +190,19 @@ class DB {
 	
 	/**
 	 * Geeft een lijst met objecten aan de hand van een query.
-	 * De query moet als resultaat een enkele rij met id's als resultaat geven die overeenkomen met ID's van het gewenste objecttype.
+	 * De query moet als resultaat een enkele rij met id's als resultaat geven
+	 * die overeenkomen met ID's van het gewenste objecttype.
+	 * @template Type
 	 * @param string $sql De query
-	 * @param string $object_type Naam van de class
-	 * @param mixed $args,... Extra parameters voor de constructor van de class (na id)
-	 * @return Object[] resultaat. Kan leeg zijn.
+	 * @param class-string<Type> $object_type Naam van de class
+	 * @param mixed $args,... Extra parameters voor de constructor van de class
+	 * (na id)
+	 * @return Type[] resultaat. Kan leeg zijn.
 	 * @throws SQLException Als de query mislukt.
-	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
+	 * @throws SQLException Als er geen verbinding kan worden gemaakt met de
+	 * database.
 	 */
-	public static function selectObjectLijst( string $sql, string $object_type, ...$args ): array {
+	public static function selectObjectLijst( string $sql, $object_type, ...$args ): array {
 		$respons = [];
 		foreach ( self::selectSingleColumn($sql) as $id ) {
 			$respons[] = new $object_type($id, ...$args);

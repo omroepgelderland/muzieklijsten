@@ -17,6 +17,7 @@ class Lijst {
 	private string $naam;
 	private int $minkeuzes;
 	private int $maxkeuzes;
+	private int $vrijekeuzes;
 	private ?int $stemmen_per_ip;
 	private bool $artiest_eenmalig;
 	private bool $recaptcha;
@@ -92,6 +93,14 @@ class Lijst {
 	public function get_maxkeuzes(): int {
 		$this->set_db_properties();
 		return $this->maxkeuzes;
+	}
+
+	/**
+	 * Geeft het aantal vrije keuzes.
+	 */
+	public function get_vrijekeuzes(): int {
+		$this->set_db_properties();
+		return $this->vrijekeuzes;
 	}
 	
 	/**
@@ -289,6 +298,7 @@ class Lijst {
 	 * Geeft alle unieke stemmers.
 	 * @param \DateTime $van Neem alleen de stemmers die gestemd hebben vanaf deze datum (optioneel).
 	 * @param \DateTime $tot Neem alleen de stemmers die gestemd hebben tot en met deze datum (optioneel).
+	 * @return Stemmer[]
 	 */
 	public function get_stemmers( ?\DateTime $van = null, ?\DateTime $tot = null ): array {
 		$where = [];
@@ -427,6 +437,7 @@ class Lijst {
 		$this->naam = $data['naam'];
 		$this->minkeuzes = $data['minkeuzes'];
 		$this->maxkeuzes = $data['maxkeuzes'];
+		$this->vrijekeuzes = $data['vrijekeuzes'];
 		$this->stemmen_per_ip = $data['stemmen_per_ip'];
 		$this->artiest_eenmalig = $data['artiest_eenmalig'] == 1;
 		$this->recaptcha = $data['recaptcha'] == 1;
@@ -675,6 +686,7 @@ class Lijst {
 		$query = <<<EOT
 		SELECT
 			stemmen.nummer_id,
+			stemmen.is_vrijekeuze,
 			n.titel,
 			n.artiest,
 			stemmers.id AS stemmer_id,
@@ -720,6 +732,7 @@ class Lijst {
 		$nummers = [];
 		foreach ( DB::query($query) as [
 			'nummer_id' => $nummer_id,
+			'is_vrijekeuze' => $is_vrijekeuze,
 			'titel' => $titel,
 			'artiest' => $artiest,
 			'stemmer_id' => $stemmer_id,
@@ -733,6 +746,7 @@ class Lijst {
 			'waarde' => $waarde
 		]) {
 			$nummer_id = (int)$nummer_id;
+			$is_vrijekeuze = $is_vrijekeuze == 1;
 			$stemmer_id = (int)$stemmer_id;
 			$is_behandeld = $is_behandeld == 1;
 			$is_geanonimiseerd = $is_geanonimiseerd == 1;
@@ -745,7 +759,8 @@ class Lijst {
 			$nummers[$nummer_id]['nummer'] = [
 				'id' => $nummer_id,
 				'titel' => $titel,
-				'artiest' => $artiest
+				'artiest' => $artiest,
+				'is_vrijekeuze' => $is_vrijekeuze
 			];
 			$nummers[$nummer_id]['stemmen'][$stemmer_id]['stemmer_id'] = $stemmer_id;
 			$nummers[$nummer_id]['stemmen'][$stemmer_id]['ip'] = $ip;

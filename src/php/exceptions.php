@@ -76,3 +76,8 @@ class ObjectEigenschapOntbreekt extends Muzieklijsten_Exception {}
  * Ongeldig lijst-ID
  */
 class GeenLijstException extends GebruikersException {}
+
+/**
+ * Ingestuurde vrije keuze met lege artiest of titel.
+ */
+class LegeVrijeKeuze extends Muzieklijsten_Exception {}

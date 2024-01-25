@@ -548,7 +548,7 @@ class ResultatenNummer {
 
     this.e_aantal_stemmen = this.e_tr_uitklap.getElementsByClassName('aantal-stemmen').item(0);
 
-    this.e_tr_uitklap.getElementsByClassName('verwijder-nummer').item(0).addEventListener('click', this.verwijderen.bind(this));
+    // this.e_tr_uitklap.getElementsByClassName('verwijder-nummer').item(0).addEventListener('click', this.verwijderen.bind(this));
 
     this.e_container.appendChild(this.e_tr_uitklap);
     this.e_container.appendChild(this.e_tr_gegevens);
@@ -644,16 +644,16 @@ class ResultatenNummer {
     this.e_aantal_stemmen.innerText = this.get_aantal_stemmen();
   }
 
-  async verwijderen(e) {
-    e.stopPropagation();
-    if ( confirm('Dit nummer, inclusief alle reacties hierop, verwijderen uit de stemlijst?') ) {
-      const aantal_stemmen = this.get_aantal_stemmen();
-      // await functies.verwijder_nummer(this.lijst_id, this.nummer_id);
-      this.e_tr_gegevens.parentElement.removeChild(this.e_tr_gegevens);
-      this.e_tr_uitklap.parentNode.removeChild(this.e_tr_uitklap);
-      functies.trigger(this.eventer, 'verwijderd', aantal_stemmen);
-    }
-  }
+  // async verwijderen(e) {
+  //   e.stopPropagation();
+  //   if ( confirm('Dit nummer, inclusief alle stemmen hierop, verwijderen uit de stemlijst?') ) {
+  //     const aantal_stemmen = this.get_aantal_stemmen();
+  //     // await functies.verwijder_nummer(this.lijst_id, this.nummer_id);
+  //     this.e_tr_gegevens.parentElement.removeChild(this.e_tr_gegevens);
+  //     this.e_tr_uitklap.parentNode.removeChild(this.e_tr_uitklap);
+  //     functies.trigger(this.eventer, 'verwijderd', aantal_stemmen);
+  //   }
+  // }
 
   filter(nummers_tekst, stemmers_tekst, van, tot) {
     // Filter het nummer.

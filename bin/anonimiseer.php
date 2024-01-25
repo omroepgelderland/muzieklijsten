@@ -78,5 +78,7 @@ foreach ( DB::query($query) as $entry ) {
 	anonimiseer_stemmen($id);
 	anonimiseer_velden($id);
 }
+verwijder_ongekoppelde_vrije_keuze_nummers();
+verwijder_stemmers_zonder_stemmen();
 
 DB::commit();

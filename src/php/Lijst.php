@@ -596,6 +596,17 @@ class Lijst {
 				AND nl.lijst_id = {$this->get_id()}
 		EOT;
 		DB::query($query);
+
+		// Verwijdering als het een vrije keuzenummer was.
+		$query = <<<EOT
+		DELETE FROM stemmen
+		WHERE
+			nummer_id = {$nummer->get_id()}
+			AND lijst_id = {$this->get_id()}
+		EOT;
+		DB::query($query);
+
+		verwijder_ongekoppelde_vrije_keuze_nummers();
 		verwijder_stemmers_zonder_stemmen();
 	}
 

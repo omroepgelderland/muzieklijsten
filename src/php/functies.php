@@ -377,3 +377,20 @@ function get_velden(): array {
 	}
 	return $velden;
 }
+
+/**
+ * Verwijdert alle vrije keuzenummers uit de tabel nummers waar geen stemmen
+ * op zijn.
+ */
+function verwijder_ongekoppelde_vrije_keuze_nummers(): void {
+	DB::query(<<<EOT
+	DELETE n
+	FROM nummers n
+	WHERE
+	n.is_vrijekeuze = 1
+	AND n.id NOT IN (
+		SELECT nummer_id
+		FROM stemmen
+	)
+	EOT);
+}

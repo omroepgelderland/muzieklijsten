@@ -225,10 +225,12 @@ function verwijder_stem( \stdClass $request ): void {
 		Stemmer::maak_uit_request($request)
 	);
 	$stem->verwijderen();
+	verwijder_ongekoppelde_vrije_keuze_nummers();
 }
 
 /**
  * Verwijderen van een nummer in de resultateninterface.
+ * (wordt momenteel niet gebruikt)
  * @param \stdClass $request HTTP-request.
  * @throws GeenLijstException
  */

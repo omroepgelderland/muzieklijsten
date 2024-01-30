@@ -316,7 +316,12 @@ function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
         $stemmer->add_stem($nummer, $lijst, $toelichting);
     }
 	// Invoer van (optionele) vrije keuzes
-	foreach ( $request->vrijekeuzes as $vrijekeus_invoer ) {
+	try {
+		$vrijekeuzes = $request->vrijekeuzes;
+	} catch ( UndefinedPropertyException ) {
+		$vrijekeuzes = [];
+	}
+	foreach ( $vrijekeuzes as $vrijekeus_invoer ) {
 		try {
 			$nummer = Nummer::vrijekeuze_toevoegen(
 				$vrijekeus_invoer->artiest,

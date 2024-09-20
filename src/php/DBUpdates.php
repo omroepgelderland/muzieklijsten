@@ -58,4 +58,10 @@ class DBUpdates {
 		DB::query('ALTER TABLE `stemmen` ADD `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `behandeld`');
 	}
 
+	public static function update_4(): void {
+		DB::query(
+			'ALTER TABLE `lijsten` ADD `mail_stemmers` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `bedankt_tekst`'
+		);
+	}
+
 }

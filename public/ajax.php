@@ -34,6 +34,7 @@ function filter_lijst_metadata( \stdClass $request ): array {
 	$vrijekeuzes = filter_var($request->vrijekeuzes, FILTER_VALIDATE_INT);
 	$stemmen_per_ip = filter_var($request->{'stemmen-per-ip'}, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 	$artiest_eenmalig = isset($request->{'artiest-eenmalig'});
+	$mail_stemmers = isset($request->{'mail-stemmers'});
 	$recaptcha = isset($request->recaptcha);
 	$emails = explode(',', filter_var($request->email));
 	$emails_geparsed = [];
@@ -77,6 +78,7 @@ function filter_lijst_metadata( \stdClass $request ): array {
 		'vrijekeuzes' => $vrijekeuzes,
 		'stemmen_per_ip' => $stemmen_per_ip,
 		'artiest_eenmalig' => $artiest_eenmalig,
+		'mail_stemmers' => $mail_stemmers,
 		'recaptcha' => $recaptcha,
 		'email' => $emails_str,
 		'bedankt_tekst' => $bedankt_tekst
@@ -375,6 +377,7 @@ function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
 	}
 
 	$stemmer->mail_redactie($lijst);
+	$stemmer->mail_stemmer($lijst);
 	return $stemmer;
 }
 
@@ -604,6 +607,7 @@ function get_beheer_lijstdata( \stdClass $request ): array {
 		'vrijekeuzes' => $lijst->get_vrijekeuzes(),
 		'stemmen_per_ip' => $lijst->get_max_stemmen_per_ip(),
 		'artiest_eenmalig' => $lijst->is_artiest_eenmalig(),
+		'mail_stemmers' => $lijst->is_mail_stemmers(),
 		'recaptcha' => $lijst->heeft_gebruik_recaptcha(),
 		'email' => implode(',', $lijst->get_notificatie_email_adressen()),
 		'bedankt_tekst' => $lijst->get_bedankt_tekst(),

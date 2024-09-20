@@ -24,6 +24,7 @@ class Lijst {
 	/** @var string[] */
 	private array $notificatie_email_adressen;
 	private string $bedankt_tekst;
+	private bool $mail_stemmers;
 	/** @var Veld[] */
 	private array $velden;
 	/** @var Nummer[] */
@@ -388,6 +389,14 @@ class Lijst {
 		$this->set_db_properties();
 		return $this->bedankt_tekst;
 	}
+
+	/**
+	 * Geeft de instelling of stemmers gemaild worden na het stemmen.
+	 */
+	public function is_mail_stemmers(): bool {
+		$this->set_db_properties();
+		return $this->mail_stemmers;
+	}
 	
 	/**
 	 * Zet alle klassevariabelen terug naar null, behalve het ID. Dit is nuttig wanneer de lijst is verwijderd of zodanig is aangepast dat de klassevariabelen niet meer overeenkomen met de database, en dus opnieuw moeten worden opgehaald.
@@ -449,6 +458,7 @@ class Lijst {
 			}
 		}
 		$this->bedankt_tekst = $data['bedankt_tekst'];
+		$this->mail_stemmers = $data['mail_stemmers'];
 		$this->db_props_set = true;
 	}
 

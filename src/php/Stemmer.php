@@ -195,6 +195,89 @@ class Stemmer {
 	}
 
 	/**
+	 * Mailt een bevestiging naar de stemmer, als dat is geconfigureerd in de
+	 * lijst en als de stemmer een e-mailadres heeft opgegeven.
+	 */
+	public function mail_stemmer( Lijst $lijst ): void {
+		if ( !$lijst->is_mail_stemmers() ) {
+			return;
+		}
+
+		$onderwerp = "Je stem voor {$lijst->get_naam()}";
+		$naam = 'stemmer';
+		foreach ( $lijst->get_velden() as $veld ) {
+			if ( $veld->get_label() === 'Naam' ) {
+				try {
+					$naam = $veld->get_stemmer_waarde($this);
+				} catch ( Muzieklijsten_Exception ) {}
+			}
+			if ( $veld->get_label() === 'E‑mailadres' || $veld->get_label() === 'E-mailadres' ) {
+				try {
+					$email = $veld->get_stemmer_waarde($this);
+				} catch ( Muzieklijsten_Exception ) {}
+			}
+		}
+		if ( !isset($email) ) {
+			return;
+		}
+
+		$html_body = <<<EOT
+		<!doctype html>
+		<html lang="nl-NL">
+		<head>
+			<meta charset="utf-8">
+			<meta http-equiv="content-type" content="text/html; charset=utf-8">
+			<title id="onderwerp"></title>
+		</head>
+		<body>
+			<p>Beste <span id="stemmernaam"></span>,</p>
+			<p>Bedankt voor het uitbrengen van je stem op de lijst ‘<span id="lijstnaam"></span>’.</p>
+			<p>Dit zijn jouw keuzes:</p>
+			<p id="keuzes"></p>
+		</body>
+		</html>
+		EOT;
+		$dom = new \DOMDocument();
+		$dom->loadHTML($html_body);
+
+		$e_onderwerp = $dom->getElementById('onderwerp');
+		$e_onderwerp->appendChild($dom->createTextNode($onderwerp));
+		$e_onderwerp->removeAttribute('id');
+
+		$dom->getElementById('stemmernaam')->replaceWith($dom->createTextNode($naam));
+
+		$dom->getElementById('lijstnaam')->replaceWith($dom->createTextNode($lijst->get_naam()));
+
+		$e_keuzes = $dom->getElementById('keuzes');
+		$e_keuzes->removeAttribute('id');
+		foreach ( $this->get_stemmen($lijst) as $stem ) {
+			$e_strong = $e_keuzes->appendChild($dom->createElement('strong'));
+			$e_strong->appendChild($dom->createTextNode(
+				"{$stem->nummer->get_artiest()} – {$stem->nummer->get_titel()}"
+			));
+			$toelichting = $stem->get_toelichting();
+			if ( $toelichting !== null && $toelichting !== '' ) {
+				$e_span = $e_keuzes->appendChild($dom->createElement('span'));
+				$e_span->setAttribute('style', 'margin-left: 20px; font-style: italic;');
+				$e_span->appendChild($dom->createTextNode(
+					" Toelichting: {$stem->get_toelichting()}"
+				));
+				$e_keuzes->appendChild($e_span);
+			}
+			$e_keuzes->appendChild($dom->createElement('br'));
+		}
+
+		stuur_mail(
+			$email,
+			[],
+			Config::get_instelling('mail', 'afzender'),
+			$onderwerp,
+			$dom->textContent,
+			$dom->saveHTML()
+		);
+	}
+
+	/**
 	 * @return Stem[]
 	 */
 	public function get_stemmen( Lijst $lijst ): array {

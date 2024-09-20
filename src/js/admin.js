@@ -927,6 +927,7 @@ class BeheerModal {
     this.e_form.elements.vrijekeuzes.value = data.vrijekeuzes;
     this.e_form.elements['stemmen-per-ip'].value = data.stemmen_per_ip;
     this.e_form.elements['artiest-eenmalig'].checked = data.artiest_eenmalig;
+    this.e_form.elements['mail-stemmers'].checked = data.mail_stemmers;
     this.e_form.elements.recaptcha.checked = data.recaptcha;
     this.e_form.elements.email.value = data.email;
     this.e_form.elements['bedankt-tekst'].value = data.bedankt_tekst;

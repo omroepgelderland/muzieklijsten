@@ -149,9 +149,11 @@ function losse_nummers_toevoegen( \stdClass $request ): array {
     login();
 	$request->nummers ??= [];
 	$request->lijsten ??= [];
-    $json = [];
-	$json['toegevoegd'] = 0;
-	$json['dubbel'] = 0;
+    $json = [
+		'toegevoegd' => 0,
+		'dubbel' => 0,
+		'lijsten_nummers' => 0
+	];
 	foreach( $request->nummers as $nummer ) {
 		$artiest = trim($nummer->artiest);
 		$titel = trim($nummer->titel);
@@ -168,18 +170,22 @@ function losse_nummers_toevoegen( \stdClass $request ): array {
 			$res = DB::query($sql);
 			if ( $res->num_rows > 0 ) {
 				$json['dubbel']++;
+				$nummer_id = (int)$res->fetch_array()[0];
 			} else {
 				$json['toegevoegd']++;
                 $nummer_id = DB::insertMulti('nummers', [
                     'titel' => $titel,
                     'artiest' => $artiest
                 ]);
-				foreach( $request->lijsten as $lijst ) {
-                    DB::insertMulti('lijsten_nummers', [
-                        'nummer_id' => $nummer_id,
-                        'lijst_id' => $lijst
-                    ]);
-				}
+			}
+			foreach( $request->lijsten as $lijst ) {
+				try {
+					DB::insertMulti('lijsten_nummers', [
+						'nummer_id' => $nummer_id,
+						'lijst_id' => $lijst
+					]);
+					$json['lijsten_nummers']++;
+				} catch ( SQLException_DupEntry ) {}
 			}
 		}
 	}

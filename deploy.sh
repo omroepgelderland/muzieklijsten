@@ -17,7 +17,7 @@ fi
 projectdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 projectnaam="$(basename "$projectdir")"
 tempdir="/tmp/dist_$projectnaam/"
-cd "$projectdir"
+cd "$projectdir" || exit 1
 
 if [[ $2 != "kort" ]]; then
     if [ ! -f ~/.nvm/nvm.sh ]; then
@@ -31,7 +31,7 @@ nvm install --lts || exit 1
 if [[ $mode == "production" ]]; then
     oude_versie="$(git tag --list 'v*' --sort=v:refname | tail -n1)"
     echo "Versieverhoging? (major|minor|patch|premajor|preminor|prepatch|prerelease) "
-    read versie_type
+    read -r versie_type
     nieuwe_versie="$(npx semver -i "$versie_type" "$oude_versie")"
     git_versie="v$nieuwe_versie"
 fi
@@ -48,16 +48,16 @@ if [[ $mode == "dev" ]]; then
         /usr/local/bin/composer8.1 dump-autoload || exit 1
     fi
     delete_dist_bestanden
-    npx webpack --watch --config webpack.$mode.js || exit 1
+    npx webpack --watch --config "webpack.$mode.js" || exit 1
 fi
 if [[ $mode == "production" || $mode == "staging" ]]; then
-    git branch -D $mode 2>/dev/null
-    git push origin --delete $mode 2>/dev/null
-	git push github --delete $mode 2>/dev/null
+    git branch -D "$mode" 2>/dev/null
+    git push origin --delete "$mode" 2>/dev/null
+	git push github --delete "$mode" 2>/dev/null
     rm -rf "$tempdir"
     git clone . "$tempdir" || exit 1
     cd "$tempdir" || exit 1
-    git checkout -b $mode
+    git checkout -b "$mode"
 
     # Composer packages
     export COMPOSER_NO_DEV=1
@@ -68,7 +68,7 @@ if [[ $mode == "production" || $mode == "staging" ]]; then
     # Webpack output
     export NODE_ENV=development
     npm ci
-    npx webpack --config webpack.$mode.js || exit 1
+    npx webpack --config "webpack.$mode.js" || exit 1
     git add -f public/ || exit 1
     # export NODE_ENV=production
     # npm ci || exit 1
@@ -93,13 +93,13 @@ if [[ $mode == "production" || $mode == "staging" ]]; then
     if [[ $mode == "staging" ]]; then
         git commit -m "[staging build]" || exit 1
     fi
-    git push origin $mode || exit 1
+    git push origin "$mode" || exit 1
     cd "$projectdir" || exit 1
     rm -rf "$tempdir"
     if [[ $mode == "production" ]]; then
         git push origin "$git_versie" || exit 1
 		git push github "$git_versie" || exit 1
     fi
-    git push --force origin $mode || exit 1
-	git push --force github $mode || exit 1
+    git push --force origin "$mode" || exit 1
+	git push --force github "$mode" || exit 1
 fi

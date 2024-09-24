@@ -113,10 +113,13 @@ app.controller('MainCtrl', [
         //console.log(data);
         $scope.toegevoegde_nummers = data.toegevoegd;
         $scope.dubbele_nummers = data.dubbel;
+        $scope.lijsten_nummers = data.lijsten_nummers;
         $scope.een_toegevoegd = ($scope.toegevoegde_nummers === 1);
         $scope.meerdere_toegevoegd = ($scope.toegevoegde_nummers != 1);
         $scope.een_dubbel = ($scope.dubbele_nummers == 1);
         $scope.meerdere_dubbel = ($scope.dubbele_nummers != 1 && $scope.dubbele_nummers != 0);
+        $scope.een_lijst_toegevoegd = $scope.lijsten_nummers == 1;
+        $scope.meerdere_lijst_toegevoegd = !$scope.een_lijst_toegevoegd;
         $scope.error = false;
         $scope.nummers = [new Nummer()];
         $scope.$apply();

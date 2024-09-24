@@ -25,6 +25,7 @@ class Lijst {
 	private array $notificatie_email_adressen;
 	private string $bedankt_tekst;
 	private bool $mail_stemmers;
+	private bool $random_volgorde;
 	/** @var Veld[] */
 	private array $velden;
 	/** @var Nummer[] */
@@ -397,6 +398,14 @@ class Lijst {
 		$this->set_db_properties();
 		return $this->mail_stemmers;
 	}
+
+	/**
+	 * Geeft de instelling voor het random sorteren van nummers in de lijst.
+	 */
+	public function is_random_volgorde(): bool {
+		$this->set_db_properties();
+		return $this->random_volgorde;
+	}
 	
 	/**
 	 * Zet alle klassevariabelen terug naar null, behalve het ID. Dit is nuttig wanneer de lijst is verwijderd of zodanig is aangepast dat de klassevariabelen niet meer overeenkomen met de database, en dus opnieuw moeten worden opgehaald.
@@ -459,6 +468,7 @@ class Lijst {
 		}
 		$this->bedankt_tekst = $data['bedankt_tekst'];
 		$this->mail_stemmers = $data['mail_stemmers'];
+		$this->random_volgorde = $data['random_volgorde'];
 		$this->db_props_set = true;
 	}
 

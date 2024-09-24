@@ -64,4 +64,10 @@ class DBUpdates {
 		);
 	}
 
+	public static function update_5(): void {
+		DB::query(
+			'ALTER TABLE lijsten ADD random_volgorde TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER mail_stemmers'
+		);
+	}
+
 }

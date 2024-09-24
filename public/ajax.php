@@ -35,6 +35,7 @@ function filter_lijst_metadata( \stdClass $request ): array {
 	$stemmen_per_ip = filter_var($request->{'stemmen-per-ip'}, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
 	$artiest_eenmalig = isset($request->{'artiest-eenmalig'});
 	$mail_stemmers = isset($request->{'mail-stemmers'});
+	$random_volgorde = isset($request->{'random-volgorde'});
 	$recaptcha = isset($request->recaptcha);
 	$emails = explode(',', filter_var($request->email));
 	$emails_geparsed = [];
@@ -79,6 +80,7 @@ function filter_lijst_metadata( \stdClass $request ): array {
 		'stemmen_per_ip' => $stemmen_per_ip,
 		'artiest_eenmalig' => $artiest_eenmalig,
 		'mail_stemmers' => $mail_stemmers,
+		'random_volgorde' => $random_volgorde,
 		'recaptcha' => $recaptcha,
 		'email' => $emails_str,
 		'bedankt_tekst' => $bedankt_tekst
@@ -518,7 +520,8 @@ function get_stemlijst_frontend_data( \stdClass $request ): array {
 		'is_max_stemmen_per_ip_bereikt' => $lijst->is_max_stemmen_per_ip_bereikt(),
 		'velden' => $velden,
 		'recaptcha_sitekey' => Config::get_instelling('recaptcha', 'sitekey'),
-		'privacy_url' => Config::get_instelling('privacy_url')
+		'privacy_url' => Config::get_instelling('privacy_url'),
+		'random_volgorde' => $lijst->is_random_volgorde()
 	];
 }
 
@@ -614,6 +617,7 @@ function get_beheer_lijstdata( \stdClass $request ): array {
 		'stemmen_per_ip' => $lijst->get_max_stemmen_per_ip(),
 		'artiest_eenmalig' => $lijst->is_artiest_eenmalig(),
 		'mail_stemmers' => $lijst->is_mail_stemmers(),
+		'random_volgorde' => $lijst->is_random_volgorde(),
 		'recaptcha' => $lijst->heeft_gebruik_recaptcha(),
 		'email' => implode(',', $lijst->get_notificatie_email_adressen()),
 		'bedankt_tekst' => $lijst->get_bedankt_tekst(),

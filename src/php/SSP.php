@@ -79,7 +79,10 @@ class SSP {
 	 *  @return string SQL order by clause
 	 */
 	protected function order() {
-		if ( isset($this->request->order) && count($this->request->order) > 0 ) {
+		if ( $this->get_lijst()->is_random_volgorde() ) {
+			return "ORDER BY RAND({$this->request->random_seed})";
+		}
+		else if ( isset($this->request->order) && count($this->request->order) > 0 ) {
 			$orderBy = [];
 			$dtColumns = self::pluck( $this->kolommen, 'dt' );
 
@@ -101,7 +104,11 @@ class SSP {
 				}
 			}
 
-			return 'ORDER BY '.implode(', ', $orderBy);
+			if ( count($orderBy) > 0 ) {
+				return 'ORDER BY '.implode(', ', $orderBy);
+			} else {
+				return '';
+			}
 		} else {
 			return '';
 		}

@@ -79,7 +79,12 @@ class SSP {
 	 *  @return string SQL order by clause
 	 */
 	protected function order() {
-		if ( $this->get_lijst()->is_random_volgorde() ) {
+		try {
+			$is_random_volgorde = $this->get_lijst()->is_random_volgorde();
+		} catch ( GeenLijstException ) {
+			$is_random_volgorde = false;
+		}
+		if ( $is_random_volgorde ) {
 			return "ORDER BY RAND({$this->request->random_seed})";
 		}
 		else if ( isset($this->request->order) && count($this->request->order) > 0 ) {

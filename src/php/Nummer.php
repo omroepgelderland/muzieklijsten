@@ -17,6 +17,7 @@ class Nummer {
 	private ?string $categorie;
 	private ?string $map;
 	private bool $is_opener;
+	private bool $is_vrijekeuze;
 	/** @var Muzieklijst[] */
 	private array $lijsten;
 	private bool $db_props_set;
@@ -113,6 +114,11 @@ class Nummer {
 		return $this->is_opener;
 	}
 	
+	public function is_vrijekeuze(): bool {
+		$this->set_db_properties();
+		return $this->is_vrijekeuze;
+	}
+	
 	/**
 	 * Geeft alle lijsten waar dit nummer op staat.
 	 * @return Muzieklijst[]
@@ -155,6 +161,7 @@ class Nummer {
 		$this->categorie = $data['categorie'];
 		$this->map = $data['map'];
 		$this->is_opener = $data['opener'] == 1;
+		$this->is_vrijekeuze = $data['is_vrijekeuze'] == 1;
 		$this->db_props_set = true;
 	}
 

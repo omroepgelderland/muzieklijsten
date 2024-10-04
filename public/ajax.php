@@ -359,6 +359,16 @@ function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
 				$vrijekeus_invoer->artiest,
 				$vrijekeus_invoer->titel
 			);
+			if ( !$nummer->is_vrijekeuze() ) {
+				foreach ( $lijst->get_nummers() as $lijst_nummer ) {
+					if ( $nummer->equals($lijst_nummer) ) {
+						throw new GebruikersException(
+							"Het nummer {$lijst_nummer->get_artiest()} – {$lijst_nummer->get_titel()} kan niet worden "
+							."gekozen als vrij nummer. Selecteer het nummer in de keuzelijst"
+						);
+					}
+				}
+			}
 			$stemmer->add_stem($nummer, $lijst, $vrijekeus_invoer->toelichting, true);
 		} catch ( LegeVrijeKeuze ) {}
 	}

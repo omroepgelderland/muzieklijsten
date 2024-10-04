@@ -486,7 +486,7 @@ class DB {
 				$respons[$key] = '1';
 			} elseif ( $value === false ) {
 				$respons[$key] = '0';
-			} elseif ( is_numeric($value) ) {
+			} elseif ( is_int($value) || is_float($value) ) {
 				$respons[$key] = sprintf('%s', $value);
 			} elseif ( $value instanceof \DateTime ) {
 				$respons[$key] = $value->format('"Y-m-d H:i:s"');

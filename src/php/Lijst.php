@@ -813,4 +813,56 @@ class Lijst {
 		return array_values($nummers);
 	}
 
+	/**
+	 * Zoekt een stemmer op deze lijst aan de hand van een e-mailadres.
+	 * @return Stemmer|null De stemmer, of null als die niet kan  worden
+	 * gevonden.
+	 */
+	public function get_stemmer_uit_email( string $email ): ?Stemmer {
+		$e_email = DB::escape_string(
+			\strtolower(
+				\filter_var($email, FILTER_SANITIZE_EMAIL)
+			)
+		);
+		$query = <<<EOT
+		SELECT stemmen.stemmer_id
+		FROM stemmen
+		JOIN stemmers_velden sv ON
+		sv.stemmer_id = stemmen.stemmer_id
+		AND sv.veld_id = 6
+		AND sv.waarde = "{$e_email}"
+		WHERE
+		stemmen.lijst_id = {$this->get_id()}
+		EOT;
+		try {
+			return DB::selectObjectLijst($query, Stemmer::class)[0];
+		} catch ( IndexException ) {
+			return null;
+		}
+	}
+
+	/**
+	 * Zoekt een stemmer op deze lijst aan de hand van een telefoonnummer.
+	 * @return Stemmer|null De stemmer, of null als die niet kan  worden
+	 * gevonden.
+	 */
+	public function get_stemmer_uit_telefoonnummer( string $telefoonnummer ): ?Stemmer {
+		$e_telefoonnummer = filter_telefoonnummer($telefoonnummer);
+		$query = <<<EOT
+		SELECT stemmen.stemmer_id
+		FROM stemmen
+		JOIN stemmers_velden sv ON
+		sv.stemmer_id = stemmen.stemmer_id
+		AND sv.veld_id = 5
+		AND sv.waarde = "{$e_telefoonnummer}"
+		WHERE
+		stemmen.lijst_id = {$this->get_id()}
+		EOT;
+		try {
+			return DB::selectObjectLijst($query, Stemmer::class)[0];
+		} catch ( IndexException ) {
+			return null;
+		}
+	}
+
 }

@@ -279,52 +279,74 @@ function get_totaal_aantal_stemmers( \stdClass $request ): int {
  */
 function stem( \stdClass $request ): string {
     $lijst = Lijst::maak_uit_request($request);
+	$bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
+	$html = "<h4>{$bedankt_tekst}</h4>";
+
 	if ( $lijst->heeft_gebruik_recaptcha() && !is_captcha_ok($request->{'g-recaptcha-response'}) ) {
 		throw new GebruikersException('Captcha verkeerd.');
 	}
 	if ( $lijst->is_max_stemmen_per_ip_bereikt($lijst) ) {
-		return 'Het maximum aantal stemmen voor dit IP-adres is bereikt.';
+		return $html;
 	}
+
 	try {
 		$stemmer = verwerk_stem($lijst, $request);
-		$is_blacklist = false;
-	} catch ( BlacklistException ) {
-		$is_blacklist = true;
-	}
-	$bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
-	$html = "<h4>{$bedankt_tekst}</h4>";
-	if ( !$is_blacklist && ( $lijst->get_id() == 31 || $lijst->get_id() == 201 ) ) {
-		if ( is_dev() ) {
-			$fbshare_url = sprintf(
-				'https://webdev.gld.nl/%s/muzieklijsten/fbshare.php?stemmer=%d',
-				get_developer(),
-				$stemmer->get_id()
-			);
-			$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebdev.gld.nl%2F'.get_developer().'%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$stemmer->get_id().'&amp;src=sdkpreparse';
-		} else {
-			$fbshare_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$stemmer->get_id();
-			$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$stemmer->get_id().'&amp;src=sdkpreparse';
+		if ( $lijst->get_id() == 31 || $lijst->get_id() == 201 ) {
+			if ( is_dev() ) {
+				$fbshare_url = sprintf(
+					'https://webdev.gld.nl/%s/muzieklijsten/fbshare.php?stemmer=%d',
+					get_developer(),
+					$stemmer->get_id()
+				);
+				$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebdev.gld.nl%2F'.get_developer().'%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$stemmer->get_id().'&amp;src=sdkpreparse';
+			} else {
+				$fbshare_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='.$stemmer->get_id();
+				$fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'.$stemmer->get_id().'&amp;src=sdkpreparse';
+			}
+			$html .= <<<EOT
+				<div class="fb-share-button" data-href="{$fbshare_url}" data-layout="button" data-size="large" data-mobile-iframe="true">
+					<a class="fb-xfbml-parse-ignore" target="_blank" href="{$fb_url}">Deel mijn keuze op Facebook</a>
+				</div>
+			EOT;
 		}
-		$html .= <<<EOT
-			<div class="fb-share-button" data-href="{$fbshare_url}" data-layout="button" data-size="large" data-mobile-iframe="true">
-				<a class="fb-xfbml-parse-ignore" target="_blank" href="{$fb_url}">Deel mijn keuze op Facebook</a>
-			</div>
-		EOT;
-	}
+	} catch ( BlacklistException ) {}
 	return $html;
 }
 
+/**
+ * Verwerkt een steminvoer.
+ * Als er al een stem is geweest op deze lijst met hetzelfde e-mailadres of
+ * telefoonnummer dan wordt de oude stem gewist en vervangen door de nieuwe
+ * invoer. De gebruiker wordt hier niet van op de hoogte gesteld.
+ * @throws BlacklistException
+ */
 function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
 	check_ip_blacklist($_SERVER['REMOTE_ADDR']);
-	$stemmer = Stemmer::maak(
+
+	// Zoek bestaande stemmer.
+	$stemmer = null;
+	try {
+		$stemmer ??= $lijst->get_stemmer_uit_telefoonnummer($request->velden->{5});
+	} catch ( UndefinedPropertyException ) {}
+	try {
+		$stemmer ??= $lijst->get_stemmer_uit_email($request->velden->{6});
+	} catch ( UndefinedPropertyException ) {}
+	
+	// Verwijder vorige stem en invoer.
+	$stemmer?->verwijder_stemmen($lijst);
+	$stemmer?->verwijder_velden();
+
+	// Maak nieuwe stemmer.
+	$stemmer ??= Stemmer::maak(
 		$_SERVER['REMOTE_ADDR']
 	);
-    
+
     foreach( $request->nummers as $input_nummer ) {
 		$nummer = new Nummer(filter_var($input_nummer->id, FILTER_VALIDATE_INT));
 		$toelichting = filter_var($input_nummer->toelichting);
         $stemmer->add_stem($nummer, $lijst, $toelichting);
     }
+
 	// Invoer van (optionele) vrije keuzes
 	try {
 		$vrijekeuzes = $request->vrijekeuzes;
@@ -349,39 +371,7 @@ function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
 		} catch ( UndefinedPropertyException ) {
 			$waarde = null;
 		}
-		if ( $veld->get_type() === 'checkbox' ) {
-			$waarde = filter_var($waarde, FILTER_VALIDATE_BOOL);
-		}
-		elseif ( $veld->get_type() === 'date' ) {
-			$waarde = (new \DateTime($waarde))->format('Y-m-d');
-		}
-		elseif ( $veld->get_type() === 'email' ) {
-			$waarde = filter_var($waarde, FILTER_SANITIZE_EMAIL);
-			if ( $waarde !== null ) {
-				$waarde = strtolower($waarde);
-			}
-		}
-		elseif ( $veld->get_type() === 'month' || $veld->get_type() === 'number' || $veld->get_type() === 'week' ) {
-			$waarde = filter_var($waarde, FILTER_VALIDATE_INT);
-		}
-		elseif ( $veld->get_type() === 'postcode' ) {
-			$waarde = filter_postcode($waarde);
-		}
-		elseif ( $veld->get_type() === 'tel' ) {
-			$waarde = filter_telefoonnummer($waarde);
-		}
-		else {
-			$waarde = filter_var($waarde);
-		}
-		if ( $waarde !== false && $waarde !== null ) {
-			$veld->add_waarde($stemmer, $waarde);
-		} elseif ( $veld->is_verplicht() ) {
-			throw new GebruikersException(sprintf(
-				'Veld %s is verplicht voor de lijst %s',
-				$veld->get_label(),
-				$lijst->get_naam()
-			));
-		}
+		$veld->set_waarde($stemmer, $waarde);
 	}
 
 	$stemmer->mail_redactie($lijst);

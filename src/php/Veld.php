@@ -187,12 +187,51 @@ class Veld {
 		$this->db_props_set = true;
 	}
 
-	public function add_waarde( Stemmer $stemmer, string $waarde ): void {
-		DB::insertMulti('stemmers_velden', [
-			'stemmer_id' => $stemmer->get_id(),
-			'veld_id' => $this->get_id(),
-			'waarde' => $waarde
-		]);
+	/**
+	 * Filtert de invoer van een veld en voegt het toe aan de database.
+	 * Als de combinatie stemmer–veld al bestaat dan wordt de waarde
+	 * overschreven.
+	 * @throws GebruikersException Als de invoer leeg is maar niet leeg mag zijn.
+	 * @throws Muzieklijsten_Exception Als er bij de constructor niet is
+	 * aangegeven of het veld verplicht is.
+	 */
+	public function set_waarde( Stemmer $stemmer, string $waarde ): void {
+		if ( $this->get_type() === 'checkbox' ) {
+			$gefilterde_waarde = filter_var($waarde, FILTER_VALIDATE_BOOL);
+		}
+		elseif ( $this->get_type() === 'date' ) {
+			$gefilterde_waarde = (new \DateTime($waarde))->format('Y-m-d');
+		}
+		elseif ( $this->get_type() === 'email' ) {
+			$gefilterde_waarde = filter_var($waarde, FILTER_SANITIZE_EMAIL);
+			if ( $gefilterde_waarde !== null ) {
+				$gefilterde_waarde = strtolower($gefilterde_waarde);
+			}
+		}
+		elseif ( $this->get_type() === 'month' || $this->get_type() === 'number' || $this->get_type() === 'week' ) {
+			$gefilterde_waarde = filter_var($waarde, FILTER_VALIDATE_INT);
+		}
+		elseif ( $this->get_type() === 'postcode' ) {
+			$gefilterde_waarde = filter_postcode($waarde);
+		}
+		elseif ( $this->get_type() === 'tel' ) {
+			$gefilterde_waarde = filter_telefoonnummer($waarde);
+		}
+		else {
+			$gefilterde_waarde = filter_var($waarde);
+		}
+
+		if ( $gefilterde_waarde !== false && $gefilterde_waarde !== null ) {
+			DB::insert_update_multi('stemmers_velden', [
+				'stemmer_id' => $stemmer->get_id(),
+				'veld_id' => $this->get_id(),
+				'waarde' => $gefilterde_waarde
+			]);
+		} elseif ( $this->is_verplicht() ) {
+			throw new GebruikersException(
+				"Veld {$this->get_label()} mag niet leeg zijn"
+			);
+		}
 	}
 
 	/**

@@ -115,6 +115,9 @@ class Stemmer {
 		} catch ( SQLException_DataTooLong ) {
 			$max = DB::get_max_kolom_lengte('stemmen', 'toelichting');
 			throw new GebruikersException("De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens.");
+		} catch ( SQLException_DupEntry ) {
+			// Bestaande stem teruggeven
+			return new Stem($nummer, $lijst, $this);
 		}
 	}
 	
@@ -298,6 +301,32 @@ class Stemmer {
 			);
 		}
 		return $stemmen;
+	}
+
+	/**
+	 * Verwijdert alle stemmen van deze stemmer op een lijst.
+	 */
+	public function verwijder_stemmen( Lijst $lijst ): void {
+		$query = <<<EOT
+		DELETE FROM stemmen
+		WHERE
+			lijst_id = {$lijst->get_id()}
+			AND stemmer_id = {$this->get_id()}
+		EOT;
+		DB::query($query);
+		verwijder_ongekoppelde_vrije_keuze_nummers();
+	}
+
+	/**
+	 * Verwijdert de inhoud van alle formuliervelden van deze stemmer.
+	 */
+	public function verwijder_velden(): void {
+		$query = <<<EOT
+		DELETE FROM stemmers_velden
+		WHERE
+			stemmer_id = {$this->get_id()}
+		EOT;
+		DB::query($query);
 	}
 
 }

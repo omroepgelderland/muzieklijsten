@@ -1,12 +1,12 @@
 #!/bin/bash
 
 function delete_dist_bestanden() {
-	rm -rf \
-		public/afbeeldingen/ \
-		public/css/ \
-		public/fonts/ \
-		public/js/ \
-		public/*.html
+    rm -rf \
+        public/afbeeldingen/ \
+        public/css/ \
+        public/fonts/ \
+        public/js/ \
+        public/*.html
 }
 
 if [[ $1 == "" ]]; then
@@ -53,7 +53,7 @@ fi
 if [[ $mode == "production" || $mode == "staging" ]]; then
     git branch -D "$mode" 2>/dev/null
     git push origin --delete "$mode" 2>/dev/null
-	git push github --delete "$mode" 2>/dev/null
+    git push github --delete "$mode" 2>/dev/null
     rm -rf "$tempdir"
     git clone . "$tempdir" || exit 1
     cd "$tempdir" || exit 1
@@ -98,8 +98,8 @@ if [[ $mode == "production" || $mode == "staging" ]]; then
     rm -rf "$tempdir"
     if [[ $mode == "production" ]]; then
         git push origin "$git_versie" || exit 1
-		git push github "$git_versie" || exit 1
+        git push github "$git_versie" || exit 1
     fi
     git push --force origin "$mode" || exit 1
-	git push --force github "$mode" || exit 1
+    git push --force github "$mode" || exit 1
 fi

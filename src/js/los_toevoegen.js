@@ -61,8 +61,8 @@ async function get_lijsten() {
 var app = angular.module('losseNummers', []);
 
 app.controller('MainCtrl', [
-	'$scope', '$http',
-	($scope, $http) => {
+  '$scope', '$http',
+  ($scope, $http) => {
     $scope.nummers = [new Nummer()];
     $scope.een_toegevoegd = false;
     $scope.meerdere_toegevoegd = false;

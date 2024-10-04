@@ -4,19 +4,19 @@ namespace muzieklijsten;
 require_once __DIR__.'/../vendor/autoload.php';
 
 function readline_met_default( string $prompt, bool $mag_leeg = true, string $default = '' ): string {
-	if ( $default !== '' ) {
-		$prompt = "{$prompt} [{$default}]: ";
-	} else {
-		$prompt = "{$prompt}: ";
-	}
-	$ans = trim(readline($prompt));
-	if ( $ans === '' && $default !== '' ) {
-		$ans = $default;
-	}
-	if ( $ans === '' && !$mag_leeg ) {
-		throw new Muzieklijsten_Exception('De invoer mag niet leeg zijn.');
-	}
-	return $ans;
+    if ( $default !== '' ) {
+        $prompt = "{$prompt} [{$default}]: ";
+    } else {
+        $prompt = "{$prompt}: ";
+    }
+    $ans = trim(readline($prompt));
+    if ( $ans === '' && $default !== '' ) {
+        $ans = $default;
+    }
+    if ( $ans === '' && !$mag_leeg ) {
+        throw new Muzieklijsten_Exception('De invoer mag niet leeg zijn.');
+    }
+    return $ans;
 }
 
 // Configuratiebestand genereren.
@@ -26,39 +26,39 @@ $recaptcha_sitekey = readline_met_default('Recaptcha site key', false);
 $recaptcha_secret = readline_met_default('Recaptcha secret', false);
 $root_url = rtrim($root_url, '/').'/';
 $config = [
-	'organisatie' => readline_met_default('Naam organisatie/bedrijf'),
-	'root_url' => $root_url,
-	'privacy_url' => readline_met_default('URL naar het privacybeleid'),
-	'nimbus_url' => readline_met_default('URL naar Nimbus'),
-	'sql' => [
-		'server' => $sql_server = readline_met_default('SQL-server', false, 'localhost'),
-		'database' => $sql_database = readline_met_default('Naam van de database', false, 'muzieklijsten'),
-		'user' => $sql_user = readline_met_default('SQL gebruikersnaam', false, 'muzieklijsten'),
-		'password' => $sql_password = readline_met_default('Wachtwoord van de SQL-gebruiker (alleen als de gebruiker nog niet bestaat)', false)
-	],
-	'php_auth' => [
-		'user' => readline_met_default('Gebruikersnaam voor de beheerdersinterface', false),
-		'password' => readline_met_default('Wachtwoord voor de beheerdersinterface', false)
-	],
-	'mail' => [
-		'sendmail_path' => '/usr/sbin/sendmail',
-		'afzender' => readline_met_default('Afzender voor e-mails naar de redactie', false)
-	],
-	'recaptcha' => [
-		'sitekey' => $recaptcha_sitekey,
-		'secret' => $recaptcha_secret
-	]
+    'organisatie' => readline_met_default('Naam organisatie/bedrijf'),
+    'root_url' => $root_url,
+    'privacy_url' => readline_met_default('URL naar het privacybeleid'),
+    'nimbus_url' => readline_met_default('URL naar Nimbus'),
+    'sql' => [
+        'server' => $sql_server = readline_met_default('SQL-server', false, 'localhost'),
+        'database' => $sql_database = readline_met_default('Naam van de database', false, 'muzieklijsten'),
+        'user' => $sql_user = readline_met_default('SQL gebruikersnaam', false, 'muzieklijsten'),
+        'password' => $sql_password = readline_met_default('Wachtwoord van de SQL-gebruiker (alleen als de gebruiker nog niet bestaat)', false)
+    ],
+    'php_auth' => [
+        'user' => readline_met_default('Gebruikersnaam voor de beheerdersinterface', false),
+        'password' => readline_met_default('Wachtwoord voor de beheerdersinterface', false)
+    ],
+    'mail' => [
+        'sendmail_path' => '/usr/sbin/sendmail',
+        'afzender' => readline_met_default('Afzender voor e-mails naar de redactie', false)
+    ],
+    'recaptcha' => [
+        'sitekey' => $recaptcha_sitekey,
+        'secret' => $recaptcha_secret
+    ]
 ];
 
 $configdir = path_join(__DIR__, '..', 'config');
 if ( !is_dir($configdir) ) {
-	mkdir($configdir, 0770, true);
+    mkdir($configdir, 0770, true);
 }
 $configdir = realpath($configdir);
 $config_pad = path_join($configdir, 'config.json');
 file_put_contents(
-	$config_pad,
-	json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    $config_pad,
+    json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
 );
 echo "De configuratie is opgeslagen in {$config_pad}. Je kunt dit bestand zo nodig aanpassen.\n";
 
@@ -68,9 +68,9 @@ $root_url_pad = parse_url($root_url, PHP_URL_PATH);
 $root_url_pad = rtrim($root_url_pad, '/');
 $https_root_url = rtrim("https://{$root_host}/{$root_url_pad}/", '/').'/';
 if ( $root_url_pad === '' ) {
-	$alias_regel = '';
+    $alias_regel = '';
 } else {
-	$alias_regel = "Alias {$root_url_pad} {$public_pad}\n\n";
+    $alias_regel = "Alias {$root_url_pad} {$public_pad}\n\n";
 }
 echo "Maak een regel in je webserver zodat {$root_url} verwijst naar {$public_pad}\n";
 
@@ -119,12 +119,12 @@ GRANT ALL PRIVILEGES ON `{$sql_database}`.* TO "{$sql_user}"@"{$sql_server}";
 EOT;
 exec("sudo mysql -u {$db_root_user} {$root_password_param} -e '{$root_queries}'", $output, $result_code);
 if ( $result_code !== 0 ) {
-	echo $output."\n";
-	echo <<<EOT
-	Kan niet inloggen als root op MySQL. Voer de volgende queries zelf uit op je MySQL-server en druk daarna op enter.
-	{$root_queries}
-	EOT;
-	readline();
+    echo $output."\n";
+    echo <<<EOT
+    Kan niet inloggen als root op MySQL. Voer de volgende queries zelf uit op je MySQL-server en druk daarna op enter.
+    {$root_queries}
+    EOT;
+    readline();
 }
 
 $db = DB::getDB();
@@ -137,9 +137,9 @@ do {} while ( $db->next_result() );
 // databaseversienummer op twee plekken tegelijk worden bijgehouden)
 $db_versie = 0;
 foreach ( get_class_methods('\muzieklijsten\DBUpdates') as $update_functie ) {
-	if ( preg_match('~^update_([0-9]+)$~', $update_functie, $m) === 1 ) {
-		$db_versie = max($db_versie, (int)$m[1]);
-	}
+    if ( preg_match('~^update_([0-9]+)$~', $update_functie, $m) === 1 ) {
+        $db_versie = max($db_versie, (int)$m[1]);
+    }
 }
 $db->query(<<<EOT
 INSERT INTO versie (versie)

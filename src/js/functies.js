@@ -46,7 +46,7 @@ function post_verwerk_respons(xhr, resolve, reject, event) {
 
 export function verwijder_lijst(lijst_id) {
   return post('verwijder_lijst', {
-    'lijst': lijst_id
+    lijst: lijst_id
   });
 }
 
@@ -60,8 +60,8 @@ export function lijst_maken(fd) {
 
 export function losse_nummers_toevoegen(nummers, lijst_ids) {
   return post('losse_nummers_toevoegen', {
-    'nummers': nummers,
-    'lijsten': lijst_ids
+    nummers: nummers,
+    lijsten: lijst_ids
   });
 }
 
@@ -71,39 +71,39 @@ export function get_lijsten() {
 
 export function stem_set_behandeld(nummer_id, lijst_id, stemmer_id, waarde) {
   return post('stem_set_behandeld', {
-    'nummer': nummer_id,
-    'lijst': lijst_id,
-    'stemmer': stemmer_id,
-    'waarde': waarde
+    nummer: nummer_id,
+    lijst: lijst_id,
+    stemmer: stemmer_id,
+    waarde: waarde
   });
 }
 
 export function verwijder_stem(nummer_id, lijst_id, stemmer_id) {
   return post('verwijder_stem', {
-    'nummer': nummer_id,
-    'lijst': lijst_id,
-    'stemmer': stemmer_id
+    nummer: nummer_id,
+    lijst: lijst_id,
+    stemmer: stemmer_id
   });
 }
 
 export function verwijder_nummer(lijst_id, nummer_id) {
   return post('verwijder_nummer', {
-    'lijst': lijst_id,
-    'nummer': nummer_id
+    lijst: lijst_id,
+    nummer: nummer_id
   });
 }
 
 export function get_totaal_aantal_stemmers(lijst_id, van, tot) {
   return post('get_totaal_aantal_stemmers', {
-    'lijst': lijst_id,
-    'van': van,
-    'tot': tot
+    lijst: lijst_id,
+    van: van,
+    tot: tot
   });
 }
 
 export function toon_geselecteerde_nummers(nummer_ids) {
   return post('toon_geselecteerde_nummers', {
-    'nummers': nummer_ids
+    nummers: nummer_ids
   });
 }
 
@@ -113,7 +113,7 @@ export function stem(data) {
 
 export function get_geselecteerde_nummers(lijst_id) {
   return post('get_geselecteerde_nummers', {
-    'lijst': lijst_id
+    lijst: lijst_id
   });
 }
 
@@ -145,7 +145,7 @@ export function get_html_template( geimporteerd_template ) {
  */
 export function trigger(elem, type, data) {
   if ( data !== undefined ) {
-    elem.dispatchEvent(new CustomEvent(type, {'detail': data}));
+    elem.dispatchEvent(new CustomEvent(type, {detail: data}));
   } else {
     elem.dispatchEvent(new CustomEvent(type));
   }

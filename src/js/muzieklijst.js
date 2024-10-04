@@ -204,46 +204,46 @@ class StemView {
 
     // datatables heeft jQuery nodig.
     this.datatable = $(e_datatable).DataTable({
-      'processing': true,
-      'serverSide': true,
-      'ajax': (data, callback, settings) => {
+      processing: true,
+      serverSide: true,
+      ajax: (data, callback, settings) => {
         data.lijst = this.lijst_id;
         data.is_vrijekeuze = false;
         data.random_seed = this.random_seed;
         functies.vul_datatables(data, callback, settings);
       },
-      'bLengthChange': false,
-      'iDisplayLength': 50,
-      'columnDefs': [
+      bLengthChange: false,
+      iDisplayLength: 50,
+      columnDefs: [
         {
-          'targets': 0,
-          'searchable': false,
-          'orderable': false,
-          'className': 'dt-body-center',
-          'render': (data, type, full, meta) => {
+          targets: 0,
+          searchable: false,
+          orderable: false,
+          className: 'dt-body-center',
+          render: (data, type, full, meta) => {
             return '<input type="checkbox">';
           }
         }
       ],
-      'order': [
+      order: [
         [2, 'asc'],
         [1, 'asc']
       ],
-      'ordering': !(await this.is_random_volgorde()),
-      // 'rowCallback': this.row_callback.bind(this),
-      'language': {
-        'lengthMenu': '_MENU_ nummers per pagina',
-        'zeroRecords': 'Geen nummers gevonden',
-        'info': 'Pagina _PAGE_ van _PAGES_',
-        'infoEmpty': 'Geen nummers gevonden',
-        'infoFiltered': '(gefilterd van _MAX_ totaal)',
-        'search': 'Zoeken:',
-        'paginate': {
-          'first': 'Eerste',
-          'last': 'Laatste',
-          'next': 'Volgende',
-          'previous': 'Vorige'
-        },
+      ordering: !(await this.is_random_volgorde()),
+      // rowCallback: this.row_callback.bind(this),
+      language: {
+        lengthMenu: '_MENU_ nummers per pagina',
+        zeroRecords: 'Geen nummers gevonden',
+        info: 'Pagina _PAGE_ van _PAGES_',
+        infoEmpty: 'Geen nummers gevonden',
+        infoFiltered: '(gefilterd van _MAX_ totaal)',
+        search: 'Zoeken:',
+        paginate: {
+          first: 'Eerste',
+          last: 'Laatste',
+          next: 'Volgende',
+          previous: 'Vorige'
+        }
       }
     });
     this.e_datatable_body = e_datatable.getElementsByTagName('tbody').item(0);
@@ -314,7 +314,7 @@ class StemView {
    */
   get_serverdata() {
     return this.serverdata_promise ??= functies.post('get_stemlijst_frontend_data', {
-      'lijst': this.lijst_id
+      lijst: this.lijst_id
     });
   }
 

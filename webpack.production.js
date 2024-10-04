@@ -5,54 +5,61 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
-	'mode': 'production',
-	'module': {
-		'rules': [
+	mode: 'production',
+	module: {
+		rules: [
 			{
-				'test': /\.js$/i,
-				'exclude': /node_modules/,
-				'use': {
-					'loader': 'babel-loader'
+				test: /\.js$/i,
+				exclude: /node_modules/,
+				use: {
+					loader: 'babel-loader'
 				}
 			},
 			{
-				'test': /\.css$/i,
-				'use': [
+				test: /\.css$/i,
+				use: [
 					{
-						'loader': MiniCssExtractPlugin.loader,
-						'options': {
-							'publicPath': '../'
+						loader: MiniCssExtractPlugin.loader,
+						options: {
+							publicPath: '../'
 						}
 					},
 					'css-loader'
 				],
 			},
 			{
-				'test': /\.s[ac]ss$/i,
-				'use': [
+				test: /\.s[ac]ss$/i,
+				use: [
 					{
-						'loader': MiniCssExtractPlugin.loader,
-						'options': {
-							'publicPath': '../'
+						loader: MiniCssExtractPlugin.loader,
+						options: {
+							publicPath: '../'
 						}
 					},
 					'css-loader',
-					'sass-loader'
+					{
+            loader: 'sass-loader',
+            options: {
+              sassOptions: {
+                quietDeps: true
+              }
+            }
+          }
 				],
 			}
 		]
 	},
-	'plugins': [
+	plugins: [
 		new MiniCssExtractPlugin({
-			'filename': 'css/[name].css',
-			'chunkFilename': '[id].css'
+			filename: 'css/[name].css',
+			chunkFilename: '[id].css'
 		})
 	],
-	'optimization': {
-		'minimize': true,
-		'minimizer': [
+	optimization: {
+		minimize: true,
+		minimizer: [
 			new TerserPlugin({
-				'extractComments': false
+				extractComments: false
 			}),
 			new CssMinimizerPlugin()
 		]

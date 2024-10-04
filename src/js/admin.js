@@ -58,38 +58,38 @@ class Main {
     });
 
     this.tabel = $('#beschikbare-nummers').DataTable({
-      'processing': true,
-      'serverSide': true,
-      'ajax': (data, callback, settings) => {
+      processing: true,
+      serverSide: true,
+      ajax: (data, callback, settings) => {
         data.is_vrijekeuze = false;
         functies.vul_datatables(data, callback, settings);
       },
-      'columnDefs': [{
-        'targets': 0,
-        'searchable': false,
-        'orderable': false,
-        'className': 'dt-body-center',
-        'render': (nummer_id, type, [nummer_id2, titel, artiest, jaar], meta) => {
+      columnDefs: [{
+        targets: 0,
+        searchable: false,
+        orderable: false,
+        className: 'dt-body-center',
+        render: (nummer_id, type, [nummer_id2, titel, artiest, jaar], meta) => {
           let input = document.createElement('input');
           input.setAttribute('type', 'checkbox');
           return input.outerHTML;
         }
       }],
-      'order': [1, 'asc'],
-      'rowCallback': this.toon_geselecteerd.bind(this),
-      'language': {
-        'lengthMenu': '_MENU_ nummers per pagina',
-        'zeroRecords': 'Geen nummers gevonden',
-        'info': 'Pagina _PAGE_ van _PAGES_',
-        'infoEmpty': 'Geen nummers gevonden',
-        'infoFiltered': '(gefilterd van _MAX_ totaal)',
-        'search': 'Zoeken:',
-        'paginate': {
-          'first': 'Eerste',
-          'last': 'Laatste',
-          'next': 'Volgende',
-          'previous': 'Vorige'
-        },
+      order: [1, 'asc'],
+      rowCallback: this.toon_geselecteerd.bind(this),
+      language: {
+        lengthMenu: '_MENU_ nummers per pagina',
+        zeroRecords: 'Geen nummers gevonden',
+        info: 'Pagina _PAGE_ van _PAGES_',
+        infoEmpty: 'Geen nummers gevonden',
+        infoFiltered: '(gefilterd van _MAX_ totaal)',
+        search: 'Zoeken:',
+        paginate: {
+          first: 'Eerste',
+          last: 'Laatste',
+          next: 'Volgende',
+          previous: 'Vorige'
+        }
       }
 
     });
@@ -155,7 +155,7 @@ class Main {
    * @returns {Promise<unknown>}
    */
   async vul_lijst_metadata() {
-    const data = await functies.post('get_lijst_metadata', {'lijst': this.lijst_id});
+    const data = await functies.post('get_lijst_metadata', {lijst: this.lijst_id});
     for ( const e_naam of document.getElementsByClassName('lijst-naam') ) {
       e_naam.innerText = data.naam;
     }
@@ -236,8 +236,8 @@ class Main {
    */
   nummer_toevoegen(nummer_id) {
     return functies.post('lijst_nummer_toevoegen', {
-      'lijst': this.lijst_id,
-      'nummer': nummer_id
+      lijst: this.lijst_id,
+      nummer: nummer_id
     });
   }
 
@@ -246,8 +246,8 @@ class Main {
    */
   nummer_verwijderen(nummer_id) {
     return functies.post('lijst_nummer_verwijderen', {
-      'lijst': this.lijst_id,
-      'nummer': nummer_id
+      lijst: this.lijst_id,
+      nummer: nummer_id
     });
   }
 
@@ -388,18 +388,18 @@ class ResultatenModal {
     document.getElementsByTagName('body').item(0).appendChild(this.e_modal);
     //// Voor bootstrap 5
     // this.modal = new Modal(this.e_modal, {
-    //   'backdrop': true,
-    //   'focus': true,
-    //   'keyboard': true
+    //   backdrop: true,
+    //   focus: true,
+    //   keyboard: true
     // });
     // this.e_modal.addEventListener('hidden.bs.modal', e => {
     //   this.e_modal.parentNode.removeChild(this.e_modal);
     // });
     this.$modal = $(this.e_modal);
     this.$modal.modal({
-        'backdrop': true,
-        'focus': true,
-        'keyboard': true
+        backdrop: true,
+        focus: true,
+        keyboard: true
       });
     this.$modal.on('hidden.bs.modal', e => {
       this.e_modal.parentNode.removeChild(this.e_modal);
@@ -410,10 +410,10 @@ class ResultatenModal {
 
   async maak_resultaten_tabel() {
     let labels_promise = functies.post('get_resultaten_labels', {
-      'lijst': this.lijst_id
+      lijst: this.lijst_id
     });
     let nummers_stemmen = await functies.post('get_resultaten', {
-      'lijst': this.lijst_id
+      lijst: this.lijst_id
     });
     for ( const nummer_stemmen of nummers_stemmen ) {
       let resultaten_nummer = new ResultatenNummer(this, this.e_resultaten_tabel);
@@ -887,18 +887,18 @@ class BeheerModal {
 
     //// Voor bootstrap 5
     // this.modal = new Modal(this.e_modal, {
-    //   'backdrop': true,
-    //   'focus': true,
-    //   'keyboard': true
+    //   backdrop: true,
+    //   focus: true,
+    //   keyboard: true
     // });
     // this.e_modal.addEventListener('hidden.bs.modal', e => {
     //   this.e_modal.parentNode.removeChild(this.e_modal);
     // });
     this.$modal = $(this.e_modal);
     this.$modal.modal({
-        'backdrop': true,
-        'focus': true,
-        'keyboard': true
+        backdrop: true,
+        focus: true,
+        keyboard: true
       });
     this.$modal.on('hidden.bs.modal', this.destroy.bind(this));
     
@@ -915,7 +915,7 @@ class BeheerModal {
 
   async vul_data() {
     this.e_form.elements.lijst.value = this.lijst_id;
-    const data = await functies.post('get_beheer_lijstdata', {'lijst': this.lijst_id});
+    const data = await functies.post('get_beheer_lijstdata', {lijst: this.lijst_id});
 
     for ( const e_lijst_naam of this.e_modal.querySelectorAll('.lijst-naam') ) {
       e_lijst_naam.textContent = data.naam;
@@ -999,8 +999,8 @@ class BeheerModal {
       try {
         const lijst_id = await functies.lijst_maken(fd);
         functies.trigger(this.eventer, 'lijst_gemaakt', {
-          'id': lijst_id,
-          'naam': fd.get('naam')
+          id: lijst_id,
+          naam: fd.get('naam')
         });
         this.$modal.modal('hide');
       } catch (msg) {
@@ -1010,8 +1010,8 @@ class BeheerModal {
       try {
         await functies.lijst_opslaan(fd);
         functies.trigger(this.eventer, 'lijst_veranderd', {
-          'id': this.lijst_id,
-          'naam': fd.get('naam')
+          id: this.lijst_id,
+          naam: fd.get('naam')
         });
         this.$modal.modal('hide');
       } catch (msg) {
@@ -1026,7 +1026,7 @@ class BeheerModal {
       try {
         await functies.verwijder_lijst(this.lijst_id)
         functies.trigger(this.eventer, 'lijst_verwijderd', {
-          'id': this.lijst_id
+          id: this.lijst_id
         });
         this.$modal.modal('hide');
       } catch (msg) {

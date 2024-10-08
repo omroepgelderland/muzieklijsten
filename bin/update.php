@@ -21,19 +21,7 @@ namespace muzieklijsten;
 require_once __DIR__.'/../vendor/autoload.php';
 
 try {
-    DB::disableAutocommit();
-    try {
-        $versie = DB::selectSingle('SELECT versie FROM versie') + 1;
-    } catch ( SQLException ) {
-        // De database heeft nog geen versienummer-tabel.
-        $versie = 1;
-    }
-    while ( method_exists('\muzieklijsten\DBUpdates', "update_{$versie}") ) {
-        call_user_func("\\muzieklijsten\\DBUpdates::update_{$versie}");
-        DB::updateMulti('versie', ['versie' => $versie], "TRUE");
-        DB::commit();
-        $versie++;
-    }
+    db_update();
 } catch ( \Throwable $e ) {
     Log::crit($e);
     exit(1);

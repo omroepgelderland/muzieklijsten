@@ -333,6 +333,7 @@ function stuur_mail(
  * @return string Het resulterende pad.
  */
 function path_join( ...$paths ): string {
+    $path = '';
     foreach ( $paths as $i => $arg ) {
         if ( $i == 0 ) {
             // eerste parameter
@@ -393,4 +394,23 @@ function verwijder_ongekoppelde_vrije_keuze_nummers(): void {
         FROM stemmen
     )
     EOT);
+}
+
+/**
+ * Werkt de database bij naar de nieuwste versie. Zie docs in bin/update.php.
+ */
+function db_update(): void {
+    DB::disableAutocommit();
+    try {
+        $versie = DB::selectSingle('SELECT versie FROM versie') + 1;
+    } catch ( SQLException ) {
+        // De database heeft nog geen versienummer-tabel.
+        $versie = 1;
+    }
+    while ( method_exists('\muzieklijsten\DBUpdates', "update_{$versie}") ) {
+        call_user_func("\\muzieklijsten\\DBUpdates::update_{$versie}");
+        DB::updateMulti('versie', ['versie' => $versie], "TRUE");
+        DB::commit();
+        $versie++;
+    }
 }

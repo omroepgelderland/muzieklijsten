@@ -112,3 +112,5 @@ CREATE TABLE IF NOT EXISTS `versie` (
  `versie` int unsigned NOT NULL,
  PRIMARY KEY (`versie`)
 );
+
+INSERT INTO `versie` (`versie`) VALUES (3);

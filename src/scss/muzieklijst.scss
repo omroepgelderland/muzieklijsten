@@ -1,8 +1,6 @@
 body:not(.geladen),
 body:not(.gestemd) .gestemd,
 body.gestemd .not-gestemd,
-body:not(.max-ip-bereikt) .max-ip-bereikt,
-body.max-ip-bereikt .not-max-ip-bereikt,
 body:not(.error) .error,
 body.error .not-error,
 body:not(.heeft-nummers-geselecteerd) .heeft-nummers-geselecteerd {

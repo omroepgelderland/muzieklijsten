@@ -284,9 +284,6 @@ class StemView {
     if ( serverdata.is_actief ) {
       this.e_body.classList.add('is-actief');
     }
-    if ( serverdata.is_max_stemmen_per_ip_bereikt ) {
-      this.e_body.classList.add('max-ip-bereikt');
-    }
     this.e_keuzeformulier.elements.lijst.value = this.lijst_id;
     for ( const velddata of serverdata.velden ) {
       new Invoerveld(velddata);

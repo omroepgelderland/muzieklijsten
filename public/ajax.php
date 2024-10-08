@@ -517,7 +517,6 @@ function get_stemlijst_frontend_data( \stdClass $request ): array {
         'lijst_naam' => $lijst->get_naam(),
         'heeft_gebruik_recaptcha' => $lijst->heeft_gebruik_recaptcha(),
         'is_actief' => $lijst->is_actief(),
-        'is_max_stemmen_per_ip_bereikt' => $lijst->is_max_stemmen_per_ip_bereikt(),
         'velden' => $velden,
         'recaptcha_sitekey' => Config::get_instelling('recaptcha', 'sitekey'),
         'privacy_url' => Config::get_instelling('privacy_url'),

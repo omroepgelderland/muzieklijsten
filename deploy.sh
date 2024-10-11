@@ -48,12 +48,14 @@ if [[ $mode == "dev" ]]; then
         /usr/local/bin/composer8.1 dump-autoload || exit 1
     fi
     delete_dist_bestanden
+    npx tsc --noEmit || exit 1
     npx webpack --watch --config "webpack.$mode.js" || exit 1
 fi
 if [[ $mode == "production" || $mode == "staging" ]]; then
     git branch -D "$mode" 2>/dev/null
     git push origin --delete "$mode" 2>/dev/null
     git push github --delete "$mode" 2>/dev/null
+    git gc
     rm -rf "$tempdir"
     git clone . "$tempdir" || exit 1
     cd "$tempdir" || exit 1
@@ -68,6 +70,7 @@ if [[ $mode == "production" || $mode == "staging" ]]; then
     # Webpack output
     export NODE_ENV=development
     npm ci
+    npx tsc --noEmit || exit 1
     npx webpack --config "webpack.$mode.js" || exit 1
     git add -f public/ || exit 1
     # export NODE_ENV=production

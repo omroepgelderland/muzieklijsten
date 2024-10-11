@@ -68,5 +68,15 @@ module.exports = {
         return chunks.map((chunk) => chunk.name).join('-');
       }
     }
+  },
+  resolve: {
+    extensions: [".ts", ".js"],
+    alias: {
+      '@muzieklijsten': path.resolve(__dirname, 'src/js/lib')
+    }
+  },
+  performance: {
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000
   }
 };

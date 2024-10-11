@@ -10,10 +10,16 @@ module.exports = merge(common, {
   module: {
     rules: [
       {
-        test: /\.js$/i,
+        test: /\.(js|ts)$/i,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader'
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              '@babel/preset-env',
+              '@babel/preset-typescript'
+            ]
+          }
         }
       },
       {

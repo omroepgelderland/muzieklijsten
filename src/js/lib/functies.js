@@ -138,20 +138,6 @@ export function get_html_template( geimporteerd_template ) {
 }
 
 /**
- * Triggert een event op een element.
- * @param {HTMLElement} elem 
- * @param {string} type 
- * @param {any} data 
- */
-export function trigger(elem, type, data) {
-  if ( data !== undefined ) {
-    elem.dispatchEvent(new CustomEvent(type, {detail: data}));
-  } else {
-    elem.dispatchEvent(new CustomEvent(type));
-  }
-}
-
-/**
  * Plaatst (non breaking) spaties in een Nederlands internationaal telefoonnummer
  * voor de leesbaarheid.
  * @param {string} telefoonnummer Origineel telefoonnummer

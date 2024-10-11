@@ -4,7 +4,7 @@ import 'angular';
 import 'angular-route';
 
 // Project js
-import * as functies from './functies.js';
+import * as functies from '@muzieklijsten/functies.js';
 
 // Libraries css
 import '../scss/algemeen.scss';

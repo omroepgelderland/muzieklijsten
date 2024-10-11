@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "baseUrl": "./",
+        "paths": {
+            "@epg/*": [
+                "src/js/lib/*"
+            ]
+        },
+        "noEmit": true,
+        "module": "es2022",
+        "target": "es2022",
+        "allowJs": true,
+        "moduleResolution": "bundler",
+        "sourceMap": true,
+        "strict": true,
+        "allowUnreachableCode": false,
+        "noFallthroughCasesInSwitch": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "src/js/"
+    ]
+}

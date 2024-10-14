@@ -38,7 +38,7 @@ function filter_cell_string( string $waarde, bool $null_als_leeg ) {
     return $res;
 }
 
-function filter_cell_int( string $waarde ): ?int {
+function filter_cell_int( string $waarde ): int {
     $string = filter_cell_string($waarde, false);
     $res = filter_var($string, FILTER_VALIDATE_INT);
     if ( $res === false ) {

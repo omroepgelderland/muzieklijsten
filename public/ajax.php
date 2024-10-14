@@ -525,7 +525,7 @@ function get_resultaten_labels( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
-    } catch ( SQLException ) {
+    } catch ( GeenLijstException ) {
         throw new GebruikersException('Ongeldige lijst');
     }
     $respons = [];
@@ -539,7 +539,7 @@ function get_resultaten( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
-    } catch ( SQLException ) {
+    } catch ( GeenLijstException ) {
         throw new GebruikersException('Ongeldige lijst');
     }
     return $lijst->get_resultaten();
@@ -549,7 +549,7 @@ function get_lijst_metadata( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
-    } catch ( SQLException ) {
+    } catch ( GeenLijstException ) {
         throw new GebruikersException('Ongeldige lijst');
     }
     $nummer_ids = [];
@@ -601,7 +601,7 @@ function get_beheer_lijstdata( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
-    } catch ( SQLException ) {
+    } catch ( GeenLijstException ) {
         throw new GebruikersException('Ongeldige lijst');
     }
     return [

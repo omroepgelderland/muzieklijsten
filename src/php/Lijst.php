@@ -579,57 +579,57 @@ class Lijst {
         $this->reset();
     }
     
-    /**
-     * Maakt HTML voor een invoerveld in het formulier.
-     * @param $id ID en naam van het veld.
-     * @param $label Zichtbaar label.
-     * @param $type Type van <input>
-     * @param $leeg_feedback Tekst die aan de gebruiker wordt getoond
-     * als het verplichte veld niet is ingevuld.
-     * @param $is_verplicht Of het veld verplicht is.
-     * @param $max_length Maximale lengte van tekstinvoer (optioneel).
-     * @param $placeholder Placeholdertekst (optioneel).
-     * @return string HTML.
-     */
-    private function get_formulier_html(
-        string $id,
-        string $label,
-        string $type,
-        string $leeg_feedback,
-        bool $is_verplicht,
-        ?int $max_length = null,
-        string $placeholder = ''
-    ): string {
-        $template = <<<EOT
-        <div class="form-group row">
-            <label class="control-label col-sm-2"></label>
-            <div class="col-sm-10">
-                <input class="form-control">
-            </div>
-        </div>
-        EOT;
-        $doc = new HTMLTemplate($template);
-        /** @var \DOMElement $e_label */
-        $e_label = $doc->getElementsByTagName('label')->item(0);
-        /** @var \DOMElement $e_input */
-        $e_input = $doc->getElementsByTagName('input')->item(0);
-        $e_label->appendChild($doc->createTextNode($label));
-        $e_label->setAttribute('for', $id);
-        $e_input->setAttribute('type', $type);
-        $e_input->setAttribute('id', $id);
-        $e_input->setAttribute('name', $id);
-        if ( strlen($placeholder) > 0 ){
-            $e_input->setAttribute('placeholder', $placeholder);
-        }
-        $e_input->setAttribute('data-leeg-feedback', $leeg_feedback);
-        if ( isset($max_length) && in_array($type, ['text', 'search', 'url', 'tel', 'email', 'password']) ) {
-            $e_input->setAttribute('maxlength', $max_length);
-        }
-        if ( $is_verplicht ) {
-            $e_input->appendChild($doc->createAttribute('required'));
-        }
-        return $doc->saveHTML();
-    }
+    // /**
+    //  * Maakt HTML voor een invoerveld in het formulier.
+    //  * @param $id ID en naam van het veld.
+    //  * @param $label Zichtbaar label.
+    //  * @param $type Type van <input>
+    //  * @param $leeg_feedback Tekst die aan de gebruiker wordt getoond
+    //  * als het verplichte veld niet is ingevuld.
+    //  * @param $is_verplicht Of het veld verplicht is.
+    //  * @param $max_length Maximale lengte van tekstinvoer (optioneel).
+    //  * @param $placeholder Placeholdertekst (optioneel).
+    //  * @return string HTML.
+    //  */
+    // private function get_formulier_html(
+    //     string $id,
+    //     string $label,
+    //     string $type,
+    //     string $leeg_feedback,
+    //     bool $is_verplicht,
+    //     ?int $max_length = null,
+    //     string $placeholder = ''
+    // ): string {
+    //     $template = <<<EOT
+    //     <div class="form-group row">
+    //         <label class="control-label col-sm-2"></label>
+    //         <div class="col-sm-10">
+    //             <input class="form-control">
+    //         </div>
+    //     </div>
+    //     EOT;
+    //     $doc = new HTMLTemplate($template);
+    //     /** @var \DOMElement $e_label */
+    //     $e_label = $doc->getElementsByTagName('label')->item(0);
+    //     /** @var \DOMElement $e_input */
+    //     $e_input = $doc->getElementsByTagName('input')->item(0);
+    //     $e_label->appendChild($doc->createTextNode($label));
+    //     $e_label->setAttribute('for', $id);
+    //     $e_input->setAttribute('type', $type);
+    //     $e_input->setAttribute('id', $id);
+    //     $e_input->setAttribute('name', $id);
+    //     if ( strlen($placeholder) > 0 ){
+    //         $e_input->setAttribute('placeholder', $placeholder);
+    //     }
+    //     $e_input->setAttribute('data-leeg-feedback', $leeg_feedback);
+    //     if ( isset($max_length) && in_array($type, ['text', 'search', 'url', 'tel', 'email', 'password']) ) {
+    //         $e_input->setAttribute('maxlength', $max_length);
+    //     }
+    //     if ( $is_verplicht ) {
+    //         $e_input->appendChild($doc->createAttribute('required'));
+    //     }
+    //     return $doc->saveHTML();
+    // }
 
     public function set_veld( Veld $veld, bool $verplicht ): void {
         DB::insert_update_multi('lijsten_velden', [

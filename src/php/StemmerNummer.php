@@ -7,29 +7,26 @@
 
 namespace muzieklijsten;
 
-class Stem {
+class StemmerNummer {
 
     public Nummer $nummer;
-    public Lijst $lijst;
     public Stemmer $stemmer;
     private ?string $toelichting;
     private bool $behandeld;
+    private bool $is_vrijekeuze;
     private bool $db_props_set;
     
     /**
      * @param Nummer $nummer
-     * @param Lijst $lijst
      * @param Stemmer $stemmer
      * @param ?array $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct(
         Nummer $nummer,
-        Lijst $lijst,
         Stemmer $stemmer,
         ?array $data = null
     ) {
         $this->nummer = $nummer;
-        $this->lijst = $lijst;
         $this->stemmer = $stemmer;
         $this->db_props_set = false;
         if ( isset($data) ) {
@@ -38,15 +35,15 @@ class Stem {
     }
     
     /**
-     * Geeft aan of twee stemmen dezelfde zijn. Wanneer $obj geen Stem is wordt false gegeven.
+     * Geeft aan of twee stemmen dezelfde zijn. Wanneer $obj geen Stem is wordt
+     * false gegeven.
      * @param mixed $obj Object om deze instantie mee te vergelijken
      * @return bool Of $obj dezelfde stem is als deze instantie
      */
     public function equals( $obj ): bool {
         return 
-            $obj instanceof Stem
+            $obj instanceof StemmerNummer
             && $this->nummer->equals($obj->nummer)
-            && $this->lijst->equals($obj->lijst)
             && $this->stemmer->equals($obj->stemmer);
     }
     
@@ -69,13 +66,22 @@ class Stem {
     }
     
     /**
+     * 
+     * @return bool
+     */
+    public function is_vrijekeuze(): bool {
+        $this->set_db_properties();
+        return $this->is_vrijekeuze;
+    }
+    
+    /**
      * Vul het object met velden uit de database.
      */
     private function set_db_properties(): void {
         if ( !$this->db_props_set ) {
             $query = <<<EOT
                 SELECT *
-                FROM stemmen
+                FROM stemmers_nummers
                 WHERE {$this->get_where_voorwaarden()}
             EOT;
             $this->set_data(DB::selectSingleRow($query));
@@ -89,14 +95,14 @@ class Stem {
      */
     private function set_data( array $data ): void {
         $this->toelichting = $data['toelichting'];
-        $this->behandeld = $data['behandeld'] == 1;
+        $this->behandeld = (bool)$data['behandeld'];
+        $this->is_vrijekeuze = (bool)$data['is_vrijekeuze'];
         $this->db_props_set = true;
     }
 
     private function get_where_voorwaarden(): string {
         return <<<EOT
             nummer_id = {$this->nummer->get_id()}
-            AND lijst_id = {$this->lijst->get_id()}
             AND stemmer_id = {$this->stemmer->get_id()}
         EOT;
     }
@@ -104,13 +110,12 @@ class Stem {
     /**
      * Maakt een object uit een id aangeleverd door HTTP POST.
      * @param \stdClass $request HTTP-request.
-     * @return Stem
+     * @return static
      * @throws GeenLijstException
      */
-    public static function maak_uit_request( \stdClass $request ): Stem {
+    public static function maak_uit_request( \stdClass $request ): static {
         return new static(
             Nummer::maak_uit_request($request),
-            Lijst::maak_uit_request($request),
             Stemmer::maak_uit_request($request)
         );
     }
@@ -120,7 +125,7 @@ class Stem {
      * @param bool $waarde aan of uit.
      */
     public function set_behandeld( bool $waarde ): void {
-        DB::updateMulti('stemmen', [
+        DB::updateMulti('stemmers_nummers', [
             'behandeld' => $waarde
         ], $this->get_where_voorwaarden());
     }
@@ -129,7 +134,7 @@ class Stem {
      * Verwijdert de stem.
      */
     public function verwijderen(): void {
-        DB::query("DELETE FROM stemmen WHERE {$this->get_where_voorwaarden()}");
+        DB::query("DELETE FROM stemmers_nummers WHERE {$this->get_where_voorwaarden()}");
         verwijder_stemmers_zonder_stemmen();
         foreach ( $this as $key => $value ) {
             unset($this->$key);

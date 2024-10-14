@@ -96,7 +96,12 @@ function anonimiseer( $waarde ): ?string {
  * Overkoepelende error handler voor aanroep met exception_error_handler.
  * Maakt een echte PHP exception bij fouten.
  */
-function exception_error_handler( $errno, $errstr, $errfile, $errline ) {
+function exception_error_handler(
+    int $errno,
+    string $errstr,
+    string $errfile,
+    int $errline
+): never {
     switch ( $errno ) {
         case E_ERROR:
             throw new ErrorErrorException($errstr, 0, $errno, $errfile, $errline);
@@ -244,12 +249,12 @@ function filter_telefoonnummer( mixed $telefoonnummer ): ?string {
  */
 function verwijder_stemmers_zonder_stemmen(): void {
     $query = <<<EOT
-        DELETE
-        FROM stemmers
-        WHERE id NOT IN (
-            SELECT stemmer_id
-            FROM stemmen
-        )
+    DELETE
+    FROM stemmers
+    WHERE id NOT IN (
+        SELECT stemmer_id
+        FROM stemmers_nummers
+    )
     EOT;
     DB::query($query);
 }
@@ -388,11 +393,11 @@ function verwijder_ongekoppelde_vrije_keuze_nummers(): void {
     DELETE n
     FROM nummers n
     WHERE
-    n.is_vrijekeuze = 1
-    AND n.id NOT IN (
-        SELECT nummer_id
-        FROM stemmen
-    )
+        n.is_vrijekeuze = 1
+        AND n.id NOT IN (
+            SELECT nummer_id
+            FROM stemmers_nummers
+        )
     EOT);
 }
 

@@ -70,4 +70,51 @@ class DBUpdates {
         );
     }
 
+    public static function update_6(): void {
+        DB::query(<<<EOT
+        ALTER TABLE `stemmers`
+            ADD `lijst_id` INT UNSIGNED NOT NULL AFTER `id`, ADD INDEX (`lijst_id`);
+        EOT);
+        DB::query(<<<EOT
+        UPDATE stemmers
+        JOIN stemmen ON
+            stemmers.id = stemmen.stemmer_id
+        SET
+            stemmers.lijst_id = stemmen.lijst_id
+        EOT);
+        DB::query(<<<EOT
+        ALTER TABLE `stemmers`
+            ADD FOREIGN KEY (`lijst_id`) REFERENCES `lijsten`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+        EOT);
+
+        // alle indexen droppen in stemmen behalve stemmer_id
+        DB::query(<<<EOT
+        ALTER TABLE `stemmen` DROP INDEX `lijst_id_2`;
+        EOT);
+        DB::query(<<<EOT
+        ALTER TABLE `stemmen` DROP INDEX `lijst_id`;
+        EOT);
+        DB::query(<<<EOT
+        ALTER TABLE `stemmen` DROP PRIMARY KEY;
+        EOT);
+
+        // drop foreign key lijst_id en dan kolom lijst_id
+        DB::query(<<<EOT
+        ALTER TABLE stemmen DROP FOREIGN KEY stemmen_ibfk_2;
+        EOT);
+        DB::query(<<<EOT
+        ALTER TABLE `stemmen` DROP `lijst_id`;
+        EOT);
+
+        DB::query(<<<EOT
+        ALTER TABLE `stemmen` ADD UNIQUE (`nummer_id`, `stemmer_id`);
+        EOT);
+        DB::query(<<<EOT
+        ALTER TABLE `stemmen` ADD PRIMARY KEY (`nummer_id`, `stemmer_id`);
+        EOT);
+        DB::query(<<<EOT
+        RENAME TABLE `stemmen` TO `stemmers_nummers`;
+        EOT);
+    }
+
 }

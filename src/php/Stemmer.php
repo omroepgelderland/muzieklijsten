@@ -10,8 +10,10 @@ namespace muzieklijsten;
 class Stemmer {
     
     private int $id;
+    private Lijst $lijst;
     private string $ip;
     private \DateTime $tijdstip;
+    private bool $is_geanonimiseerd;
     private bool $db_props_set;
     
     /**
@@ -25,11 +27,20 @@ class Stemmer {
             $this->set_data($data);
         }
     }
-    
+
     /**
-     * 
-     * @return int
+     * Geeft de lijst waar deze stemmer op gestemd heeft.
      */
+    public function get_lijst(): Lijst {
+        $this->set_db_properties();
+        return $this->lijst;
+    }
+
+    public function is_geanonimiseerd(): bool {
+        $this->set_db_properties();
+        return $this->is_geanonimiseerd;
+    }
+    
     public function get_id(): int {
         return $this->id;
     }
@@ -43,19 +54,11 @@ class Stemmer {
         return ( $obj instanceof Stemmer && $obj->get_id() == $this->id );
     }
     
-    /**
-     * 
-     * @return string
-     */
     public function get_ip(): string {
         $this->set_db_properties();
         return $this->ip;
     }
     
-    /**
-     * 
-     * @return \DateTime
-     */
     public function get_tijdstip(): \DateTime {
         $this->set_db_properties();
         return $this->tijdstip;
@@ -78,17 +81,20 @@ class Stemmer {
      * @param array $data Data.
      */
     private function set_data( array $data ): void {
+        $this->lijst = new Lijst($data['lijst_id']);
         $this->ip = $data['ip'];
-        
         $this->tijdstip = $data['timestamp'];
+        $this->is_geanonimiseerd = (bool)$data['is_geanonimiseerd'];
         $this->db_props_set = true;
     }
 
     public static function maak(
+        Lijst $lijst,
         string $ip
     ): static {
         try {
             $id = DB::insertMulti('stemmers', [
+                'lijst_id' => $lijst->get_id(),
                 'ip' => $ip
             ]);
             return new static($id);
@@ -97,27 +103,28 @@ class Stemmer {
         }
     }
 
+    /**
+     * Stem op een nummer toevoegen voor deze stemmer.
+     */
     public function add_stem(
         Nummer $nummer,
-        Lijst $lijst,
         string $toelichting,
         bool $is_vrijekeuze = false
-    ): Stem {
+    ): StemmerNummer {
         try {
-            DB::insertMulti('stemmen', [
+            DB::insertMulti('stemmers_nummers', [
                 'nummer_id' => $nummer->get_id(),
-                'lijst_id' => $lijst->get_id(),
                 'stemmer_id' => $this->get_id(),
                 'toelichting' => $toelichting,
                 'is_vrijekeuze' => $is_vrijekeuze
             ]);
-            return new Stem($nummer, $lijst, $this);
+            return new StemmerNummer($nummer, $this);
         } catch ( SQLException_DataTooLong ) {
-            $max = DB::get_max_kolom_lengte('stemmen', 'toelichting');
+            $max = DB::get_max_kolom_lengte('stemmers_nummers', 'toelichting');
             throw new GebruikersException("De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens.");
         } catch ( SQLException_DupEntry ) {
             // Bestaande stem teruggeven
-            return new Stem($nummer, $lijst, $this);
+            return new StemmerNummer($nummer, $this);
         }
     }
     
@@ -157,7 +164,8 @@ class Stemmer {
      * Mailt een notificatie van deze stem naar de redactie.
      * @param Lijst $lijst
      */
-    public function mail_redactie( Lijst $lijst ): void {
+    public function mail_redactie(): void {
+        $lijst = $this->get_lijst();
         // Velden
         $velden = [];
         foreach ( $lijst->get_velden() as $veld ) {
@@ -201,7 +209,8 @@ class Stemmer {
      * Mailt een bevestiging naar de stemmer, als dat is geconfigureerd in de
      * lijst en als de stemmer een e-mailadres heeft opgegeven.
      */
-    public function mail_stemmer( Lijst $lijst ): void {
+    public function mail_stemmer(): void {
+        $lijst = $this->get_lijst();
         if ( !$lijst->is_mail_stemmers() ) {
             return;
         }
@@ -281,21 +290,19 @@ class Stemmer {
     }
 
     /**
-     * @return Stem[]
+     * @return list<StemmerNummer>
      */
-    public function get_stemmen( Lijst $lijst ): array {
+    public function get_stemmen(): array {
         $query = <<<EOT
         SELECT *
-        FROM stemmen
+        FROM stemmers_nummers
         WHERE
-            lijst_id = {$lijst->get_id()}
-            AND stemmer_id = {$this->get_id()}
+            stemmer_id = {$this->get_id()}
         EOT;
         $stemmen = [];
         foreach ( DB::query($query) as $entry ) {
-            $stemmen[] = new Stem(
+            $stemmen[] = new StemmerNummer(
                 new Nummer($entry['nummer_id']),
-                $lijst,
                 $this,
                 $entry
             );
@@ -304,14 +311,13 @@ class Stemmer {
     }
 
     /**
-     * Verwijdert alle stemmen van deze stemmer op een lijst.
+     * Verwijdert alle stemmen van deze stemmer op de lijst.
      */
-    public function verwijder_stemmen( Lijst $lijst ): void {
+    public function verwijder_stemmen(): void {
         $query = <<<EOT
-        DELETE FROM stemmen
+        DELETE FROM stemmers_nummers
         WHERE
-            lijst_id = {$lijst->get_id()}
-            AND stemmer_id = {$this->get_id()}
+            stemmer_id = {$this->get_id()}
         EOT;
         DB::query($query);
         verwijder_ongekoppelde_vrije_keuze_nummers();
@@ -329,4 +335,62 @@ class Stemmer {
         DB::query($query);
     }
 
+    /**
+     * Anonimiseer tekstinvoeren van deze stemmer.
+     */
+    public function anonimiseer(): void {
+        DB::updateMulti(
+            'stemmers', [
+                'ip' => anonimiseer($this->get_ip()),
+                'is_geanonimiseerd' => true
+            ],
+            "id = {$this->id}"
+        );
+        $this->db_props_set = false;
+        $this->anonimiseer_toelichtingen();
+        $this->anonimiseer_velden();
+    }
+
+    /**
+     * Anonimiseer de toelichtingen die deze stemmer per nummer heeft ingevuld.
+     */
+    private function anonimiseer_toelichtingen(): void {
+        $query = <<<EOT
+            SELECT nummer_id, toelichting
+            FROM stemmers_nummers
+            WHERE
+                stemmer_id = {$this->id}
+                AND toelichting IS NOT NULL
+                AND toelichting != ''
+        EOT;
+        foreach ( DB::query($query) as ['nummer_id' => $nummer_id, 'toelichting' => $toelichting] ) {
+            DB::updateMulti(
+                'stemmers_nummers',
+                ['toelichting' => anonimiseer($toelichting)],
+                "nummer_id = {$nummer_id} AND stemmer_id = {$this->id}"
+            );
+        }
+    }
+
+    /**
+     * Anonimiseer de formuliervelden.
+     */
+    private function anonimiseer_velden(): void {
+        $query = <<<EOT
+            SELECT veld_id, waarde
+            FROM stemmers_velden
+            WHERE
+                stemmer_id = {$this->id}
+                AND waarde IS NOT NULL
+                AND waarde != ''
+        EOT;
+        foreach ( DB::query($query) as ['veld_id' => $veld_id, 'waarde' => $waarde] ) {
+            DB::updateMulti(
+                'stemmers_velden',
+                ['waarde' => anonimiseer($waarde)],
+                "veld_id = {$veld_id} AND stemmer_id = {$this->id}"
+            );
+        }
+    }
+    
 }

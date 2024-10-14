@@ -132,12 +132,12 @@ class DB {
     /**
      * Geef de eerste kolom van de eerste rij van het resultaat van een SQL query terug. Er wordt een Exception gegeven als er geen resultaat is.
      * @param string $sql SQL query
-     * @return string resultaat
+     * @return DBWaarde
      * @throws SQLException Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function selectSingle( string $sql ) {
+    public static function selectSingle( string $sql ): mixed {
         $res = self::query($sql);
         if ( $res->num_rows === 0 ) {
             throw new SQLException(sprintf(
@@ -151,7 +151,7 @@ class DB {
     /**
      * Geef de eerste rij van het resultaat van een SQL query terug. Er wordt een Exception gegeven als er geen resultaat is.
      * @param string $sql SQL query
-     * @return array associatieve array met resultaat
+     * @return array<string, DBWaarde> associatieve array met resultaat
      * @throws Exception Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
@@ -174,7 +174,7 @@ class DB {
     /**
      * Geef de eerste kolom van het resultaat van een SQL query terug.
      * @param string $sql SQL query
-     * @return array resultaat. Kan leeg zijn.
+     * @return list<DBWaarde> resultaat. Kan leeg zijn.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
@@ -226,8 +226,8 @@ class DB {
     /**
      * Zet een aantal velden in de database aan de hand van een associatieve array. PHP types worden naar SQL omgezet. Strings worden ge-escaped
      * @param string $table Naam van de tabel waarin de data moet worden geplaatst.
-     * @param array $data Associatieve array met kolomnamen als keys en in te voegen gegevens als values.
-     * @returns mixed Het ID van de ingevoegde rij.
+     * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
+     * voegen gegevens als values.
      * @throws Exception Als er niets is toegevoegd na uitvoering van de query.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
@@ -254,7 +254,8 @@ class DB {
     /**
      * Verander een aantal velden in de database aan de hand van een associatieve array. PHP types worden naar SQL omgezet. Strings worden ge-escaped
      * @param string $table Naam van de tabel waar de data moet worden aangepast.
-     * @param array $data Associatieve array met kolomnamen als keys en in te voegen gegevens als values.
+     * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
+     * voegen gegevens als values.
      * @param string $conditions Voorwaarden voor binnen het WHERE-statement
      * @return int Aantal veranderde rijen
      * @throws SQLException Als de query mislukt.
@@ -276,9 +277,9 @@ class DB {
      * Zet een waarde uit de database om naar het juiste PHP type aan de hand van het MySQL veldtype
      * @param mixed $waarde Waarde uit de database
      * @param int $type MySQLi type
-     * @return mixed
+     * @return DBWaarde
      */
-    private static function typecast( $waarde, int $type ) {
+    private static function typecast( $waarde, int $type ): mixed {
         if ( $waarde === null ) {
             return null;
         }
@@ -440,12 +441,14 @@ class DB {
      * Voegt een entry toe of update een bestaande entry als de primary keys of unieke velden van de invoer al bestaan in de database.
      * PHP types worden naar SQL omgezet. Strings worden ge-escaped
      * @param string $table Naam van de tabel waarin de data moet worden geplaatst.
-     * @param array $data Associatieve array met kolomnamen als keys en in te voegen gegevens als values.
-     * @returns \stdClass Object met informatie over de uitgevoerde actie en het resultaat.
+     * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
+     * voegen gegevens als values.
+     * @return DBInsertUpdateResult Object met informatie over de uitgevoerde actie en het
+     * resultaat.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function insert_update_multi( string $table, array $data = [] ): \stdClass {
+    public static function insert_update_multi( string $table, array $data = [] ): object {
         $db = static::getDB();
         $data = static::prepareer_data($data);
         $update_values = [];
@@ -471,7 +474,7 @@ class DB {
     
     /**
      * Prepareert een associatieve array met keys en values voor gebruik in een SQL-query
-     * @param array $data Invoer
+     * @param array<string, DBWaarde> $data Invoer
      * @return array uitvoer
      */
     protected static function prepareer_data( array $data ): array {

@@ -30,6 +30,8 @@ class Lijst {
     private array $velden;
     /** @var Nummer[] */
     private array $nummers;
+    /** @var list<Stemmer> */
+    private array $stemmers;
     private bool $db_props_set;
     
     /**
@@ -44,10 +46,6 @@ class Lijst {
         }
     }
     
-    /**
-     * 
-     * @return int
-     */
     public function get_id(): int {
         return $this->id;
     }
@@ -70,28 +68,16 @@ class Lijst {
         return $this->actief;
     }
     
-    /**
-     * 
-     * @return string
-     */
     public function get_naam(): string {
         $this->set_db_properties();
         return $this->naam;
     }
     
-    /**
-     * 
-     * @return int
-     */
     public function get_minkeuzes(): int {
         $this->set_db_properties();
         return $this->minkeuzes;
     }
     
-    /**
-     * 
-     * @return int
-     */
     public function get_maxkeuzes(): int {
         $this->set_db_properties();
         return $this->maxkeuzes;
@@ -105,38 +91,14 @@ class Lijst {
         return $this->vrijekeuzes;
     }
     
-    /**
-     * 
-     * @return ?int
-     */
     public function get_max_stemmen_per_ip(): ?int {
         $this->set_db_properties();
         return $this->stemmen_per_ip;
     }
     
-    /**
-     * 
-     * @return bool
-     */
     public function is_artiest_eenmalig(): bool {
         $this->set_db_properties();
         return $this->artiest_eenmalig;
-    }
-
-    /**
-     * Geeft aan of het veld "naam" in het formulier staat.
-     * @return bool
-     */
-    public function heeft_veld_naam(): bool {
-        return true;
-    }
-
-    /**
-     * Geeft aan of het veld "naam" verplicht is.
-     * @return bool
-     */
-    public function is_veld_naam_verplicht(): bool {
-        return true;
     }
 
     /**
@@ -150,7 +112,7 @@ class Lijst {
     
     /**
      * 
-     * @return string[]
+     * @return list<string>
      */
     public function get_notificatie_email_adressen(): array {
         $this->set_db_properties();
@@ -211,25 +173,67 @@ class Lijst {
     
     /**
      * Geeft alle nummers van deze lijst
-     * @return Nummer[]
+     * @return list<Nummer>
      */
     public function get_nummers(): array {
         if ( !isset($this->nummers) ) {
-            $this->nummers = [];
-            $sql = sprintf(
-                'SELECT nummer_id FROM lijsten_nummers WHERE lijst_id = %d',
-                $this->get_id()
-            );
-            foreach ( DB::selectSingleColumn($sql) as $nummer_id ) {
-                $this->nummers[] = new Nummer($nummer_id);
-            }
+            $query = <<<EOT
+            SELECT nummer_id
+            FROM lijsten_nummers
+            WHERE lijst_id = {$this->get_id()}
+            EOT;
+            $this->nummers = DB::selectObjectLijst($query, Nummer::class);
         }
         return $this->nummers;
     }
+
+    /**
+     * @return list<Stemmer>
+     */
+    private function get_alle_stemmers(): array {
+        if ( !isset($this->stemmers) ) {
+            $query = <<<EOT
+            SELECT id
+            FROM stemmers
+            WHERE lijst_id = {$this->id}
+            EOT;
+            $this->stemmers = DB::selectObjectLijst($query, Stemmer::class);
+        }
+        return $this->stemmers;
+    }
     
     /**
+     * Geeft de stemmers op deze lijst.
+     * @param \DateTime $van Neem alleen de stemmers die gestemd hebben vanaf deze datum (optioneel).
+     * @param \DateTime $tot Neem alleen de stemmers die gestemd hebben tot en met deze datum (optioneel).
+     * @return List<Stemmer>
+     */
+    public function get_stemmers( ?\DateTime $van = null, ?\DateTime $tot = null ): array {
+        if ( $van === null && $tot === null ) {
+            return $this->get_alle_stemmers();
+        }
+
+        $where = [];
+        if ( isset($van) ) {
+            $where[] = "DATE(timestamp) >= \"{$van->format('Y-m-d')}\"";
+        }
+        if ( isset($tot) ) {
+            $where[] = "DATE(timestamp) <= \"{$tot->format('Y-m-d')}\"";
+        }
+        $where_str = implode(' AND ', $where);
+        $query = <<<EOT
+            SELECT id
+            FROM stemmers
+            WHERE
+                lijst_id = {$this->get_id()}
+                AND {$where_str}
+        EOT;
+        return DB::selectObjectLijst($query, Stemmer::class);
+    }
+
+    /**
      * Geeft alle nummers van deze lijst gesorteerd op titel.
-     * @return Nummer[]
+     * @return list<Nummer>
      */
     public function get_nummers_sorteer_titels(): array {
         $nummers = [];
@@ -252,88 +256,46 @@ class Lijst {
      * @param Nummer|null $nummer Neem alleen de stemmen op dit nummer mee (optioneel).
      * @param \DateTime $van Neem alleen de stemmen vanaf deze datum (optioneel).
      * @param \DateTime $tot Neem alleen de stemmen tot en met deze datum (optioneel).
-     * @return Stem[] Stemmen
+     * @return list<StemmerNummer> Stemmen
      */
     public function get_stemmen(
         ?Nummer $nummer = null,
         ?\DateTime $van = null,
         ?\DateTime $tot = null
     ): array {
-        $where = ["sm.lijst_id = {$this->get_id()}"];
+        $where = [];
         if ( isset($nummer) ) {
-            $where[] = "sm.nummer_id = {$nummer->get_id()}";
+            $where[] = "sn.nummer_id = {$nummer->get_id()}";
         }
         $on = [
-            'st.id = sm.stemmer_id'
+            "s.lijst_id = {$this->get_id()}",
+            's.id = sn.stemmer_id'
         ];
         if ( isset($van) ) {
-            $on[] = "DATE(st.timestamp) >= \"{$van->format('Y-m-d')}\"";
+            $on[] = "DATE(s.timestamp) >= \"{$van->format('Y-m-d')}\"";
         }
         if ( isset($tot) ) {
-            $on[] = "DATE(st.timestamp) <= \"{$tot->format('Y-m-d')}\"";
+            $on[] = "DATE(s.timestamp) <= \"{$tot->format('Y-m-d')}\"";
         }
         $where_str = implode(' AND ', $where);
         $on_str = implode(' AND ', $on);
         $query = <<<EOT
-            SELECT sm.*
-            FROM stemmen sm
-            INNER JOIN stemmers st ON {$on_str}
+            SELECT sn.*
+            FROM stemmers_nummers sn
+            INNER JOIN stemmers s ON {$on_str}
             WHERE
                 {$where_str}
         EOT;
         $stemmen = [];
         foreach ( DB::query($query) as $entry ) {
-            $stem_nummer = isset($nummer)
-                ? $nummer
-                : new Nummer($entry['nummer_id']);
-            $stemmen[] = new Stem(
+            $stem_nummer = $nummer ?? new Nummer($entry['nummer_id']);
+            $stemmen[] = new StemmerNummer(
                 $stem_nummer,
-                $this,
                 new Stemmer($entry['stemmer_id']),
                 $entry
             );
         }
         return $stemmen;
-    }
-
-    /**
-     * Geeft alle unieke stemmers.
-     * @param \DateTime $van Neem alleen de stemmers die gestemd hebben vanaf deze datum (optioneel).
-     * @param \DateTime $tot Neem alleen de stemmers die gestemd hebben tot en met deze datum (optioneel).
-     * @return Stemmer[]
-     */
-    public function get_stemmers( ?\DateTime $van = null, ?\DateTime $tot = null ): array {
-        $where = [];
-        if ( isset($van) ) {
-            $where[] = "DATE(timestamp) >= \"{$van->format('Y-m-d')}\"";
-        }
-        if ( isset($tot) ) {
-            $where[] = "DATE(timestamp) <= \"{$tot->format('Y-m-d')}\"";
-        }
-        $where_str = implode(' AND ', $where);
-        if ( count($where) > 0 ) {
-            $query = <<<EOT
-                SELECT stemmer_id
-                FROM stemmen
-                WHERE
-                    lijst_id = {$this->get_id()}
-                    AND stemmer_id IN (
-                        SELECT id
-                        FROM stemmers
-                        WHERE {$where_str}
-                    )
-                GROUP BY stemmer_id
-            EOT;
-        } else {
-            $query = <<<EOT
-                SELECT stemmer_id
-                FROM stemmen
-                WHERE
-                    lijst_id = {$this->get_id()}
-                GROUP BY stemmer_id
-            EOT;
-        }
-        return DB::selectObjectLijst($query, Stemmer::class);
     }
 
     /**
@@ -349,35 +311,20 @@ class Lijst {
     ): array {
         $datumvoorwaarden = [];
         if ( isset($van) ) {
-            $datumvoorwaarden[] = "DATE(timestamp) >= \"{$van->format('Y-m-d')}\"";
+            $datumvoorwaarden[] = "DATE(s.timestamp) >= \"{$van->format('Y-m-d')}\"";
         }
         if ( isset($tot) ) {
-            $datumvoorwaarden[] = "DATE(timestamp) <= \"{$tot->format('Y-m-d')}\"";
+            $datumvoorwaarden[] = "DATE(s.timestamp) <= \"{$tot->format('Y-m-d')}\"";
         }
         $datumvoorwaarden_str = implode(' AND ', $datumvoorwaarden);
-        if ( count($datumvoorwaarden) > 0 ) {
-            $datumvoorwaarden_query = <<<EOT
-                AND sm.stemmer_id IN (
-                    SELECT id
-                    FROM stemmers
-                    WHERE {$datumvoorwaarden_str}
-                )
-            EOT;
-        } else {
-            $datumvoorwaarden_query = '';
-        }
         $query = <<<EOT
-            SELECT nl.nummer_id
-            FROM lijsten_nummers nl
-            LEFT JOIN stemmen sm ON
-                sm.nummer_id = nl.nummer_id
-                AND sm.lijst_id = nl.lijst_id
-                {$datumvoorwaarden_query}
-            WHERE
-                nl.lijst_id = {$this->get_id()}
-            GROUP BY nl.nummer_id
-            HAVING COUNT(sm.stemmer_id) > 0
-            ORDER BY COUNT(sm.stemmer_id) DESC
+            SELECT sn.nummer_id
+            FROM stemmers_nummers sn
+            INNER JOIN stemmers s ON
+                s.lijst_id = {$this->id}
+                {$datumvoorwaarden_str}
+            GROUP BY sn.nummer_id
+            ORDER BY COUNT(sn.stemmer_id) DESC
         EOT;
         return DB::selectObjectLijst($query, Nummer::class);
     }
@@ -473,7 +420,8 @@ class Lijst {
     }
 
     /**
-     * Maakt een nieuwe inactieve lijst met dezelfde eigenschappen als deze en verplaatst alle stemmen op deze lijst daar naartoe.
+     * Maakt een nieuwe inactieve lijst met dezelfde eigenschappen als deze en
+     * verplaatst alle stemmen op deze lijst daar naartoe.
      * @param string $naam Naam van de nieuwe lijst.
      * @return Lijst
      */
@@ -490,7 +438,9 @@ class Lijst {
                     artiest_eenmalig,
                     recaptcha,
                     email,
-                    bedankt_tekst
+                    bedankt_tekst,
+                    mail_stemmers,
+                    random_volgorde
                 )
                 SELECT
                     0,
@@ -501,7 +451,9 @@ class Lijst {
                     artiest_eenmalig,
                     recaptcha,
                     email,
-                    bedankt_tekst
+                    bedankt_tekst,
+                    mail_stemmers,
+                    random_volgorde
                 FROM lijsten
                 WHERE id = {$this->get_id()}
         EOT;
@@ -533,14 +485,14 @@ class Lijst {
 
         // Stemmen verplaatsen
         $query = <<<EOT
-            UPDATE stemmen s
-            JOIN stemmers r ON
-                s.stemmer_id = r.id
-            SET s.lijst_id = {$nieuw_id}
+            UPDATE stemmers
+            SET
+                lijst_id = {$nieuw_id}
             WHERE
-                s.lijst_id = {$this->get_id()};
+                lijst_id = {$this->get_id()}
         EOT;
         DB::query($query);
+        $this->stemmers = [];
 
         return new Lijst($nieuw_id);
     }
@@ -567,17 +519,16 @@ class Lijst {
     }
 
     public function is_max_stemmen_per_ip_bereikt(): bool {
+        if ( $this->get_max_stemmen_per_ip() === null ) {
+            return false;
+        }
         $query = <<<EOT
             SELECT
-                l.stemmen_per_ip IS NOT NULL
-                    AND COUNT(DISTINCT stemmers.id) >= l.stemmen_per_ip
-            FROM stemmers stemmers
-            INNER JOIN stemmen stemmen ON
-                stemmen.stemmer_id = stemmers.id
-            INNER JOIN lijsten l ON
-                l.id = {$this->get_id()}
-                AND stemmen.lijst_id = l.id
-            WHERE stemmers.ip = "{$_SERVER['REMOTE_ADDR']}"
+                COUNT(s.id) >= {$this->get_max_stemmen_per_ip()}
+            FROM stemmers s
+            WHERE
+                s.lijst_id = {$this->id}
+                AND s.ip = "{$_SERVER['REMOTE_ADDR']}"
         EOT;
         return DB::selectSingle($query) == 1;
     }
@@ -598,33 +549,33 @@ class Lijst {
 
     /**
      * Haalt een nummer weg uit de stemlijst.
-     * Het nummer blijft bestaan in de database; het is alleen niet meer aan deze lijst gekoppeld.
+     * Het nummer blijft bestaan in de database; het is alleen niet meer aan
+     * deze lijst gekoppeld.
      * Alle stemmen op dit nummer in deze lijst worden verwijderd.
      * Stemmers die geen stemmen meer hebben worden verwijderd.
      * @param Nummer $nummer
      */
     public function verwijder_nummer( Nummer $nummer ): void {
-        // Verwijder de koppeling en de stemmen.
+        // Verwijder de koppeling.
         $query = <<<EOT
-            DELETE nl, s
-            FROM lijsten_nummers nl
-            LEFT JOIN stemmen s ON
-                s.nummer_id = nl.nummer_id
-                AND s.lijst_id = nl.lijst_id
-            WHERE
-                nl.nummer_id = {$nummer->get_id()}
-                AND nl.lijst_id = {$this->get_id()}
+        DELETE
+        FROM lijsten_nummers
+        WHERE
+            nummer_id = {$nummer->get_id()}
+            AND lijst_id = {$this->id}
         EOT;
         DB::query($query);
 
-        // Verwijdering als het een vrije keuzenummer was.
+        // Verwijder stemmen en stemmers
         $query = <<<EOT
-        DELETE FROM stemmen
+        DELETE s, sn
+        FROM stemmers_nummers sn
+        INNER JOIN stemmen s ON
+            s.id = sn.stemmer_id
+            AND s.lijst_id = {$this->id}
         WHERE
-            nummer_id = {$nummer->get_id()}
-            AND lijst_id = {$this->get_id()}
+            sn.nummer_id = {$nummer->get_id()}
         EOT;
-        DB::query($query);
 
         verwijder_ongekoppelde_vrije_keuze_nummers();
         verwijder_stemmers_zonder_stemmen();
@@ -716,24 +667,24 @@ class Lijst {
     public function get_resultaten(): array {
         $query = <<<EOT
         SELECT
-            stemmen.nummer_id,
-            stemmen.is_vrijekeuze,
+            n.id as nummer_id,
+            sn.is_vrijekeuze,
             n.titel,
             n.artiest,
-            stemmers.id AS stemmer_id,
-            stemmers.ip,
-            stemmen.behandeld,
-            stemmen.toelichting,
-            stemmers.timestamp,
-            stemmers.is_geanonimiseerd,
+            s.id AS stemmer_id,
+            s.ip,
+            sn.behandeld,
+            sn.toelichting,
+            s.timestamp,
+            s.is_geanonimiseerd,
             v.id AS veld_id,
             v.type,
             sv.waarde
-        FROM stemmen
+        FROM stemmers_nummers sn
         INNER JOIN nummers n ON
-            n.id = stemmen.nummer_id
-        INNER JOIN stemmers ON
-            stemmers.id = stemmen.stemmer_id
+            n.id = sn.nummer_id
+        INNER JOIN stemmers s ON
+            s.id = sn.stemmer_id
         LEFT JOIN lijsten_velden lv ON
             lv.lijst_id = {$this->get_id()}
         LEFT JOIN velden v ON
@@ -745,18 +696,24 @@ class Lijst {
             SELECT
                 nummer_id,
                 COUNT(nummer_id) AS aantal
-            FROM stemmen
-            WHERE lijst_id = {$this->get_id()}
+            FROM stemmers_nummers
+            WHERE
+                stemmer_id IN (
+                    SELECT id
+                    FROM stemmers
+                    WHERE
+                        lijst_id = {$this->get_id()}
+                )
             GROUP BY nummer_id
         ) a ON
-            a.nummer_id = stemmen.nummer_id
+            a.nummer_id = n.id
         WHERE
-            stemmen.lijst_id = {$this->get_id()}
+            sn.lijst_id = {$this->get_id()}
         ORDER BY
             a.aantal DESC,
             n.id,
-            stemmers.timestamp ASC,
-            stemmers.id,
+            s.timestamp ASC,
+            s.id,
             v.id,
             RAND()
         EOT;
@@ -825,14 +782,15 @@ class Lijst {
             )
         );
         $query = <<<EOT
-        SELECT stemmen.stemmer_id
-        FROM stemmen
-        JOIN stemmers_velden sv ON
-        sv.stemmer_id = stemmen.stemmer_id
-        AND sv.veld_id = 6
-        AND sv.waarde = "{$e_email}"
-        WHERE
-        stemmen.lijst_id = {$this->get_id()}
+        SELECT sn.stemmer_id
+        FROM stemmers_nummers sn
+        INNER JOIN stemmers s ON
+            s.id = sn.stemmer_id
+            AND s.lijst_id = {$this->get_id()}
+        INNER JOIN stemmers_velden sv ON
+            sv.stemmer_id = sn.stemmer_id
+            AND sv.veld_id = 6
+            AND sv.waarde = "{$e_email}"
         EOT;
         try {
             return DB::selectObjectLijst($query, Stemmer::class)[0];
@@ -849,14 +807,15 @@ class Lijst {
     public function get_stemmer_uit_telefoonnummer( string $telefoonnummer ): ?Stemmer {
         $e_telefoonnummer = filter_telefoonnummer($telefoonnummer);
         $query = <<<EOT
-        SELECT stemmen.stemmer_id
-        FROM stemmen
-        JOIN stemmers_velden sv ON
-        sv.stemmer_id = stemmen.stemmer_id
-        AND sv.veld_id = 5
-        AND sv.waarde = "{$e_telefoonnummer}"
-        WHERE
-        stemmen.lijst_id = {$this->get_id()}
+        SELECT sn.stemmer_id
+        FROM stemmers_nummers sn
+        INNER JOIN stemmers s ON
+            s.id = sn.stemmer_id
+            AND s.lijst_id = {$this->get_id()}
+        INNER JOIN stemmers_velden sv ON
+            sv.stemmer_id = sn.stemmer_id
+            AND sv.veld_id = 5
+            AND sv.waarde = "{$e_telefoonnummer}"
         EOT;
         try {
             return DB::selectObjectLijst($query, Stemmer::class)[0];

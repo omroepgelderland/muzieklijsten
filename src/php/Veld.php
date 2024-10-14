@@ -110,7 +110,7 @@ class Veld {
     
     /**
      * Geeft alle lijsten waar dit een veld is.
-     * @return List<Lijst>
+     * @return list<Lijst>
      */
     public function get_lijsten(): array {
         if ( !isset($this->lijsten) ) {

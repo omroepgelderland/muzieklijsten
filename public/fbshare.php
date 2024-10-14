@@ -14,14 +14,12 @@ try {
     $stemmer = Stemmer::maak_uit_request(INPUT_GET);
 
     $query = <<<EOT
-        SELECT n.artiest, n.titel
-        FROM nummers n
-        INNER JOIN stemmen sn ON
-            sn.nummer_id = n.id
-        INNER JOIN stemmers s ON
-            s.id = {$stemmer->get_id()}
-            AND s.id = sn.stemmer_id
-        ORDER BY n.artiest, n.titel
+    SELECT n.artiest, n.titel
+    FROM nummers n
+    INNER JOIN stemmers_nummers sn ON
+        sn.nummer_id = n.id
+        AND sn.stemmer_id = {$stemmer->get_id()}
+    ORDER BY n.artiest, n.titel
     EOT;
     $res = DB::query($query);
     $nummers_meta = [];

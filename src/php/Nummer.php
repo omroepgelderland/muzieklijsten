@@ -18,7 +18,7 @@ class Nummer {
     private ?string $map;
     private bool $is_opener;
     private bool $is_vrijekeuze;
-    /** @var Muzieklijst[] */
+    /** @var Lijst[] */
     private array $lijsten;
     private bool $db_props_set;
     
@@ -34,10 +34,6 @@ class Nummer {
         }
     }
     
-    /**
-     * 
-     * @return int
-     */
     public function get_id(): int {
         return $this->id;
     }
@@ -52,63 +48,38 @@ class Nummer {
     }
     
     /**
-     * 
-     * @return string|null
+     * Geeft het Powergold ID
      */
     public function get_muziek_id(): ?string {
         $this->set_db_properties();
         return $this->muziek_id;
     }
     
-    /**
-     * 
-     * @return string
-     */
     public function get_titel(): string {
         $this->set_db_properties();
         return $this->titel;
     }
     
-    /**
-     * 
-     * @return string
-     */
     public function get_artiest(): string {
         $this->set_db_properties();
         return $this->artiest;
     }
     
-    /**
-     * 
-     * @return int|null
-     */
     public function get_jaar(): ?int {
         $this->set_db_properties();
         return $this->jaar;
     }
     
-    /**
-     * 
-     * @return string|null
-     */
     public function get_categorie(): ?string {
         $this->set_db_properties();
         return $this->categorie;
     }
     
-    /**
-     * 
-     * @return string|null
-     */
     public function get_map(): ?string {
         $this->set_db_properties();
         return $this->map;
     }
     
-    /**
-     * 
-     * @return bool
-     */
     public function is_opener(): bool {
         $this->set_db_properties();
         return $this->is_opener;
@@ -121,18 +92,16 @@ class Nummer {
     
     /**
      * Geeft alle lijsten waar dit nummer op staat.
-     * @return Muzieklijst[]
+     * @return list<Lijst>
      */
     public function get_lijsten(): array {
         if ( !isset($this->lijsten) ) {
-            $this->lijsten = [];
-            $sql = sprintf(
-                'SELECT lijst_id FROM lijsten_nummers WHERE nummer_id = %d',
-                $this->get_id()
-            );
-            foreach ( DB::selectSingleColumn($sql) as $lijst_id ) {
-                $this->lijsten[] = new Lijst($lijst_id);
-            }
+            $query = <<<EOT
+            SELECT lijst_id
+            FROM lijsten_nummers
+            WHERE nummer_id = {$this->get_id()}
+            EOT;
+            $this->lijsten = DB::selectObjectLijst($query, Lijst::class);
         }
         return $this->lijsten;
     }

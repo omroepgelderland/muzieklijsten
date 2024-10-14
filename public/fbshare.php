@@ -12,8 +12,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 set_env();
 
 try {
-
-    $stemmer = Stemmer::maak_uit_request(INPUT_GET);
+    $stemmer = Stemmer::maak_uit_request((object)$_GET);
 
     $query = <<<EOT
     SELECT n.artiest, n.titel

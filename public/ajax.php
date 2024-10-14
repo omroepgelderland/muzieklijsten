@@ -341,7 +341,7 @@ function verwerk_stem( Lijst $lijst, object $request ): Stemmer {
     foreach( $request->nummers as $input_nummer ) {
         $nummer = new Nummer(filter_var($input_nummer->id, FILTER_VALIDATE_INT));
         $toelichting = filter_var($input_nummer->toelichting);
-        $stemmer->add_stem($nummer, $lijst, $toelichting);
+        $stemmer->add_stem($nummer, $toelichting, false);
     }
 
     // Invoer van (optionele) vrije keuzes

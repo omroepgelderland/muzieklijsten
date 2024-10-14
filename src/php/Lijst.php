@@ -734,9 +734,9 @@ class Lijst {
             n.id = stemmen.nummer_id
         INNER JOIN stemmers ON
             stemmers.id = stemmen.stemmer_id
-        INNER JOIN lijsten_velden lv ON
+        LEFT JOIN lijsten_velden lv ON
             lv.lijst_id = {$this->get_id()}
-        INNER JOIN velden v ON
+        LEFT JOIN velden v ON
             v.id = lv.veld_id
         LEFT JOIN stemmers_velden sv ON
             sv.stemmer_id = stemmers.id

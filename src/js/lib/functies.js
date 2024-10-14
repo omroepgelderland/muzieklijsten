@@ -2,7 +2,7 @@
  * Voert een post-request uit aan de server.
  * @param {string} functie 
  * @param {object|FormData} data 
- * @returns {Promise}
+ * @returns {Promise<any>}
  */
 export function post(functie, data = {}) {
   return new Promise((resolve, reject) => {

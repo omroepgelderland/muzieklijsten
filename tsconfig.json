@@ -2,7 +2,7 @@
     "compilerOptions": {
         "baseUrl": "./",
         "paths": {
-            "@epg/*": [
+            "@muzieklijsten/*": [
                 "src/js/lib/*"
             ]
         },

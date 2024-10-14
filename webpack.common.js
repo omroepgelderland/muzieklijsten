@@ -70,7 +70,7 @@ module.exports = {
     }
   },
   resolve: {
-    extensions: [".ts", ".js"],
+    extensions: ['.ts', '.js'],
     alias: {
       '@muzieklijsten': path.resolve(__dirname, 'src/js/lib')
     }

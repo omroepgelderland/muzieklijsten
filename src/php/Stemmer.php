@@ -153,9 +153,6 @@ class Stemmer {
      */
     public function verwijderen(): void {
         DB::query("DELETE FROM stemmers WHERE id = {$this->get_id()}");
-        foreach ( $this as $key => $value ) {
-            unset($this->$key);
-        }
         $this->db_props_set = false;
     }
 
@@ -267,6 +264,7 @@ class Stemmer {
             ));
             $toelichting = $stem->get_toelichting();
             if ( $toelichting !== null && $toelichting !== '' ) {
+                /** @var \DOMElement $e_span */
                 $e_span = $e_keuzes->appendChild($dom->createElement('span'));
                 $e_span->setAttribute('style', 'margin-left: 20px; font-style: italic;');
                 $e_span->appendChild($dom->createTextNode(

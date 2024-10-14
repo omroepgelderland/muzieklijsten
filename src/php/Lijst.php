@@ -355,13 +355,10 @@ class Lijst {
      * 2. Bij het ophalen van data wordt geconstateerd dat de lijst niet meer bestaat en een foutmelding gegeven.
      */
     public function reset(): void {
-        // Alle klassenvariabelen unsetten behalve ID
-        foreach ( $this as $key => &$value ) {
-            if ( $key != 'id' ) {
-                $value = null;
-            }
-        }
         $this->db_props_set = false;
+        unset($this->velden);
+        unset($this->nummers);
+        unset($this->stemmers);
     }
     
     /**
@@ -522,7 +519,7 @@ class Lijst {
                 s.lijst_id = {$this->id}
                 AND s.ip = "{$_SERVER['REMOTE_ADDR']}"
         EOT;
-        return DB::selectSingle($query) == 1;
+        return (bool)DB::selectSingle($query);
     }
 
     /**
@@ -579,10 +576,7 @@ class Lijst {
     public function verwijderen(): void {
         DB::query("DELETE FROM lijsten WHERE id = {$this->get_id()}");
         verwijder_stemmers_zonder_stemmen();
-        foreach ( $this as $key => $value ) {
-            unset($this->$key);
-        }
-        $this->db_props_set = false;
+        $this->reset();
     }
     
     /**

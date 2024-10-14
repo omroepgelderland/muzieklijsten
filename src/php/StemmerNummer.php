@@ -123,9 +123,6 @@ class StemmerNummer {
     public function verwijderen(): void {
         DB::query("DELETE FROM stemmers_nummers WHERE {$this->get_where_voorwaarden()}");
         verwijder_stemmers_zonder_stemmen();
-        foreach ( $this as $key => $value ) {
-            unset($this->$key);
-        }
         $this->db_props_set = false;
     }
 

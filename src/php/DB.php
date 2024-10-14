@@ -152,7 +152,7 @@ class DB {
      * Geef de eerste rij van het resultaat van een SQL query terug. Er wordt een Exception gegeven als er geen resultaat is.
      * @param $sql SQL query
      * @return array<string, DBWaarde> associatieve array met resultaat
-     * @throws Exception Als er geen resultaat is.
+     * @throws SQLException Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
@@ -228,7 +228,7 @@ class DB {
      * @param $table Naam van de tabel waarin de data moet worden geplaatst.
      * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
      * voegen gegevens als values.
-     * @throws Exception Als er niets is toegevoegd na uitvoering van de query.
+     * @throws \Exception Als er niets is toegevoegd na uitvoering van de query.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */

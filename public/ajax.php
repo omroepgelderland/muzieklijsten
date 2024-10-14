@@ -281,7 +281,7 @@ function stem( object $request ): string {
     if ( $lijst->heeft_gebruik_recaptcha() && !is_captcha_ok($request->{'g-recaptcha-response'}) ) {
         throw new GebruikersException('Captcha verkeerd.');
     }
-    if ( $lijst->is_max_stemmen_per_ip_bereikt($lijst) ) {
+    if ( $lijst->is_max_stemmen_per_ip_bereikt() ) {
         return $html;
     }
 
@@ -329,7 +329,7 @@ function verwerk_stem( Lijst $lijst, object $request ): Stemmer {
     } catch ( UndefinedPropertyException ) {}
     
     // Verwijder vorige stem en invoer.
-    $stemmer?->verwijder_stemmen($lijst);
+    $stemmer?->verwijder_stemmen();
     $stemmer?->verwijder_velden();
 
     // Maak nieuwe stemmer.
@@ -366,7 +366,7 @@ function verwerk_stem( Lijst $lijst, object $request ): Stemmer {
                     }
                 }
             }
-            $stemmer->add_stem($nummer, $lijst, $vrijekeus_invoer->toelichting, true);
+            $stemmer->add_stem($nummer, $vrijekeus_invoer->toelichting, true);
         } catch ( LegeVrijeKeuze ) {}
     }
     
@@ -381,8 +381,8 @@ function verwerk_stem( Lijst $lijst, object $request ): Stemmer {
         $veld->set_waarde($stemmer, $waarde);
     }
 
-    $stemmer->mail_redactie($lijst);
-    $stemmer->mail_stemmer($lijst);
+    $stemmer->mail_redactie();
+    $stemmer->mail_stemmer();
     return $stemmer;
 }
 

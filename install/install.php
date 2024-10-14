@@ -121,7 +121,7 @@ GRANT ALL PRIVILEGES ON `{$sql_database}`.* TO "{$sql_user}"@"{$sql_server}";
 EOT;
 exec("sudo mysql -u {$db_root_user} {$root_password_param} -e '{$root_queries}'", $output, $result_code);
 if ( $result_code !== 0 ) {
-    echo $output."\n";
+    echo implode('\n', $output)."\n";
     echo <<<EOT
     Kan niet inloggen als root op MySQL. Voer de volgende queries zelf uit op je MySQL-server en druk daarna op enter.
     {$root_queries}

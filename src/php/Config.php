@@ -29,7 +29,7 @@ class Config {
     /**
      * Haalt de JSON inhoud op.
      * @return array Inhoud van het configuratiebestand
-     * @throws EPGException Als het configuratiebestand niet kan worden geladen.
+     * @throws Muzieklijsten_Exception Als het configuratiebestand niet kan worden geladen.
      */
     protected function _get_data(): array {
         if ( !isset($this->data) ) {
@@ -55,7 +55,7 @@ class Config {
     /**
      * Haalt de JSON inhoud op.
      * @return array Inhoud van het configuratiebestand
-     * @throws EPGException Als het configuratiebestand niet kan worden geladen.
+     * @throws Muzieklijsten_Exception Als het configuratiebestand niet kan worden geladen.
      */
     public static function get_data(): array {
         return self::get_obj()->_get_data();

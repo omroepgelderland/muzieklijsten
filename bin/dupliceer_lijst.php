@@ -13,6 +13,8 @@ namespace muzieklijsten;
 
 require_once __DIR__.'/../vendor/autoload.php';
 
+set_env();
+
 DB::disableAutocommit();
 
 $origineel_id = filter_var(readline('id van de te dupliceren lijst: '), FILTER_VALIDATE_INT);

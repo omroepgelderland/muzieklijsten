@@ -148,9 +148,9 @@ class PhpExcelReader {
     /**
      * Set the encoding method
      *
-     * @param string Encoding to use
+     * @param $encoding Encoding to use
      */
-    public function setOutputEncoding($encoding)
+    public function setOutputEncoding(string $encoding)
     {
         $this->_defaultEncoding = $encoding;
     }
@@ -160,9 +160,9 @@ class PhpExcelReader {
      *  set iconv if you would like use 'iconv' for encode UTF-16LE to your encoding
      *  set mb if you would like use 'mb_convert_encoding' for encode UTF-16LE to your encoding
      *
-     * @param string Encoding type to use.  Either 'iconv' or 'mb'
+     * @param $encoder Encoding type to use.  Either 'iconv' or 'mb'
      */
-    public function setUTFEncoder($encoder = 'iconv')
+    public function setUTFEncoder(string $encoder = 'iconv')
     {
         $this->_encoderFunction = '';
 
@@ -187,7 +187,7 @@ class PhpExcelReader {
     /**
      * Set the default number format
      *
-     * @param Default format
+     * @param $sFormat Default format
      */
     public function setDefaultFormat($sFormat)
     {
@@ -197,10 +197,10 @@ class PhpExcelReader {
     /**
      * Force a column to use a certain format
      *
-     * @param integer Column number
-     * @param string Format
+     * @param $column Column number
+     * @param $sFormat Format
      */
-    public function setColumnFormat($column, $sFormat)
+    public function setColumnFormat(int $column, string $sFormat)
     {
         $this->_columnsFormat[$column] = $sFormat;
     }
@@ -208,7 +208,7 @@ class PhpExcelReader {
     /**
      * Read the spreadsheet file using OLE, then parse
      *
-     * @param filename
+     * @param $sFilename filename
      * @todo return a valid value
      */
     public function read($sFileName)
@@ -233,10 +233,8 @@ class PhpExcelReader {
 
     /**
      * Parse a workbook
-     *
-     * @return bool
      */
-    private function _parse()
+    private function _parse(): bool
     {
         $pos = 0;
 
@@ -660,9 +658,9 @@ class PhpExcelReader {
     /**
      * Check whether the current record read is a date
      *
-     * @return boolean True if date, false otherwise
+     * @return bool True if date, false otherwise
      */
-    public function isDate($spos)
+    public function isDate($spos): bool
     {
         $xfindex = ord($this->data[$spos+4]) | ord($this->data[$spos+5]) << 8;
         if ($this->formatRecords['xfrecords'][$xfindex]['type'] == 'date') {
@@ -690,10 +688,10 @@ class PhpExcelReader {
      * Dates in Excel are stored as number of seconds from an epoch.  On 
      * Windows, the epoch is 30/12/1899 and on Mac it's 01/01/1904
      *
-     * @param integer The raw Excel value to convert
+     * @param $numValue The raw Excel value to convert
      * @return array First element is the converted date, the second element is number a unix timestamp
      */ 
-    private function createDate($numValue)
+    private function createDate(int $numValue)
     {
         if ($numValue > 1) {
             $utcDays = $numValue - ($this->nineteenFour ? SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS1904 : SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS);

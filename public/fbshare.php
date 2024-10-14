@@ -9,6 +9,8 @@ namespace muzieklijsten;
 
 require_once __DIR__.'/../vendor/autoload.php';
 
+set_env();
+
 try {
 
     $stemmer = Stemmer::maak_uit_request(INPUT_GET);

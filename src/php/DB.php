@@ -77,7 +77,7 @@ class DB {
     
     /**
      * Zet speciale tekens om en voorkomt SQL injectie
-     * @param string $str Waarde die omgezet moet worden
+     * @param $str Waarde die omgezet moet worden
      * @return string Omgezette string
      */
     public static function escape_string( string $str ): string {
@@ -108,7 +108,7 @@ class DB {
     
     /**
      * Voert een MySQL query uit.
-     * @param string $sql SQL query
+     * @param $sql SQL query
      * @return ?\mysqli_result Resultaat
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
@@ -131,7 +131,7 @@ class DB {
     
     /**
      * Geef de eerste kolom van de eerste rij van het resultaat van een SQL query terug. Er wordt een Exception gegeven als er geen resultaat is.
-     * @param string $sql SQL query
+     * @param $sql SQL query
      * @return DBWaarde
      * @throws SQLException Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
@@ -150,7 +150,7 @@ class DB {
     
     /**
      * Geef de eerste rij van het resultaat van een SQL query terug. Er wordt een Exception gegeven als er geen resultaat is.
-     * @param string $sql SQL query
+     * @param $sql SQL query
      * @return array<string, DBWaarde> associatieve array met resultaat
      * @throws Exception Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
@@ -173,7 +173,7 @@ class DB {
     
     /**
      * Geef de eerste kolom van het resultaat van een SQL query terug.
-     * @param string $sql SQL query
+     * @param $sql SQL query
      * @return list<DBWaarde> resultaat. Kan leeg zijn.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
@@ -193,11 +193,11 @@ class DB {
      * De query moet als resultaat een enkele rij met id's als resultaat geven
      * die overeenkomen met ID's van het gewenste objecttype.
      * @template Type
-     * @param string $sql De query
+     * @param $sql De query
      * @param class-string<Type> $object_type Naam van de class
      * @param mixed $args,... Extra parameters voor de constructor van de class
      * (na id)
-     * @return Type[] resultaat. Kan leeg zijn.
+     * @return list<Type> resultaat. Kan leeg zijn.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de
      * database.
@@ -212,9 +212,9 @@ class DB {
     
     /**
      * Geeft aan of een of meerdere databaserecords bestaan.
-     * @param string $sql Query
-     * @param int $min Minimum aantal resultaten. Standaard 1
-     * @param int $max Maximum aantal resultaten. Standaard 1
+     * @param $sql Query
+     * @param $min Minimum aantal resultaten. Standaard 1
+     * @param $max Maximum aantal resultaten. Standaard 1
      * @return bool
      * @throws SQLException bij databasefouten
      */
@@ -225,7 +225,7 @@ class DB {
     
     /**
      * Zet een aantal velden in de database aan de hand van een associatieve array. PHP types worden naar SQL omgezet. Strings worden ge-escaped
-     * @param string $table Naam van de tabel waarin de data moet worden geplaatst.
+     * @param $table Naam van de tabel waarin de data moet worden geplaatst.
      * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
      * voegen gegevens als values.
      * @throws Exception Als er niets is toegevoegd na uitvoering van de query.
@@ -253,10 +253,10 @@ class DB {
     
     /**
      * Verander een aantal velden in de database aan de hand van een associatieve array. PHP types worden naar SQL omgezet. Strings worden ge-escaped
-     * @param string $table Naam van de tabel waar de data moet worden aangepast.
+     * @param $table Naam van de tabel waar de data moet worden aangepast.
      * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
      * voegen gegevens als values.
-     * @param string $conditions Voorwaarden voor binnen het WHERE-statement
+     * @param $conditions Voorwaarden voor binnen het WHERE-statement
      * @return int Aantal veranderde rijen
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
@@ -276,10 +276,10 @@ class DB {
     /**
      * Zet een waarde uit de database om naar het juiste PHP type aan de hand van het MySQL veldtype
      * @param mixed $waarde Waarde uit de database
-     * @param int $type MySQLi type
+     * @param $type MySQLi type
      * @return DBWaarde
      */
-    private static function typecast( $waarde, int $type ): mixed {
+    private static function typecast( mixed $waarde, int $type ): mixed {
         if ( $waarde === null ) {
             return null;
         }
@@ -372,10 +372,9 @@ class DB {
     
     /**
      * Zet floats om in ints als dat kan zonder dataverlies
-     * @param int|float $waarde
-     * @return int|float
+     * @param $waarde
      */
-    private static function typecast_nummer( $waarde ) {
+    private static function typecast_nummer( int|float $waarde ): int|float {
         if ( $waarde == (int)$waarde ) {
             return (int)$waarde;
         } else {
@@ -385,8 +384,8 @@ class DB {
     
     /**
      * Genereert een foutmelding aan de hand van de foutinformatie uit MySQLi.
-     * @param string $sql De query die de fout veroorzaakte.
-     * @param \mysqli_sql_exception|null $e Door PHP gegooide error (optioneel).
+     * @param $sql De query die de fout veroorzaakte.
+     * @param $e Door PHP gegooide error (optioneel).
      * @throws SQLException
      */
     private static function throwQueryException( string $sql, ?\mysqli_sql_exception $e = null ): never {
@@ -398,8 +397,8 @@ class DB {
     
     /**
      * Genereert een foutmelding aan de hand van de foutinformatie uit MySQLi.
-     * @param string $msg Foutinformatie
-     * @param \mysqli_sql_exception|null $e Door PHP gegooide error (optioneel).
+     * @param $msg Foutinformatie
+     * @param $e Door PHP gegooide error (optioneel).
      * @throws SQLException
      */
     private static function throwException( string $msg, ?\mysqli_sql_exception $e = null ): never {
@@ -429,9 +428,8 @@ class DB {
     
     /**
      * Geeft de maximale mogelijke lengte van de invoer in een kolom.
-     * @param string $tabel Tabel.
-     * @param string $kolom Kolom.
-     * @return int
+     * @param $tabel Tabel.
+     * @param $kolom Kolom.
      */
     public static function get_max_kolom_lengte( string $tabel, string $kolom ): int {
         return self::selectSingle("SELECT max(length(`{$kolom}`)) `max_column_length` from `{$tabel}`");
@@ -440,7 +438,7 @@ class DB {
     /**
      * Voegt een entry toe of update een bestaande entry als de primary keys of unieke velden van de invoer al bestaan in de database.
      * PHP types worden naar SQL omgezet. Strings worden ge-escaped
-     * @param string $table Naam van de tabel waarin de data moet worden geplaatst.
+     * @param $table Naam van de tabel waarin de data moet worden geplaatst.
      * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
      * voegen gegevens als values.
      * @return DBInsertUpdateResult Object met informatie over de uitgevoerde actie en het

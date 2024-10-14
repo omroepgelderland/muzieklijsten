@@ -56,6 +56,9 @@ nbproject/private/
 vendor/
 !/composer.lock
 
+# PHPStan
+/phpstan.neon
+
 /debug-php.sh
 config/
 node_modules

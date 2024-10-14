@@ -17,7 +17,7 @@ class Stemmer {
     private bool $db_props_set;
     
     /**
-     * @param int $id ID van het object.
+     * @param $id ID van het object.
      * @param ?array $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct( int $id, ?array $data = null ) {
@@ -47,10 +47,10 @@ class Stemmer {
     
     /**
      * Geeft aan of twee stemmers dezelfde zijn. Wanneer $obj geen Stemmer is wordt false gegeven.
-     * @param mixed $obj Object om deze instantie mee te vergelijken
+     * @param $obj Object om deze instantie mee te vergelijken
      * @return bool Of $obj dezelfde stemmer is als deze instantie
      */
-    public function equals( $obj ): bool {
+    public function equals( mixed $obj ): bool {
         return ( $obj instanceof Stemmer && $obj->get_id() == $this->id );
     }
     
@@ -91,13 +91,13 @@ class Stemmer {
     public static function maak(
         Lijst $lijst,
         string $ip
-    ): static {
+    ): self {
         try {
             $id = DB::insertMulti('stemmers', [
                 'lijst_id' => $lijst->get_id(),
                 'ip' => $ip
             ]);
-            return new static($id);
+            return new self($id);
         } catch ( SQLException_DataTooLong ) {
             throw new GebruikersException('De invoer van een van de tekstvelden is te lang.');
         }
@@ -130,11 +130,10 @@ class Stemmer {
     
     /**
      * Maakt een object uit een id aangeleverd door HTTP POST.
-     * @param \stdClass $request HTTP-request.
-     * @return Stemmer
+     * @param object $request HTTP-request.
      * @throws Muzieklijsten_Exception
      */
-    public static function maak_uit_request( \stdClass $request ): Stemmer {
+    public static function maak_uit_request( object $request ): self {
         try {
             $id = filter_var($request->stemmer, FILTER_VALIDATE_INT);
         } catch ( UndefinedPropertyException ) {
@@ -146,7 +145,7 @@ class Stemmer {
                 filter_var($request->stemmer)
             ));
         }
-        return new static($id);
+        return new self($id);
     }
 
     /**
@@ -162,7 +161,6 @@ class Stemmer {
 
     /**
      * Mailt een notificatie van deze stem naar de redactie.
-     * @param Lijst $lijst
      */
     public function mail_redactie(): void {
         $lijst = $this->get_lijst();
@@ -176,7 +174,7 @@ class Stemmer {
         $velden_str = implode("\n", $velden);
 
         $nummers_lijst = [];
-        foreach ( $this->get_stemmen($lijst) as $stem ) {
+        foreach ( $this->get_stemmen() as $stem ) {
             $nummers_lijst[] = "{$stem->nummer->get_titel()} - {$stem->nummer->get_artiest()}";
             $nummers_lijst[] = "\tToelichting: {$stem->get_toelichting()}";
             $nummers_lijst[] = '';
@@ -262,7 +260,7 @@ class Stemmer {
 
         $e_keuzes = $dom->getElementById('keuzes');
         $e_keuzes->removeAttribute('id');
-        foreach ( $this->get_stemmen($lijst) as $stem ) {
+        foreach ( $this->get_stemmen() as $stem ) {
             $e_strong = $e_keuzes->appendChild($dom->createElement('strong'));
             $e_strong->appendChild($dom->createTextNode(
                 "{$stem->nummer->get_artiest()} – {$stem->nummer->get_titel()}"

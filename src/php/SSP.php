@@ -20,13 +20,13 @@ use mysqli_result;
 
 class SSP {
 
-    private \stdClass $request;
+    private object $request;
     private array $kolommen;
     private Lijst $lijst;
     private ?bool $is_vrijekeuze;
 
     public function __construct(
-        \stdClass $request,
+        object $request,
         array $kolommen
     ) {
         $this->request = $request;
@@ -36,8 +36,8 @@ class SSP {
     /**
      * Create the data output array for the DataTables rows
      *
-     *  @param  \mysqli_result $data    Data from the SQL get
-     *  @return array          Formatted data in a row based format
+     *  @param $data Data from the SQL get
+     *  @return array Formatted data in a row based format
      */
     protected function data_output ( \mysqli_result $data ): array {
         $out = [];
@@ -268,8 +268,8 @@ class SSP {
      * Pull a particular property from each assoc. array in a numeric array, 
      * returning and array of the property values from each item.
      *
-     *  @param  array  $a    Array to get data from
-     *  @param  string $prop Property to read
+     *  @param  $a    Array to get data from
+     *  @param  $prop Property to read
      *  @return array        Array of property values
      */
     protected static function pluck( array $a, string $prop ): array {

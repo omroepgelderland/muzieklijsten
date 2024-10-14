@@ -7,16 +7,14 @@
 
 namespace muzieklijsten;
 
-use stdClass;
-
 require_once __DIR__.'/../vendor/autoload.php';
 
 /**
  * Lijst verwijderen vanuit de beheerdersinterface.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function verwijder_lijst( \stdClass $request ) {
+function verwijder_lijst( object $request ) {
     login();
     $lijst = Lijst::maak_uit_request($request);
     $lijst->verwijderen();
@@ -24,9 +22,9 @@ function verwijder_lijst( \stdClass $request ) {
 
 /**
  * Haalt metadata van een lijst uit het request.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  */
-function filter_lijst_metadata( \stdClass $request ): array {
+function filter_lijst_metadata( object $request ): array {
     $naam = trim(filter_var($request->naam));
     $is_actief = isset($request->{'is-actief'});
     $minkeuzes = filter_var($request->minkeuzes, FILTER_VALIDATE_INT);
@@ -87,7 +85,7 @@ function filter_lijst_metadata( \stdClass $request ): array {
     ];
 }
 
-function set_lijst_velden( Lijst $lijst, \stdClass $input_velden ) {
+function set_lijst_velden( Lijst $lijst, object $input_velden ) {
     $alle_velden = get_velden();
     foreach ( $alle_velden as $veld ) {
         try {
@@ -108,10 +106,10 @@ function set_lijst_velden( Lijst $lijst, \stdClass $input_velden ) {
 
 /**
  * Bestaande lijst opslaan in de beheerdersinterface.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function lijst_opslaan( \stdClass $request ): void {
+function lijst_opslaan( object $request ): void {
     login();
     $lijst = Lijst::maak_uit_request($request);
     $data = filter_lijst_metadata($request);
@@ -126,10 +124,10 @@ function lijst_opslaan( \stdClass $request ): void {
 
 /**
  * Nieuwe lijst maken in de beheerdersinterface.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @return int ID van de nieuwe lijst.
  */
-function lijst_maken( \stdClass $request ): int {
+function lijst_maken( object $request ): int {
     login();
     $data = filter_lijst_metadata($request);
     $lijst = new Lijst(DB::insertMulti('lijsten', $data));
@@ -144,10 +142,10 @@ function lijst_maken( \stdClass $request ): int {
 
 /**
  * Losse nummers toevoegen aan de database.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @return array
  */
-function losse_nummers_toevoegen( \stdClass $request ): array {
+function losse_nummers_toevoegen( object $request ): array {
     login();
     $request->nummers ??= [];
     $request->lijsten ??= [];
@@ -211,27 +209,25 @@ function ajax_get_lijsten(): array {
 
 /**
  * Instellen dat een stem is behandeld door de redactie.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function stem_set_behandeld( \stdClass $request ): void {
+function stem_set_behandeld( object $request ): void {
     login();
-    $stem = Stem::maak_uit_request($request);
+    $stem = StemmerNummer::maak_uit_request($request);
     $waarde = filter_var($request->waarde, FILTER_VALIDATE_BOOL);
     $stem->set_behandeld($waarde);
 }
 
 /**
  * Verwijderen van een stem in de resultateninterface.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function verwijder_stem( \stdClass $request ): void {
+function verwijder_stem( object $request ): void {
     login();
-    $lijst = Lijst::maak_uit_request($request);
-    $stem = new Stem(
+    $stem = new StemmerNummer(
         Nummer::maak_uit_request($request),
-        $lijst,
         Stemmer::maak_uit_request($request)
     );
     $stem->verwijderen();
@@ -241,10 +237,10 @@ function verwijder_stem( \stdClass $request ): void {
 /**
  * Verwijderen van een nummer in de resultateninterface.
  * (wordt momenteel niet gebruikt)
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function verwijder_nummer( \stdClass $request ): void {
+function verwijder_nummer( object $request ): void {
     login();
     $lijst = Lijst::maak_uit_request($request);
     $lijst->verwijder_nummer(Nummer::maak_uit_request($request));
@@ -252,10 +248,10 @@ function verwijder_nummer( \stdClass $request ): void {
 
 /**
  * Geeft het totaal aantal stemmers op een lijst.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function get_totaal_aantal_stemmers( \stdClass $request ): int {
+function get_totaal_aantal_stemmers( object $request ): int {
     login();
     $lijst = Lijst::maak_uit_request($request);
     try {
@@ -273,11 +269,11 @@ function get_totaal_aantal_stemmers( \stdClass $request ): int {
 
 /**
  * Verwerk een stem van een bezoeker.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @return string HTML-respons.
  * @throws GeenLijstException
  */
-function stem( \stdClass $request ): string {
+function stem( object $request ): string {
     $lijst = Lijst::maak_uit_request($request);
     $bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
     $html = "<h4>{$bedankt_tekst}</h4>";
@@ -320,13 +316,13 @@ function stem( \stdClass $request ): string {
  * invoer. De gebruiker wordt hier niet van op de hoogte gesteld.
  * @throws BlacklistException
  */
-function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
+function verwerk_stem( Lijst $lijst, object $request ): Stemmer {
     check_ip_blacklist($_SERVER['REMOTE_ADDR']);
 
     // Zoek bestaande stemmer.
     $stemmer = null;
     try {
-        $stemmer ??= $lijst->get_stemmer_uit_telefoonnummer($request->velden->{5});
+        $stemmer = $lijst->get_stemmer_uit_telefoonnummer($request->velden->{5});
     } catch ( UndefinedPropertyException ) {}
     try {
         $stemmer ??= $lijst->get_stemmer_uit_email($request->velden->{6});
@@ -338,6 +334,7 @@ function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
 
     // Maak nieuwe stemmer.
     $stemmer ??= Stemmer::maak(
+        $lijst,
         $_SERVER['REMOTE_ADDR']
     );
 
@@ -391,10 +388,10 @@ function verwerk_stem( Lijst $lijst, \stdClass $request ): Stemmer {
 
 /**
  * Voegt een nummer toe aan een stemlijst.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function lijst_nummer_toevoegen( \stdClass $request ): void {
+function lijst_nummer_toevoegen( object $request ): void {
     login();
     DB::disableAutocommit();
     $lijst = Lijst::maak_uit_request($request);
@@ -404,10 +401,10 @@ function lijst_nummer_toevoegen( \stdClass $request ): void {
 
 /**
  * Haalt een nummer weg uit een stemlijst.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @throws GeenLijstException
  */
-function lijst_nummer_verwijderen( \stdClass $request ): void {
+function lijst_nummer_verwijderen( object $request ): void {
     login();
     DB::disableAutocommit();
     $lijst = Lijst::maak_uit_request($request);
@@ -415,7 +412,7 @@ function lijst_nummer_verwijderen( \stdClass $request ): void {
     DB::commit();
 }
 
-function get_geselecteerde_nummers( \stdClass $request ): array {
+function get_geselecteerde_nummers( object $request ): array {
     try {
         $lijst = Lijst::maak_uit_request($request);
         $nummers = $lijst->get_nummers_sorteer_titels();
@@ -435,16 +432,16 @@ function get_geselecteerde_nummers( \stdClass $request ): array {
 }
 
 /**
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @return array{
- * draw: int,
- * recordsTotal: int,
- * recordsFiltered: int,
- * data: array<string[]>
+ *     draw: int,
+ *     recordsTotal: int,
+ *     recordsFiltered: int,
+ *     data: array<string[]>
  * }
  * @throws GeenLijstException
  */
-function vul_datatables( \stdClass $request ): array {
+function vul_datatables( object $request ): array {
     $ssp = new SSP(
         $request,
         [
@@ -469,11 +466,11 @@ function vul_datatables( \stdClass $request ): array {
 
 /**
  * Geeft data over de stemlijst voor de stempagina.
- * @param \stdClass $request HTTP-request.
+ * @param object $request HTTP-request.
  * @return array
  * @throws GeenLijstException
  */
-function get_stemlijst_frontend_data( \stdClass $request ): array {
+function get_stemlijst_frontend_data( object $request ): array {
     try {
         $lijst = Lijst::maak_uit_request($request);
         $lijst->get_naam(); // Forceer dat de lijst in de database wordt geopend.
@@ -524,7 +521,7 @@ function get_stemlijst_frontend_data( \stdClass $request ): array {
     ];
 }
 
-function get_resultaten_labels( \stdClass $request ): array {
+function get_resultaten_labels( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
@@ -538,7 +535,7 @@ function get_resultaten_labels( \stdClass $request ): array {
     return $respons;
 }
 
-function get_resultaten( \stdClass $request ): array {
+function get_resultaten( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
@@ -548,7 +545,7 @@ function get_resultaten( \stdClass $request ): array {
     return $lijst->get_resultaten();
 }
 
-function get_lijst_metadata( \stdClass $request ): array {
+function get_lijst_metadata( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
@@ -600,7 +597,7 @@ function get_alle_velden(): array {
     return $respons;
 }
 
-function get_beheer_lijstdata( \stdClass $request ): array {
+function get_beheer_lijstdata( object $request ): array {
     login();
     try {
         $lijst = Lijst::maak_uit_request($request);
@@ -623,6 +620,8 @@ function get_beheer_lijstdata( \stdClass $request ): array {
         'velden' => $lijst->get_alle_velden_data()
     ];
 }
+
+set_env();
 
 try {
     DB::disableAutocommit();

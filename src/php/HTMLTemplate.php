@@ -16,8 +16,8 @@ class HTMLTemplate {
     public \DOMElement $body;
 
     /**
-     * @param string $source HTML-template (optioneel)
-     * @param int $options Opties voor \DOMDocument::loadHTML() (optioneel)
+     * @param $source HTML-template (optioneel)
+     * @param $options Opties voor \DOMDocument::loadHTML() (optioneel)
      */
     public function __construct( string $source = '', int $options = 0 ) {
         $template = <<<EOT
@@ -37,8 +37,7 @@ class HTMLTemplate {
 
     /**
      * Voegt een node toe aan de body.
-     * @param \DOMNode $node
-     * @return \DOMNode
+     * @param $node
      */
     public function appendChild( \DOMNode $node ): \DOMNode {
         return $this->body->appendChild($node);
@@ -46,9 +45,8 @@ class HTMLTemplate {
 
     /**
      * Maakt een element.
-     * @param string $localName
-     * @param string $value
-     * @return \DOMElement
+     * @param $localName
+     * @param $value
      */
     public function createElement( string $localName, string $value = '' ): \DOMElement {
         return $this->doc->createElement($localName, $value);
@@ -56,8 +54,7 @@ class HTMLTemplate {
 
     /**
      * Maakt een textnode
-     * @param string $data
-     * @return \DOMText
+     * @param $data
      */
     public function createTextNode( string $data ): \DOMText {
         return $this->doc->createTextNode($data);
@@ -65,7 +62,6 @@ class HTMLTemplate {
 
     /**
      * Geeft de HTML als string.
-     * @return string
      */
     public function saveHTML(): string {
         $respons = '';
@@ -75,18 +71,10 @@ class HTMLTemplate {
         return $respons;
     }
 
-    /**
-     * @param string $qualifiedName
-     * @return \DOMNodeList
-     */
     public function getElementsByTagName( string $qualifiedName ): \DOMNodeList {
         return $this->body->getElementsByTagName($qualifiedName);
     }
 
-    /**
-     * @param string $localName
-     * @return \DOMAttr
-     */
     public function createAttribute( string $localName ): \DOMAttr {
         return $this->doc->createAttribute($localName);
     }

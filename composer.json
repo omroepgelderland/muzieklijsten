@@ -29,8 +29,10 @@
 		},
 		"files": [
 			"src/php/functies.php",
-			"src/php/exceptions.php",
-			"src/php/include.php"
+			"src/php/exceptions.php"
 		]
+	},
+	"require-dev": {
+		"phpstan/phpstan": "^1.12"
 	}
 }

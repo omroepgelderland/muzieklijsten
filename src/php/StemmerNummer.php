@@ -17,8 +17,8 @@ class StemmerNummer {
     private bool $db_props_set;
     
     /**
-     * @param Nummer $nummer
-     * @param Stemmer $stemmer
+     * @param $nummer
+     * @param $stemmer
      * @param ?array $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct(
@@ -37,38 +37,26 @@ class StemmerNummer {
     /**
      * Geeft aan of twee stemmen dezelfde zijn. Wanneer $obj geen Stem is wordt
      * false gegeven.
-     * @param mixed $obj Object om deze instantie mee te vergelijken
+     * @param $obj Object om deze instantie mee te vergelijken
      * @return bool Of $obj dezelfde stem is als deze instantie
      */
-    public function equals( $obj ): bool {
+    public function equals( mixed $obj ): bool {
         return 
             $obj instanceof StemmerNummer
             && $this->nummer->equals($obj->nummer)
             && $this->stemmer->equals($obj->stemmer);
     }
     
-    /**
-     * 
-     * @return string|null
-     */
     public function get_toelichting(): ?string {
         $this->set_db_properties();
         return $this->toelichting;
     }
     
-    /**
-     * 
-     * @return bool
-     */
     public function is_behandeld(): bool {
         $this->set_db_properties();
         return $this->behandeld;
     }
     
-    /**
-     * 
-     * @return bool
-     */
     public function is_vrijekeuze(): bool {
         $this->set_db_properties();
         return $this->is_vrijekeuze;
@@ -109,12 +97,11 @@ class StemmerNummer {
 
     /**
      * Maakt een object uit een id aangeleverd door HTTP POST.
-     * @param \stdClass $request HTTP-request.
-     * @return static
+     * @param object $request HTTP-request.
      * @throws GeenLijstException
      */
-    public static function maak_uit_request( \stdClass $request ): static {
-        return new static(
+    public static function maak_uit_request( object $request ): self {
+        return new self(
             Nummer::maak_uit_request($request),
             Stemmer::maak_uit_request($request)
         );
@@ -122,7 +109,7 @@ class StemmerNummer {
 
     /**
      * Stelt in of de stem al dan niet behandeld is.
-     * @param bool $waarde aan of uit.
+     * @param $waarde aan of uit.
      */
     public function set_behandeld( bool $waarde ): void {
         DB::updateMulti('stemmers_nummers', [

@@ -18,12 +18,12 @@ class Nummer {
     private ?string $map;
     private bool $is_opener;
     private bool $is_vrijekeuze;
-    /** @var Lijst[] */
+    /** @var list<Lijst> */
     private array $lijsten;
     private bool $db_props_set;
     
     /**
-     * @param int $id ID van het object.
+     * @param $id ID van het object.
      * @param ?array $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct( int $id, ?array $data = null ) {
@@ -40,10 +40,10 @@ class Nummer {
     
     /**
      * Geeft aan of twee nummers dezelfde zijn. Wanneer $obj geen Nummer is wordt false gegeven.
-     * @param mixed $obj Object om deze instantie mee te vergelijken
-     * @return boolean Of $obj hetzelfde nummer is als deze instantie
+     * @param $obj Object om deze instantie mee te vergelijken
+     * @return bool Of $obj hetzelfde nummer is als deze instantie
      */
-    public function equals( $obj ): bool {
+    public function equals( mixed $obj ): bool {
         return ( $obj instanceof Nummer && $obj->get_id() == $this->id );
     }
     
@@ -136,11 +136,10 @@ class Nummer {
 
     /**
      * Maakt een object uit een id aangeleverd door HTTP POST.
-     * @param \stdClass $request HTTP-request.
-     * @return Nummer
+     * @param object $request HTTP-request.
      * @throws Muzieklijsten_Exception
      */
-    public static function maak_uit_request( \stdClass $request ): Nummer {
+    public static function maak_uit_request( object $request ): self {
         try {
             $id = filter_var($request->nummer, FILTER_VALIDATE_INT);
         } catch ( UndefinedPropertyException ) {
@@ -152,17 +151,17 @@ class Nummer {
                 filter_var($request->nummer)
             ));
         }
-        return new static($id);
+        return new self($id);
     }
 
     /**
      * Maakt een nieuw nummer aan als vrije keuze van een stemmer.
      * Als er al een nummer bestaat met deze artiest en titel dan wordt het
      * bestaan de nummer teruggegeven.
-     * @return static Het bestaande of nieuw toegevoegde nummer.
+     * @return self Het bestaande of nieuw toegevoegde nummer.
      * @throws LegeVrijeKeuze Als de artiest of titel leeg is.
      */
-    public static function vrijekeuze_toevoegen( string $artiest, string $titel ): static {
+    public static function vrijekeuze_toevoegen( string $artiest, string $titel ): self {
         $artiest = trim($artiest);
         $titel = trim($titel);
         if ( $artiest === '' || $titel === '' ) {
@@ -177,7 +176,7 @@ class Nummer {
             artiest LIKE "{$q_artiest}"
             AND titel LIKE "{$q_titel}"
         EOT;
-        $nummers = DB::selectObjectLijst($query, static::class);
+        $nummers = DB::selectObjectLijst($query, self::class);
         if ( count($nummers) > 0 ) {
             return $nummers[0];
         }
@@ -187,7 +186,7 @@ class Nummer {
             'titel' => $titel,
             'is_vrijekeuze' => true
         ]);
-        return new static($id);
+        return new self($id);
     }
 
 

@@ -21,21 +21,21 @@ class Lijst {
     private ?int $stemmen_per_ip;
     private bool $artiest_eenmalig;
     private bool $recaptcha;
-    /** @var string[] */
+    /** @var list<string> */
     private array $notificatie_email_adressen;
     private string $bedankt_tekst;
     private bool $mail_stemmers;
     private bool $random_volgorde;
-    /** @var Veld[] */
+    /** @var list<Veld> */
     private array $velden;
-    /** @var Nummer[] */
+    /** @var list<Nummer> */
     private array $nummers;
     /** @var list<Stemmer> */
     private array $stemmers;
     private bool $db_props_set;
     
     /**
-     * @param int $id ID van het object.
+     * @param $id ID van het object.
      * @param ?array $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct( int $id, ?array $data = null ) {
@@ -52,16 +52,15 @@ class Lijst {
     
     /**
      * Geeft aan of twee muzieklijsten dezelfde zijn. Wanneer $obj geen Muzieklijst is wordt false gegeven.
-     * @param mixed $obj Object om deze instantie mee te vergelijken
+     * @param $obj Object om deze instantie mee te vergelijken
      * @return bool Of $obj dezelfde muzieklijst is als deze instantie
      */
-    public function equals( $obj ): bool {
+    public function equals( mixed $obj ): bool {
         return ( $obj instanceof Lijst && $obj->get_id() == $this->id );
     }
     
     /**
      * Geeft aan of de lijst actief is.
-     * @return bool
      */
     public function is_actief(): bool {
         $this->set_db_properties();
@@ -101,10 +100,6 @@ class Lijst {
         return $this->artiest_eenmalig;
     }
 
-    /**
-     * 
-     * @return bool
-     */
     public function heeft_gebruik_recaptcha(): bool {
         $this->set_db_properties();
         return $this->recaptcha;
@@ -121,7 +116,7 @@ class Lijst {
     
     /**
      * Geeft alle velden die bij de lijst horen.
-     * @return Veld[]
+     * @return list<Veld>
      */
     public function get_velden(): array {
         if ( !isset($this->velden) ) {
@@ -204,9 +199,9 @@ class Lijst {
     
     /**
      * Geeft de stemmers op deze lijst.
-     * @param \DateTime $van Neem alleen de stemmers die gestemd hebben vanaf deze datum (optioneel).
-     * @param \DateTime $tot Neem alleen de stemmers die gestemd hebben tot en met deze datum (optioneel).
-     * @return List<Stemmer>
+     * @param $van Neem alleen de stemmers die gestemd hebben vanaf deze datum (optioneel).
+     * @param $tot Neem alleen de stemmers die gestemd hebben tot en met deze datum (optioneel).
+     * @return list<Stemmer>
      */
     public function get_stemmers( ?\DateTime $van = null, ?\DateTime $tot = null ): array {
         if ( $van === null && $tot === null ) {
@@ -253,9 +248,9 @@ class Lijst {
     
     /**
      * Geeft de stemmen op alle nummers in de lijst.
-     * @param Nummer|null $nummer Neem alleen de stemmen op dit nummer mee (optioneel).
-     * @param \DateTime $van Neem alleen de stemmen vanaf deze datum (optioneel).
-     * @param \DateTime $tot Neem alleen de stemmen tot en met deze datum (optioneel).
+     * @param $nummer Neem alleen de stemmen op dit nummer mee (optioneel).
+     * @param $van Neem alleen de stemmen vanaf deze datum (optioneel).
+     * @param $tot Neem alleen de stemmen tot en met deze datum (optioneel).
      * @return list<StemmerNummer> Stemmen
      */
     public function get_stemmen(
@@ -301,9 +296,9 @@ class Lijst {
     /**
      * Geeft alle nummers met ten minste één stem uit de lijst gesorteerd op het
      * aantal stemmen (hoogste aantal eerst).
-     * @param \DateTime $van Neem alleen de stemmen vanaf deze datum (optioneel).
-     * @param \DateTime $tot Neem alleen de stemmen tot en met deze datum (optioneel).
-     * @return Nummer[]
+     * @param $van Neem alleen de stemmen vanaf deze datum (optioneel).
+     * @param $tot Neem alleen de stemmen tot en met deze datum (optioneel).
+     * @return list<Nummer>
      */
     public function get_nummers_volgorde_aantal_stemmen(
         ?\DateTime $van = null,
@@ -331,7 +326,6 @@ class Lijst {
     
     /**
      * Geeft de tekst die stemmers te zien krijgen na het uitbrengen van een stem.
-     * @return string
      */
     public function get_bedankt_tekst(): string {
         $this->set_db_properties();
@@ -422,8 +416,7 @@ class Lijst {
     /**
      * Maakt een nieuwe inactieve lijst met dezelfde eigenschappen als deze en
      * verplaatst alle stemmen op deze lijst daar naartoe.
-     * @param string $naam Naam van de nieuwe lijst.
-     * @return Lijst
+     * @param $naam Naam van de nieuwe lijst.
      */
     public function dupliceer( string $naam ): Lijst {
         // Nieuwe lijst maken.
@@ -499,11 +492,10 @@ class Lijst {
 
     /**
      * Maakt een object uit een id aangeleverd door HTTP GET of POST.
-      * @param \stdClass $request HTTP-request.
-     * @return Lijst
+     * @param object $request HTTP-request.
      * @throws GeenLijstException
      */
-    public static function maak_uit_request( \stdClass $request ): Lijst {
+    public static function maak_uit_request( object $request ): self {
         try {
             $id = filter_var($request->lijst, FILTER_VALIDATE_INT);
         } catch ( UndefinedPropertyException ) {
@@ -515,7 +507,7 @@ class Lijst {
                 filter_var($request->lijst)
             ));
         }
-        return new static($id);
+        return new self($id);
     }
 
     public function is_max_stemmen_per_ip_bereikt(): bool {
@@ -535,7 +527,7 @@ class Lijst {
 
     /**
      * Voegt een nummer toe aan de stemlijst.
-     * @param Nummer $nummer
+     * @param $nummer
      */
     public function nummer_toevoegen( Nummer $nummer ): void {
         DB::insertMulti('lijsten_nummers', [
@@ -553,7 +545,7 @@ class Lijst {
      * deze lijst gekoppeld.
      * Alle stemmen op dit nummer in deze lijst worden verwijderd.
      * Stemmers die geen stemmen meer hebben worden verwijderd.
-     * @param Nummer $nummer
+     * @param $nummer
      */
     public function verwijder_nummer( Nummer $nummer ): void {
         // Verwijder de koppeling.
@@ -595,14 +587,14 @@ class Lijst {
     
     /**
      * Maakt HTML voor een invoerveld in het formulier.
-     * @param string $id ID en naam van het veld.
-     * @param string $label Zichtbaar label.
-     * @param string $type Type van <input>
-     * @param string $leeg_feedback Tekst die aan de gebruiker wordt getoond
+     * @param $id ID en naam van het veld.
+     * @param $label Zichtbaar label.
+     * @param $type Type van <input>
+     * @param $leeg_feedback Tekst die aan de gebruiker wordt getoond
      * als het verplichte veld niet is ingevuld.
-     * @param bool $is_verplicht Of het veld verplicht is.
-     * @param int|null $max_length Maximale lengte van tekstinvoer (optioneel).
-     * @param string $placeholder Placeholdertekst (optioneel).
+     * @param $is_verplicht Of het veld verplicht is.
+     * @param $max_length Maximale lengte van tekstinvoer (optioneel).
+     * @param $placeholder Placeholdertekst (optioneel).
      * @return string HTML.
      */
     private function get_formulier_html(
@@ -623,9 +615,9 @@ class Lijst {
         </div>
         EOT;
         $doc = new HTMLTemplate($template);
-        /** @var \DOMElement */
+        /** @var \DOMElement $e_label */
         $e_label = $doc->getElementsByTagName('label')->item(0);
-        /** @var \DOMElement */
+        /** @var \DOMElement $e_input */
         $e_input = $doc->getElementsByTagName('input')->item(0);
         $e_label->appendChild($doc->createTextNode($label));
         $e_label->setAttribute('for', $id);

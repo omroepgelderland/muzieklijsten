@@ -64,7 +64,7 @@ class Config {
     /**
      * Haalt een instelling op die in een sectie staat.
      * Instellingen staan onder een variabel aantal niveaus, die met de functieparameters worden aangegeven.
-     * @param string $args,... Secties waaronder de instelling staat.
+     * @param $args,... Secties waaronder de instelling staat.
      * @return mixed De waarde van de instelling
      * @throws ConfigException Als de instelling niet kan worden gevonden.
      */

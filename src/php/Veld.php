@@ -25,9 +25,9 @@ class Veld {
     
     /**
      * 
-     * @param int $id Database-id van het veld.
+     * @param $id Database-id van het veld.
      * @param ?array $data Metadata uit de databasevelden (optioneel).
-     * @param boolean $verplicht Of het veld verplicht is (optioneel)
+     * @param $verplicht Of het veld verplicht is (optioneel)
      */
     public function __construct( int $id, ?array $data = null, ?bool $verplicht = null ) {
         $this->id = $id;
@@ -38,35 +38,25 @@ class Veld {
         }
     }
     
-    /**
-     * 
-     * @return int
-     */
     public function get_id(): int {
         return $this->id;
     }
     
     /**
      * Geeft aan of twee velden dezelfde zijn. Wanneer $obj geen Veld is wordt false gegeven.
-     * @param mixed $obj Object om deze instantie mee te vergelijken
+     * @param $obj Object om deze instantie mee te vergelijken
      * @return bool Of $obj hetzelfde veld is als deze instantie
      */
-    public function equals( $obj ): bool {
+    public function equals( mixed $obj ): bool {
         return ( $obj instanceof Veld && $obj->get_id() == $this->id );
     }
     
-    /**
-     * 
-     * @return string
-     */
     public function get_label(): string {
         $this->set_db_properties();
         return $this->label;
     }
     
     /**
-     * 
-     * @return string
      * @throws ObjectEigenschapOntbreekt
      */
     public function get_placeholder(): string {
@@ -77,19 +67,11 @@ class Veld {
         return $this->placeholder;
     }
     
-    /**
-     * 
-     * @return string
-     */
     public function get_type(): string {
         $this->set_db_properties();
         return $this->type;
     }
     
-    /**
-     * 
-     * @return string
-     */
     public function get_leeg_feedback(): string {
         $this->set_db_properties();
         return $this->leeg_feedback;
@@ -98,7 +80,6 @@ class Veld {
     /**
      * Geeft aan of het invullen van dit veld verplicht is.
      * Dat is geen vaste eigenschap van het veld, maar van de combinatie veld en lijst. Of het verplicht is moet bij de constructor worden meegegeven.
-     * @return bool
      * @throws Muzieklijsten_Exception Als er bij de constructor niet is aangegeven of het veld verplicht is.
      */
     public function is_verplicht(): bool {
@@ -128,7 +109,6 @@ class Veld {
     
     /**
      * Geeft het id van het invoerveld in het HTML-formulier
-     * @return string
      */
     public function get_html_id(): string {
         return sprintf('veld-%d', $this->get_id());
@@ -137,7 +117,7 @@ class Veld {
     /**
      * Geeft het antwoord dat een stemmer hier heeft ingevuld.
      * @throws Muzieklijsten_Exception als er geen antwoord is.
-     * @param Stemmer $stemmer
+     * @param $stemmer
      * @return mixed Waarde
      */
     public function get_stemmer_waarde( Stemmer $stemmer ) {
@@ -236,7 +216,6 @@ class Veld {
     }
 
     /**
-     * @return int
      * @throws ObjectEigenschapOntbreekt
      */
     public function get_max(): int {
@@ -248,7 +227,6 @@ class Veld {
     }
 
     /**
-     * @return int
      * @throws ObjectEigenschapOntbreekt
      */
     public function get_maxlength(): int {
@@ -260,7 +238,6 @@ class Veld {
     }
 
     /**
-     * @return int
      * @throws ObjectEigenschapOntbreekt
      */
     public function get_min(): int {
@@ -272,7 +249,6 @@ class Veld {
     }
 
     /**
-     * @return int
      * @throws ObjectEigenschapOntbreekt
      */
     public function get_minlength(): int {

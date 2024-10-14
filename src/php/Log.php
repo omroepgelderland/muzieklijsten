@@ -22,8 +22,8 @@ class Log {
      */
     private function __clone() {}
     
-    protected static function get_obj(): static {
-        return self::$obj ??= new static();
+    protected static function get_obj(): self {
+        return self::$obj ??= new self();
     }
     
     protected function _get_logger( ?string $bestandsnaam=null ): \Laminas\Log\Logger {
@@ -81,8 +81,7 @@ class Log {
     
     /**
      * Geeft het pad naar het logbestand.
-     * @param string $bestandsnaam Gebruik deze naam in plaats van de naam van het script (optioneel)
-     * @return string
+     * @param $bestandsnaam Gebruik deze naam in plaats van de naam van het script (optioneel)
      */
     protected function get_pad( ?string $bestandsnaam=null ): string {
         $bestandsnaam ??= pathinfo(get_hoofdscript_pad())['filename'];
@@ -106,7 +105,7 @@ class Log {
 
     /**
      * Stelt een andere bestandsnaam in (zonder extensie).
-     * @param string $bestandsnaam
+     * @param $bestandsnaam
      */
     public static function set_bestandsnaam( string $bestandsnaam ): void {
         self::get_obj()->_set_bestandsnaam($bestandsnaam);
@@ -114,74 +113,42 @@ class Log {
     
     /**
      * Stelt een andere bestandsnaam in (zonder extensie).
-     * @param string $bestandsnaam
+     * @param $bestandsnaam
      */
     protected function _set_bestandsnaam( string $bestandsnaam ): void {
         unset($this->logger);
         $this->get_logger($bestandsnaam);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function emerg( ...$args ): void {
+    public static function emerg( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::EMERG, ...$args);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function alert( ...$args ): void {
+    public static function alert( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::ALERT, ...$args);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function crit( ...$args ): void {
+    public static function crit( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::CRIT, ...$args);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function err( ...$args ): void {
+    public static function err( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::ERR, ...$args);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function warn( ...$args ): void {
+    public static function warn( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::WARN, ...$args);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function notice( ...$args ): void {
+    public static function notice( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::NOTICE, ...$args);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function info( ...$args ): void {
+    public static function info( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::INFO, ...$args);
     }
     
-    /**
-     * 
-     * @param mixed $args,...
-     */
-    public static function debug( ...$args ): void {
+    public static function debug( mixed ...$args ): void {
         self::schrijf_log(self::get_logger()::DEBUG, ...$args);
     }
     

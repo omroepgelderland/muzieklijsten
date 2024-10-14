@@ -27,8 +27,8 @@ function multiKeyExists( array $array, string $key ): bool {
 
 /**
  * Converteert een waarde uit Excel
- * @param string $waarde
- * @param boolean $null_als_leeg Geef null terug als de string leeg is.
+ * @param $waarde
+ * @param $null_als_leeg Geef null terug als de string leeg is.
  */
 function filter_cell_string( string $waarde, bool $null_als_leeg ) {
     $res = trim(mb_convert_encoding($waarde, 'utf-8', 'windows-1252'));
@@ -102,6 +102,8 @@ function get_cel( array $rij, array $keys, string $key, string $type, bool $null
     }
 }
 
+set_env();
+
 $excel = new PhpExcelReader;
 $excel->read($argv[1]);
 
@@ -128,6 +130,20 @@ $toevoegen = $db->prepare($query);
 if ( $toevoegen === false ) {
     throw new SQLException('Prepared statement mislukt: '.$db->error, $db->errno);
 }
+$muziek_id =
+    $titel =
+    $artiest =
+    $jaar =
+    $categorie =
+    $map =
+    $opener =
+    $muziek_id =
+    $titel =
+    $artiest =
+    $jaar =
+    $categorie =
+    $map =
+    $opener = null;
 $res = $toevoegen->bind_param('sssississsissi',
     $muziek_id,
     $titel,

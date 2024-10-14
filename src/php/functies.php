@@ -18,7 +18,6 @@ function is_dev(): bool {
 /**
  * Geeft de naam van de developer op wiens omgeving het project nu draait.
  * @throws Muzieklijsten_Exception Als het project niet op een ontwikkelingsomgeving draait.
- * @return string
  */
 function get_developer(): string {
     if ( !is_dev() ) { throw new Muzieklijsten_Exception(); }
@@ -29,7 +28,6 @@ function get_developer(): string {
 
 /**
  * Geeft aan of het script handmatig (niet via cron o.i.d.) via de commandline is aangeroepen.
- * @return bool
  */
 function is_cli(): bool {
     return php_sapi_name() === 'cli' && isset($_SERVER['TERM']);
@@ -64,7 +62,7 @@ function login(): void {
 
 /**
  * Geeft alle muzieklijsten.
- * @return Lijst[]
+ * @return list<Lijst>
  */
 function get_muzieklijsten(): array {
     return DB::selectObjectLijst('SELECT id FROM lijsten ORDER BY naam', Lijst::class);
@@ -72,7 +70,7 @@ function get_muzieklijsten(): array {
 
 /**
  * Geeft alle nummers.
- * @return Nummer[]
+ * @return list<Nummer>
  */
 function get_nummers(): array {
     return DB::selectObjectLijst('SELECT id FROM nummers', Nummer::class);
@@ -82,9 +80,9 @@ function get_nummers(): array {
  * Anonimiseert een waarde door er een hash van te maken.
  * Lege strings en null worden onveranderd teruggegeven.
  * @param mixed $waarde Invoer
- * @return ?string $uitvoer
+ * @return ?string uitvoer
  */
-function anonimiseer( $waarde ): ?string {
+function anonimiseer( mixed $waarde ): ?string {
     if ( $waarde === null || $waarde === '' ) {
         return $waarde;
     } else {
@@ -162,7 +160,7 @@ function exception_error_handler(
 /**
  * Uit OLERead
  */
-function GetInt4d( $data, $pos ) {
+function GetInt4d( array $data, int $pos ) {
     $value = ord($data[$pos]) | (ord($data[$pos+1])  << 8) | (ord($data[$pos+2]) << 16) | (ord($data[$pos+3]) << 24);
     if($value >= 4294967294) $value = -2;
     return $value;
@@ -179,7 +177,7 @@ function is_captcha_ok( string $g_recaptcha_response ): bool {
  * @param mixed $postcode Ruwe input.
  * @return ?string De geparste postcode of null als de invoer leeg is.
  */
-function filter_postcode( $postcode ): ?string {
+function filter_postcode( mixed $postcode ): ?string {
     if ( $postcode === false ) {
         throw new OngeldigeInvoer('Ongeldige postcode');
     }
@@ -261,7 +259,7 @@ function verwijder_stemmers_zonder_stemmen(): void {
 
 function filter_van_tot( string $waarde ): ?\DateTime {
     $str = filter_var($waarde);
-    if ( isset($str) ) {
+    if ( $str !== '' ) {
         return \DateTime::createFromFormat('d-m-Y', $str);
     } else {
         return null;
@@ -270,13 +268,13 @@ function filter_van_tot( string $waarde ): ?\DateTime {
 
 /**
  * Verstuur een mail
- * @param string[]|string $aan Lijst met ontvangers
- * @param string[]|string $cc Lijst met ontvangers
- * @param string $van Adres van afzender
- * @param string $onderwerp Onderwerp
- * @param string $tekst_bericht Het bericht in plaintext
- * @param ?string $html_bericht Het bericht in HTML (optioneel)
- * @param ?string $bijlage Pad naar mee te sturen bijlage (optioneel, alleen pdf)
+ * @param list<string>|string $aan Lijst met ontvangers
+ * @param list<string>|string $cc Lijst met ontvangers
+ * @param $van Adres van afzender
+ * @param $onderwerp Onderwerp
+ * @param $tekst_bericht Het bericht in plaintext
+ * @param $html_bericht Het bericht in HTML (optioneel)
+ * @param $bijlage Pad naar mee te sturen bijlage (optioneel, alleen pdf)
  */
 function stuur_mail(
     $aan,
@@ -333,11 +331,11 @@ function stuur_mail(
 
 /**
  * Plakt paden aan elkaar met slashes.
- * @param string $paths,... Meerdere paden die aan elkaar geplakt worden. Het
+ * @param $paths,... Meerdere paden die aan elkaar geplakt worden. Het
  * aantal parameters is variabel.
  * @return string Het resulterende pad.
  */
-function path_join( ...$paths ): string {
+function path_join( string ...$paths ): string {
     $path = '';
     foreach ( $paths as $i => $arg ) {
         if ( $i == 0 ) {
@@ -355,7 +353,6 @@ function path_join( ...$paths ): string {
 
 /**
  * Geeft het pad naar het eerst gestartte script, los van de class van waaruit deze functie wordt aangeroepen.
- * @return string
  */
 function get_hoofdscript_pad(): string {
     return get_included_files()[0];
@@ -363,7 +360,7 @@ function get_hoofdscript_pad(): string {
 
 /**
  * Geeft een error als het IP van de gebruiker op de blacklist staat.
- * @param string $ip
+ * @param $ip
  * @throws BlacklistException
  */
 function check_ip_blacklist( string $ip ): void {
@@ -373,7 +370,7 @@ function check_ip_blacklist( string $ip ): void {
 }
 
 /**
- * @return Veld[]
+ * @return list<Veld>
  */
 function get_velden(): array {
     $velden = [];
@@ -418,4 +415,77 @@ function db_update(): void {
         DB::commit();
         $versie++;
     }
+}
+
+function set_env(): void {
+    set_error_handler(\muzieklijsten\exception_error_handler(...), error_reporting());
+    locale_set_default('nl_NL');
+    setlocale(LC_TIME, 'nl', 'nl_NL', 'Dutch');
+    date_default_timezone_set('Europe/Amsterdam');
+
+    if ( is_dev() ) {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+    }
+
+    // Voor PHP excel reader
+    define('NUM_BIG_BLOCK_DEPOT_BLOCKS_POS', 0x2c);
+    define('SMALL_BLOCK_DEPOT_BLOCK_POS', 0x3c);
+    define('ROOT_START_BLOCK_POS', 0x30);
+    define('BIG_BLOCK_SIZE', 0x200);
+    define('SMALL_BLOCK_SIZE', 0x40);
+    define('EXTENSION_BLOCK_POS', 0x44);
+    define('NUM_EXTENSION_BLOCK_POS', 0x48);
+    define('PROPERTY_STORAGE_BLOCK_SIZE', 0x80);
+    define('BIG_BLOCK_DEPOT_BLOCKS_POS', 0x4c);
+    define('SMALL_BLOCK_THRESHOLD', 0x1000);
+    // property storage offsets
+    define('SIZE_OF_NAME_POS', 0x40);
+    define('TYPE_POS', 0x42);
+    define('START_BLOCK_POS', 0x74);
+    define('SIZE_POS', 0x78);
+    define('IDENTIFIER_OLE', pack("CCCCCCCC",0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1));
+
+    define('SPREADSHEET_EXCEL_READER_BIFF8',             0x600);
+    define('SPREADSHEET_EXCEL_READER_BIFF7',             0x500);
+    define('SPREADSHEET_EXCEL_READER_WORKBOOKGLOBALS',   0x5);
+    define('SPREADSHEET_EXCEL_READER_WORKSHEET',         0x10);
+
+    define('SPREADSHEET_EXCEL_READER_TYPE_BOF',          0x809);
+    define('SPREADSHEET_EXCEL_READER_TYPE_EOF',          0x0a);
+    define('SPREADSHEET_EXCEL_READER_TYPE_BOUNDSHEET',   0x85);
+    define('SPREADSHEET_EXCEL_READER_TYPE_DIMENSION',    0x200);
+    define('SPREADSHEET_EXCEL_READER_TYPE_ROW',          0x208);
+    define('SPREADSHEET_EXCEL_READER_TYPE_DBCELL',       0xd7);
+    define('SPREADSHEET_EXCEL_READER_TYPE_FILEPASS',     0x2f);
+    define('SPREADSHEET_EXCEL_READER_TYPE_NOTE',         0x1c);
+    define('SPREADSHEET_EXCEL_READER_TYPE_TXO',          0x1b6);
+    define('SPREADSHEET_EXCEL_READER_TYPE_RK',           0x7e);
+    define('SPREADSHEET_EXCEL_READER_TYPE_RK2',          0x27e);
+    define('SPREADSHEET_EXCEL_READER_TYPE_MULRK',        0xbd);
+    define('SPREADSHEET_EXCEL_READER_TYPE_MULBLANK',     0xbe);
+    define('SPREADSHEET_EXCEL_READER_TYPE_INDEX',        0x20b);
+    define('SPREADSHEET_EXCEL_READER_TYPE_SST',          0xfc);
+    define('SPREADSHEET_EXCEL_READER_TYPE_EXTSST',       0xff);
+    define('SPREADSHEET_EXCEL_READER_TYPE_CONTINUE',     0x3c);
+    define('SPREADSHEET_EXCEL_READER_TYPE_LABEL',        0x204);
+    define('SPREADSHEET_EXCEL_READER_TYPE_LABELSST',     0xfd);
+    define('SPREADSHEET_EXCEL_READER_TYPE_NUMBER',       0x203);
+    define('SPREADSHEET_EXCEL_READER_TYPE_NAME',         0x18);
+    define('SPREADSHEET_EXCEL_READER_TYPE_ARRAY',        0x221);
+    define('SPREADSHEET_EXCEL_READER_TYPE_STRING',       0x207);
+    define('SPREADSHEET_EXCEL_READER_TYPE_FORMULA',      0x406);
+    define('SPREADSHEET_EXCEL_READER_TYPE_FORMULA2',     0x6);
+    define('SPREADSHEET_EXCEL_READER_TYPE_FORMAT',       0x41e);
+    define('SPREADSHEET_EXCEL_READER_TYPE_XF',           0xe0);
+    define('SPREADSHEET_EXCEL_READER_TYPE_BOOLERR',      0x205);
+    define('SPREADSHEET_EXCEL_READER_TYPE_UNKNOWN',      0xffff);
+    define('SPREADSHEET_EXCEL_READER_TYPE_NINETEENFOUR', 0x22);
+    define('SPREADSHEET_EXCEL_READER_TYPE_MERGEDCELLS',  0xE5);
+
+    define('SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS' ,    25569);
+    define('SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS1904', 24107);
+    define('SPREADSHEET_EXCEL_READER_MSINADAY',          86400);
+    define('SPREADSHEET_EXCEL_READER_DEF_NUM_FORMAT',    "%s");
 }

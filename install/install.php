@@ -19,6 +19,8 @@ function readline_met_default( string $prompt, bool $mag_leeg = true, string $de
     return $ans;
 }
 
+set_env();
+
 // Configuratiebestand genereren.
 $root_url = readline_met_default('Root-URL naar deze installatie van muzieklijsten', false);
 echo "Vul de gegevens van de Google Recaptcha in. Je hebt de legacy-keys nodig. (https://cloud.google.com/recaptcha-enterprise/docs/create-key#find-key)\n";

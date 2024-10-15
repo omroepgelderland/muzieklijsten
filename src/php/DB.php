@@ -232,7 +232,7 @@ class DB {
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function insertMulti( string $table, array $data ) {
+    public static function insertMulti( string $table, array $data ): int|string {
         $db = self::getDB();
         $data = static::prepareer_data($data);
         $query = sprintf(
@@ -432,7 +432,7 @@ class DB {
      * @param $kolom Kolom.
      */
     public static function get_max_kolom_lengte( string $tabel, string $kolom ): int {
-        return self::selectSingle("SELECT max(length(`{$kolom}`)) `max_column_length` from `{$tabel}`");
+        return (int)self::selectSingle("SELECT max(length(`{$kolom}`)) `max_column_length` from `{$tabel}`");
     }
     
     /**
@@ -473,7 +473,7 @@ class DB {
     /**
      * Prepareert een associatieve array met keys en values voor gebruik in een SQL-query
      * @param array<string, DBWaarde> $data Invoer
-     * @return array uitvoer
+     * @return array<string, string> uitvoer
      */
     protected static function prepareer_data( array $data ): array {
         $respons = [];
@@ -492,7 +492,7 @@ class DB {
             } elseif ( $value instanceof \DateTime ) {
                 $respons[$key] = $value->format('"Y-m-d H:i:s"');
             } else {
-                $respons[$key] = sprintf('"%s"', static::escape_string($value));
+                $respons[$key] = sprintf('"%s"', static::escape_string((string)$value));
             }
         }
         return $respons;

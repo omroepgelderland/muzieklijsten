@@ -7,6 +7,48 @@
 
 namespace muzieklijsten;
 
+/**
+ * @phpstan-type DBData array{
+ *     id: positive-int,
+ *     actief: positive-int,
+ *     naam: string,
+ *     minkeuzes: positive-int,
+ *     maxkeuzes: positive-int,
+ *     vrijekeuzes: positive-int,
+ *     stemmen_per_ip: ?positive-int,
+ *     artiest_eenmalig: positive-int,
+ *     recaptcha: positive-int,
+ *     email: ?string,
+ *     bedankt_tekst: string,
+ *     mail_stemmers: positive-int,
+ *     random_volgorde: positive-int
+ * }
+ * @phpstan-type VeldenData list<array{
+ *     id: int,
+ *     tonen: bool,
+ *     label: string,
+ *     verplicht: bool
+ * }>
+ * @phpstan-type Resultaten list<array{
+ *     nummer: array{
+ *         id: int,
+ *         titel: string,
+ *         artiest: string,
+ *         is_vrijekeuze: bool
+ *     },
+ *     stemmen: list<array{
+ *         stemmer_id: int,
+ *         ip: string,
+ *         is_behandeld: bool,
+ *         toelichting: string,
+ *         timestamp: string,
+ *         velden: list<array{
+ *             type: string,
+ *             waarde: ?string
+ *         }>
+ *     }>
+ * }>
+ */
 class Lijst {
 
     public const VELD_ZICHTBAAR_BIT = 0;
@@ -36,7 +78,7 @@ class Lijst {
     
     /**
      * @param $id ID van het object.
-     * @param ?array $data Metadata uit de databasevelden (optioneel).
+     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct( int $id, ?array $data = null ) {
         $this->id = $id;
@@ -136,6 +178,9 @@ class Lijst {
         return $this->velden;
     }
 
+    /**
+     * @return VeldenData
+     */
     public function get_alle_velden_data(): array {
         $respons = [];
         $query = <<<EOT
@@ -386,7 +431,7 @@ class Lijst {
 
     /**
      * Plaatst metadata in het object
-     * @param array $data Data.
+     * @param DBData $data Data.
      */
     private function set_data( array $data ): void {
         $this->actief = $data['actief'] == 1;
@@ -405,8 +450,8 @@ class Lijst {
             }
         }
         $this->bedankt_tekst = $data['bedankt_tekst'];
-        $this->mail_stemmers = $data['mail_stemmers'];
-        $this->random_volgorde = $data['random_volgorde'];
+        $this->mail_stemmers = (bool)$data['mail_stemmers'];
+        $this->random_volgorde = (bool)$data['random_volgorde'];
         $this->db_props_set = true;
     }
 
@@ -650,6 +695,9 @@ class Lijst {
         DB::query($query);
     }
 
+    /**
+     * @return Resultaten
+     */
     public function get_resultaten(): array {
         $query = <<<EOT
         SELECT
@@ -671,12 +719,13 @@ class Lijst {
             n.id = sn.nummer_id
         INNER JOIN stemmers s ON
             s.id = sn.stemmer_id
+            AND s.lijst_id = {$this->get_id()}
         LEFT JOIN lijsten_velden lv ON
             lv.lijst_id = {$this->get_id()}
         LEFT JOIN velden v ON
             v.id = lv.veld_id
         LEFT JOIN stemmers_velden sv ON
-            sv.stemmer_id = stemmers.id
+            sv.stemmer_id = s.id
             AND sv.veld_id = v.id
         INNER JOIN (
             SELECT
@@ -693,8 +742,6 @@ class Lijst {
             GROUP BY nummer_id
         ) a ON
             a.nummer_id = n.id
-        WHERE
-            sn.lijst_id = {$this->get_id()}
         ORDER BY
             a.aantal DESC,
             n.id,

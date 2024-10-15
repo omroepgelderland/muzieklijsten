@@ -7,6 +7,15 @@
 
 namespace muzieklijsten;
 
+/**
+ * @phpstan-type DBData array{
+ *     nummer_id: positive-int,
+ *     stemmer_id: positive-int,
+ *     toelichting: ?string,
+ *     behandeld: positive-int,
+ *     is_vrijekeuze: positive-int
+ * }
+ */
 class StemmerNummer {
 
     public Nummer $nummer;
@@ -19,7 +28,7 @@ class StemmerNummer {
     /**
      * @param $nummer
      * @param $stemmer
-     * @param ?array $data Metadata uit de databasevelden (optioneel).
+     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct(
         Nummer $nummer,
@@ -79,7 +88,7 @@ class StemmerNummer {
 
     /**
      * Plaatst metadata in het object
-     * @param array $data Data.
+     * @param DBData $data Data.
      */
     private function set_data( array $data ): void {
         $this->toelichting = $data['toelichting'];

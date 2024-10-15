@@ -10,10 +10,35 @@ namespace muzieklijsten;
 /**
  * Hiermee kunnen instellingen worden opgehaald uit de serverconfiguratie.
  * Dit is een singleton class.
+ * @phpstan-type ConfigData array{
+ *     organisatie: string,
+ *     root_url: string,
+ *     privacy_url: string,
+ *     nimbus_url: string,
+ *     sql: array{
+ *         server: string,
+ *         database: string,
+ *         user: string,
+ *         password: string
+ *     },
+ *     recaptcha: array{
+ *         sitekey: string,
+ *         secret: string
+ *     },
+ *     php_auth: array{
+ *         user: string,
+ *         password: string
+ *     },
+ *     mail: array{
+ *         sendmail_path: string,
+ *         afzender: string
+ *     }
+ * }
  */
 class Config {
     
     private static Config $config;
+    /** @var ConfigData */
     private array $data;
     
     /**
@@ -28,7 +53,7 @@ class Config {
     
     /**
      * Haalt de JSON inhoud op.
-     * @return array Inhoud van het configuratiebestand
+     * @return ConfigData Inhoud van het configuratiebestand
      * @throws Muzieklijsten_Exception Als het configuratiebestand niet kan worden geladen.
      */
     protected function _get_data(): array {
@@ -54,7 +79,7 @@ class Config {
     
     /**
      * Haalt de JSON inhoud op.
-     * @return array Inhoud van het configuratiebestand
+     * @return ConfigData Inhoud van het configuratiebestand
      * @throws Muzieklijsten_Exception Als het configuratiebestand niet kan worden geladen.
      */
     public static function get_data(): array {

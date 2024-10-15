@@ -1,5 +1,5 @@
 parameters:
-	level: 5
+	level: 6
 	paths:
 		- bin
 		- install
@@ -13,7 +13,6 @@ parameters:
 		reportUncheckedExceptionDeadCatch: false
 	ignoreErrors:
 		- '#Dead catch - (Throwable|muzieklijsten\\IndexException|muzieklijsten\\UndefinedPropertyException) is never thrown in the try block\.#'
-		- '#Property muzieklijsten\\.*::\$.* is not nullable\.#'
 	typeAliases:
 		DBWaarde: 'scalar|null|\DateTime'
 		DBInsertUpdateResult: '''

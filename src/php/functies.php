@@ -34,33 +34,6 @@ function is_cli(): bool {
 }
 
 /**
- * Vereist HTTP login voor beheerders
- */
-function login(): void {
-    session_start();
-    if ( array_key_exists('is_ingelogd', $_SESSION) && $_SESSION['is_ingelogd'] ) {
-        return;
-    }
-    if ( !isset($_SERVER['PHP_AUTH_USER']) ) {
-        header('WWW-Authenticate: Basic realm="Inloggen"');
-        header('HTTP/1.0 401 Unauthorized');
-        echo 'Je moet inloggen om deze pagina te kunnen zien.';
-        exit();
-    }
-    if (
-        $_SERVER['PHP_AUTH_USER'] !== Config::get_instelling('php_auth', 'user')
-        || $_SERVER['PHP_AUTH_PW'] !== Config::get_instelling('php_auth', 'password') )
-    {
-        // header('WWW-Authenticate: Basic realm="Inloggen"');
-        header('HTTP/1.0 401 Unauthorized');
-        echo 'Verkeerd wachtwoord en/of gebruikersnaam. Ververs de pagina met F5 om het nog een keer te proberen.';
-        session_destroy();
-        throw new Muzieklijsten_Exception('Verkeerd wachtwoord en/of gebruikersnaam');
-    }
-    $_SESSION['is_ingelogd'] = true;
-}
-
-/**
  * Geeft alle muzieklijsten.
  * @return list<Lijst>
  */
@@ -155,15 +128,6 @@ function exception_error_handler(
         default:
             throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
     }
-}
-
-/**
- * Uit OLERead
- */
-function GetInt4d( array $data, int $pos ) {
-    $value = ord($data[$pos]) | (ord($data[$pos+1])  << 8) | (ord($data[$pos+2]) << 16) | (ord($data[$pos+3]) << 24);
-    if($value >= 4294967294) $value = -2;
-    return $value;
 }
 
 function is_captcha_ok( string $g_recaptcha_response ): bool {
@@ -404,7 +368,7 @@ function verwijder_ongekoppelde_vrije_keuze_nummers(): void {
 function db_update(): void {
     DB::disableAutocommit();
     try {
-        $versie = DB::selectSingle('SELECT versie FROM versie') + 1;
+        $versie = (int)DB::selectSingle('SELECT versie FROM versie') + 1;
     } catch ( SQLException ) {
         // De database heeft nog geen versienummer-tabel.
         $versie = 1;

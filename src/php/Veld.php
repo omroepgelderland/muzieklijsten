@@ -7,6 +7,19 @@
 
 namespace muzieklijsten;
 
+/**
+ * @phpstan-type DBData array{
+ *     id: positive-int,
+ *     label: string,
+ *     leeg_feedback: string,
+ *     max: ?positive-int,
+ *     maxlength: ?positive-int,
+ *     min: ?positive-int,
+ *     minlength: ?positive-int,
+ *     placeholder: ?string,
+ *     type: string
+ * }
+ */
 class Veld {
     
     private int $id;
@@ -26,7 +39,7 @@ class Veld {
     /**
      * 
      * @param $id Database-id van het veld.
-     * @param ?array $data Metadata uit de databasevelden (optioneel).
+     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      * @param $verplicht Of het veld verplicht is (optioneel)
      */
     public function __construct( int $id, ?array $data = null, ?bool $verplicht = null ) {
@@ -154,7 +167,7 @@ class Veld {
 
     /**
      * Plaatst metadata in het object
-     * @param array $data Data.
+     * @param DBData $data Data.
      */
     private function set_data( array $data ): void {
         $this->label = $data['label'];

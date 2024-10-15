@@ -7,6 +7,15 @@
 
 namespace muzieklijsten;
 
+/**
+ * @phpstan-type DBData array{
+ *     id: positive-int,
+ *     lijst_id: positive-int,
+ *     ip: string,
+ *     timestamp: \DateTime,
+ *     is_geanonimiseerd: positive-int
+ * }
+ */
 class Stemmer {
     
     private int $id;
@@ -18,7 +27,7 @@ class Stemmer {
     
     /**
      * @param $id ID van het object.
-     * @param ?array $data Metadata uit de databasevelden (optioneel).
+     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct( int $id, ?array $data = null ) {
         $this->id = $id;
@@ -78,7 +87,7 @@ class Stemmer {
 
     /**
      * Plaatst metadata in het object
-     * @param array $data Data.
+     * @param DBData $data Data.
      */
     private function set_data( array $data ): void {
         $this->lijst = new Lijst($data['lijst_id']);

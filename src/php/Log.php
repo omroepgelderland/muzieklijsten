@@ -120,39 +120,39 @@ class Log {
         $this->get_logger($bestandsnaam);
     }
     
-    public static function emerg( mixed ...$args ): void {
+    public static function emerg( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::EMERG, ...$args);
     }
     
-    public static function alert( mixed ...$args ): void {
+    public static function alert( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::ALERT, ...$args);
     }
     
-    public static function crit( mixed ...$args ): void {
+    public static function crit( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::CRIT, ...$args);
     }
     
-    public static function err( mixed ...$args ): void {
+    public static function err( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::ERR, ...$args);
     }
     
-    public static function warn( mixed ...$args ): void {
+    public static function warn( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::WARN, ...$args);
     }
     
-    public static function notice( mixed ...$args ): void {
+    public static function notice( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::NOTICE, ...$args);
     }
     
-    public static function info( mixed ...$args ): void {
+    public static function info( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::INFO, ...$args);
     }
     
-    public static function debug( mixed ...$args ): void {
+    public static function debug( string|int|float ...$args ): void {
         self::schrijf_log(self::get_logger()::DEBUG, ...$args);
     }
     
-    private static function schrijf_log( $priority, ...$args ): void {
+    private static function schrijf_log( int $priority, string|int|float ...$args ): void {
         if ( count($args) === 1 ) {
             $message = $args[0];
         } else {

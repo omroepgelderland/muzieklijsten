@@ -7,6 +7,19 @@
 
 namespace muzieklijsten;
 
+/**
+ * @phpstan-type DBData array{
+ *     id: positive-int,
+ *     muziek_id: ?string,
+ *     titel: string,
+ *     artiest: string,
+ *     jaar: ?int,
+ *     categorie: ?string,
+ *     map: ?string,
+ *     opener: positive-int,
+ *     is_vrijekeuze: positive-int
+ * }
+ */
 class Nummer {
 
     private int $id;
@@ -24,7 +37,7 @@ class Nummer {
     
     /**
      * @param $id ID van het object.
-     * @param ?array $data Metadata uit de databasevelden (optioneel).
+     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct( int $id, ?array $data = null ) {
         $this->id = $id;
@@ -120,7 +133,7 @@ class Nummer {
 
     /**
      * Plaatst metadata in het object
-     * @param array $data Data.
+     * @param DBData $data Data.
      */
     private function set_data( array $data ): void {
         $this->muziek_id = $data['muziek_id'];

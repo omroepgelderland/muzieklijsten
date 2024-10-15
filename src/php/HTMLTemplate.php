@@ -71,6 +71,9 @@ class HTMLTemplate {
         return $respons;
     }
 
+    /**
+     * @return \DOMNodeList<\DOMElement>
+     */
     public function getElementsByTagName( string $qualifiedName ): \DOMNodeList {
         return $this->body->getElementsByTagName($qualifiedName);
     }

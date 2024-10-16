@@ -3,7 +3,8 @@ import 'bootstrap';
 import 'datatables.net-dt';
 
 // Project js
-import * as functies from '@muzieklijsten/functies.js';
+import * as functies from '@muzieklijsten/functies';
+import * as server from '@muzieklijsten/server';
 import TypedEvent from '@muzieklijsten/TypedEvent';
 
 // Libraries css
@@ -137,7 +138,7 @@ class Main {
   }
 
   async vul_metadata() {
-    const data = await functies.post('get_metadata');
+    const data = await server.post('get_metadata', {});
     for ( const e_organisatie of document.getElementsByClassName('organisatie') ) {
       e_organisatie.innerText = data.organisatie;
     }
@@ -155,7 +156,9 @@ class Main {
    * @returns {Promise<unknown>}
    */
   async vul_lijst_metadata() {
-    const data = await functies.post('get_lijst_metadata', {lijst: this.lijst_id});
+    const data = await server.post('get_lijst_metadata', {
+      lijst: this.lijst_id
+    });
     for ( const e_naam of document.getElementsByClassName('lijst-naam') ) {
       e_naam.innerText = data.naam;
     }
@@ -174,7 +177,7 @@ class Main {
     return data;
   }
 
-  checkbox_handler(e) {
+  async checkbox_handler(e) {
     e.preventDefault();
 
     let $row = $(e.target).closest('tr');
@@ -186,25 +189,27 @@ class Main {
     let index = $.inArray(nummer_id, this.geselecteerde_nummers);
 
     if ( index === -1 ) {
-      return this.nummer_toevoegen(nummer_id).then(() => {
+      try {
+        await this.nummer_toevoegen(nummer_id);
         this.geselecteerde_nummers.push(nummer_id);
         $checkbox.prop('checked', true);
         $row.addClass('selected');
-        return this.vul_lijst_geselecteerde_nummers();
-      }, (msg) => {
+        await this.vul_lijst_geselecteerde_nummers();
+      } catch (msg) {
         $checkbox.prop('checked', false);
         alert(msg);
-      });
+      }
     } else {
-      return this.nummer_verwijderen(nummer_id).then(() => {
+      try {
+        await this.nummer_verwijderen(nummer_id);
         this.geselecteerde_nummers.splice(index, 1);
         $checkbox.prop('checked', false);
         $row.removeClass('selected');
-        return this.vul_lijst_geselecteerde_nummers();
-      }, (msg) => {
+        await this.vul_lijst_geselecteerde_nummers();
+      } catch (msg) {
         $checkbox.prop('checked', true);
         alert(msg);
-      });
+      }
     }
   }
 
@@ -232,10 +237,11 @@ class Main {
   }
 
   /**
-   * Voegt een nummer toe aan de lijst. 
+   * Voegt een nummer toe aan de lijst.
+   * @returns {Promise<void>}
    */
   nummer_toevoegen(nummer_id) {
-    return functies.post('lijst_nummer_toevoegen', {
+    return server.post('lijst_nummer_toevoegen', {
       lijst: this.lijst_id,
       nummer: nummer_id
     });
@@ -243,9 +249,10 @@ class Main {
 
   /**
    * Verwijdert een nummer uit de lijst.
+   * @returns {Promise<void>}
    */
   nummer_verwijderen(nummer_id) {
-    return functies.post('lijst_nummer_verwijderen', {
+    return server.post('lijst_nummer_verwijderen', {
       lijst: this.lijst_id,
       nummer: nummer_id
     });
@@ -255,27 +262,27 @@ class Main {
    * Vult de rechterkolom met alle geselecteerde nummers.
    * De hele inhoud van het element wordt vervangen.
    */
-  vul_lijst_geselecteerde_nummers() {
-    let nummers_promise = functies.get_geselecteerde_nummers(this.lijst_id);
-    while ( this.e_geselecteerd_lijst.firstChild ) {
-      this.e_geselecteerd_lijst.removeChild(this.e_geselecteerd_lijst.firstChild);
-    }
-    return nummers_promise.then((nummers) => {
-      this.e_aantal_geselecteerde_nummers.innerText = nummers.length;
-      for ( const nummer of nummers ) {
-        let e_tr = document.createElement('tr');
-        this.e_geselecteerd_lijst.appendChild(e_tr);
-        let e_titel = document.createElement('td');
-        e_tr.appendChild(e_titel);
-        e_titel.appendChild(document.createTextNode(nummer.titel));
-        let e_artiest = document.createElement('td');
-        e_tr.appendChild(e_artiest);
-        e_artiest.appendChild(document.createTextNode(nummer.artiest));
-        let e_jaar = document.createElement('td');
-        e_tr.appendChild(e_jaar);
-        e_jaar.appendChild(document.createTextNode(nummer.jaar ?? ''));
-      }
+  async vul_lijst_geselecteerde_nummers() {
+    const nummers = await server.post('get_geselecteerde_nummers', {
+      lijst: this.lijst_id
     });
+    while ( this.e_geselecteerd_lijst.lastChild ) {
+      this.e_geselecteerd_lijst.removeChild(this.e_geselecteerd_lijst.lastChild);
+    }
+    this.e_aantal_geselecteerde_nummers.innerText = nummers.length;
+    for (const nummer of nummers) {
+      let e_tr = document.createElement('tr');
+      this.e_geselecteerd_lijst.appendChild(e_tr);
+      let e_titel = document.createElement('td');
+      e_tr.appendChild(e_titel);
+      e_titel.appendChild(document.createTextNode(nummer.titel));
+      let e_artiest = document.createElement('td');
+      e_tr.appendChild(e_artiest);
+      e_artiest.appendChild(document.createTextNode(nummer.artiest));
+      let e_jaar = document.createElement('td');
+      e_tr.appendChild(e_jaar);
+      e_jaar.appendChild(document.createTextNode(nummer.jaar ?? ''));
+    }
   }
 
   /**
@@ -415,13 +422,13 @@ class ResultatenModal {
   }
 
   async maak_resultaten_tabel() {
-    let labels_promise = functies.post('get_resultaten_labels', {
+    let labels_promise = server.post('get_resultaten_labels', {
       lijst: this.lijst_id
     });
-    /** @type {{nummer: {artiest: string, id: number, is_vrijekeuze: boolean, titel: string}, stemmen: {ip: string, is_behandeld: boolean, stemmer_id: number, timestamp: string, toelichting: string, velden: {type: string, waarde: string}[]}[]}[]} */
-    let nummers_stemmen = await functies.post('get_resultaten', {
+    let nummers_stemmen = await server.post('get_resultaten', {
       lijst: this.lijst_id
     });
+    this.totaal_aantal_stemmen = 0;
     for ( const nummer_stemmen of nummers_stemmen ) {
       let resultaten_nummer = new ResultatenNummer(this, this.e_resultaten_tabel);
       resultaten_nummer.on_stem_verwijderd.on(this.stem_verwijderd_handler.bind(this));
@@ -434,13 +441,29 @@ class ResultatenModal {
     }
   }
 
+  /**
+   * 
+   * @param {number} aantal 
+   */
   add_totaal_aantal_stemmen(aantal) {
     this.totaal_aantal_stemmen += aantal;
     this.e_totaal_aantal_stemmen.innerText = this.totaal_aantal_stemmen;
   }
 
   async set_totaal_aantal_stemmers() {
-    this.e_totaal_aantal_stemmers.innerText = await functies.get_totaal_aantal_stemmers(this.lijst_id);
+    // const van = this.get_van();
+    // const tot = this.get_tot();
+    const request = {lijst: this.lijst_id};
+    // if ( van != null ) {
+    //   request.van = van.toISOString();
+    // }
+    // if ( tot != null ) {
+    //   request.tot = tot.toISOString();
+    // }
+    this.e_totaal_aantal_stemmers.innerText = await server.post(
+      'get_totaal_aantal_stemmers',
+      request
+    );
   }
 
   stem_verwijderd_handler() {
@@ -457,8 +480,12 @@ class ResultatenModal {
     this.set_totaal_aantal_stemmers();
   }
 
-  filter(e) {
-    e.preventDefault();
+  /**
+   * 
+   * @param {Event} event 
+   */
+  async filter(event) {
+    event.preventDefault();
     let nummers_tekst = this.e_filters_form.elements['filter-nummers'].value.toLowerCase();
     let stemmers_tekst = this.e_filters_form.elements['filter-stemmers'].value.toLowerCase();
     if ( nummers_tekst.length < 3 ) {
@@ -469,37 +496,28 @@ class ResultatenModal {
       stemmers_tekst = '';
       this.e_filters_form.elements['filter-stemmers'].value = '';
     }
-    let van = new Date(this.e_filters_form.elements.van.value);
-    let tot = new Date(this.e_filters_form.elements.tot.value);
-    if ( isNaN(van) ) {
-      van = null;
-    } else {
-      van.setHours(0);
-      van.setMinutes(0);
-      van.setSeconds(0);
-      van.setMilliseconds(0);
-    }
-    if ( isNaN(tot) ) {
-      tot = null;
-    } else {
-      tot.setDate(tot.getDate() + 1);
-      tot.setHours(0);
-      tot.setMinutes(0);
-      tot.setSeconds(0);
-      tot.setMilliseconds(0);
-    }
     for ( const [nummer_id, resultaten_nummer] of Object.entries(this.resultaten_nummers) ) {
-      resultaten_nummer.filter(nummers_tekst, stemmers_tekst, van, tot);
+      resultaten_nummer.filter(
+        nummers_tekst,
+        stemmers_tekst,
+        this.get_van(),
+        this.get_tot()
+      );
     }
+    // await this.set_totaal_aantal_stemmers();
   }
 
-  filter_reset(e) {
+  /**
+   * 
+   * @param {Event} event 
+   */
+  filter_reset(event) {
     for ( const element of this.e_filters_form.elements ) {
       if ( element.type === 'text' || element.type === 'date' ) {
         element.value = '';
       }
     }
-    this.filter(e);
+    this.filter(event);
   }
 
   /**
@@ -555,6 +573,39 @@ class ResultatenModal {
     const resultaten_stem = resultaten_nummer.get_stem(stemmer_id);
     await resultaten_stem.behandeld_handler();
   }
+
+  /**
+   * @returns {Date|null}
+   */
+  get_van() {
+    const van = new Date(this.e_filters_form.elements.van.value);
+    if ( isNaN(van) ) {
+      return null;
+    } else {
+      van.setHours(0);
+      van.setMinutes(0);
+      van.setSeconds(0);
+      van.setMilliseconds(0);
+      return van;
+    }
+  }
+
+  /**
+   * @returns {Date|null}
+   */
+  get_tot() {
+    const tot = new Date(this.e_filters_form.elements.tot.value);
+    if ( isNaN(tot) ) {
+      return null;
+    } else {
+      tot.setDate(tot.getDate() + 1);
+      tot.setHours(0);
+      tot.setMinutes(0);
+      tot.setSeconds(0);
+      tot.setMilliseconds(0);
+      return tot;
+    }
+}
   
 }
 
@@ -582,6 +633,8 @@ class ResultatenNummer {
   on_stem_verwijderd;
   /** @type {TypedEvent<number>} */
   on_verwijderd;
+  /** @type {boolean} */
+  is_zichtbaar;
 
   /**
    * 
@@ -595,6 +648,7 @@ class ResultatenNummer {
     this.resultaten_modal = resultaten_modal;
     this.e_container = e_container;
     this.resultaten_stemmen = [];
+    this.is_zichtbaar = true;
     this.e_tr_uitklap = resultaten_nummer_template.item(0).cloneNode(true);
     this.e_tr_gegevens = resultaten_nummer_template.item(1).cloneNode(true);
 
@@ -689,8 +743,24 @@ class ResultatenNummer {
     }
   }
 
+  /**
+   * @return {ResultatenStem[]}
+   */
+  get_stemmen() {
+    return Object.values(this.resultaten_stemmen);
+  }
+
+  /**
+   * 
+   * @returns {number}
+   */
   get_aantal_stemmen() {
-    return Object.keys(this.resultaten_stemmen).length;
+    // if ( !this.is_zichtbaar ) {
+    //   return 0;
+    // }
+    // const zichtbare_stemmen = this.get_stemmen().filter(stem => stem.is_zichtbaar);
+    // return zichtbare_stemmen.length;
+    return this.get_stemmen().length;
   }
 
   update_aantal_stemmen() {
@@ -701,30 +771,46 @@ class ResultatenNummer {
   //   e.stopPropagation();
   //   if ( confirm('Dit nummer, inclusief alle stemmen hierop, verwijderen uit de stemlijst?') ) {
   //     const aantal_stemmen = this.get_aantal_stemmen();
-  //     // await functies.verwijder_nummer(this.lijst_id, this.nummer_id);
+  //     await server.post('verwijder_nummer', {
+  //       lijst: this.lijst_id,
+  //       nummer: this.nummer_id
+  //     });
   //     this.e_tr_gegevens.parentElement.removeChild(this.e_tr_gegevens);
   //     this.e_tr_uitklap.parentNode.removeChild(this.e_tr_uitklap);
   //     this.on_verwijderd.emit(aantal_stemmen);
   //   }
   // }
 
-  filter(nummers_tekst, stemmers_tekst, van, tot) {
+  /**
+   * 
+   * @param {string} nummers_tekst 
+   * @param {string} stemmers_tekst 
+   * @param {Date|null} van 
+   * @param {Date|null} tot 
+   */
+  filter(
+    nummers_tekst,
+    stemmers_tekst,
+    van,
+    tot
+  ) {
     // Filter het nummer.
-    let nummer_zichtbaar =
+    this.is_zichtbaar =
       nummers_tekst == ''
       || this.titel.toLowerCase().includes(nummers_tekst)
       || this.artiest.toLowerCase().includes(nummers_tekst);
 
-    if ( nummer_zichtbaar ) {
+    if ( this.is_zichtbaar ) {
       // Filter de stemmen.
       let stem_zichtbaar = false; // Of er tenminste één stem zichtbaar is.
       for ( const [stemmer_id, resultaten_stem] of Object.entries(this.resultaten_stemmen) ) {
-        stem_zichtbaar |= resultaten_stem.filter(stemmers_tekst, van, tot);
+        resultaten_stem.filter(stemmers_tekst, van, tot);
+        stem_zichtbaar |= resultaten_stem.is_zichtbaar;
       }
-      nummer_zichtbaar &= stem_zichtbaar;
+      this.is_zichtbaar &= stem_zichtbaar;
     }
 
-    if ( nummer_zichtbaar ) {
+    if ( this.is_zichtbaar ) {
       this.e_tr_uitklap.classList.remove('verborgen');
     } else {
       this.inklappen();
@@ -773,6 +859,8 @@ class ResultatenStem {
   on_change_is_behandeld;
   /** @type {TypedEvent<void>} */
   on_verwijderd;
+  /** @type {boolean} */
+  is_zichtbaar;
 
   /**
    * 
@@ -798,6 +886,7 @@ class ResultatenStem {
     this.metadata_voor_filter = [];
     this.timestamp = new Date(timestamp);
     this.is_behandeld = is_behandeld;
+    this.is_zichtbaar = true;
     this.e_tr = resultaten_stem_template.cloneNode(true);
     this.e_tr.setAttribute('data-stemmer-id', this.stemmer_id);
     this.e_behandeld_input = this.e_tr.getElementsByTagName('input').item(0);
@@ -857,12 +946,12 @@ class ResultatenStem {
 
   async behandeld_handler() {
     try {
-      await functies.stem_set_behandeld(
-        this.resultaten_nummer.nummer_id,
-        this.resultaten_nummer.resultaten_modal.lijst_id,
-        this.stemmer_id,
-        this.e_behandeld_input.checked
-      );
+      await server.post('stem_set_behandeld', {
+        nummer: this.resultaten_nummer.nummer_id,
+        lijst: this.resultaten_nummer.resultaten_modal.lijst_id,
+        stemmer: this.stemmer_id,
+        waarde: this.e_behandeld_input.checked
+      });
       this.is_behandeld = this.e_behandeld_input.checked;
       this.on_change_is_behandeld.emit(this.is_behandeld);
       this.update_behandeld();
@@ -880,15 +969,21 @@ class ResultatenStem {
   }
 
   async verwijderen() {
-    await functies.verwijder_stem(
-      this.resultaten_nummer.nummer_id,
-      this.resultaten_nummer.resultaten_modal.lijst_id,
-      this.stemmer_id
-    );
+    await server.post('verwijder_stem', {
+      nummer: this.resultaten_nummer.nummer_id,
+      lijst: this.resultaten_nummer.resultaten_modal.lijst_id,
+      stemmer: this.stemmer_id
+    });
     this.e_tr.parentNode.removeChild(this.e_tr);
     this.on_verwijderd.emit();
   }
 
+  /**
+   * 
+   * @param {string} stemmers_tekst 
+   * @param {Date|null} van 
+   * @param {Date|null} tot 
+   */
   filter(stemmers_tekst, van, tot) {
     let tekst_filter_ok = false;
     if ( stemmers_tekst === '' || stemmers_tekst === null ) {
@@ -903,7 +998,7 @@ class ResultatenStem {
         }
       }
     }
-    const filter_ok =
+    this.is_zichtbaar =
       tekst_filter_ok
       && (
         van === null
@@ -913,12 +1008,11 @@ class ResultatenStem {
         tot === null
         || this.timestamp <= tot
       )
-    if ( filter_ok ) {
+    if ( this.is_zichtbaar ) {
       this.e_tr.classList.remove('verborgen');
     } else {
       this.e_tr.classList.add('verborgen');
     }
-    return filter_ok;
   }
 
 }
@@ -999,7 +1093,9 @@ class BeheerModal {
 
   async vul_data() {
     this.e_form.elements.lijst.value = this.lijst_id;
-    const data = await functies.post('get_beheer_lijstdata', {lijst: this.lijst_id});
+    const data = await server.post('get_beheer_lijstdata', {
+      lijst: this.lijst_id
+    });
 
     for ( const e_lijst_naam of this.e_modal.querySelectorAll('.lijst-naam') ) {
       e_lijst_naam.textContent = data.naam;
@@ -1023,7 +1119,7 @@ class BeheerModal {
   }
 
   async maak_lege_veld_checks() {
-    const velden = await functies.post('get_alle_velden');
+    const velden = await server.post('get_alle_velden', {});
     for ( const veld of velden ) {
       this.maak_veld_checks(veld);
     }
@@ -1081,7 +1177,7 @@ class BeheerModal {
     let fd = new FormData(this.e_form);
     if ( this.is_nieuw() ) {
       try {
-        const lijst_id = await functies.lijst_maken(fd);
+        const lijst_id = await server.post('lijst_maken', fd);
         this.on_lijst_gemaakt.emit({
           id: lijst_id,
           naam: fd.get('naam')
@@ -1092,7 +1188,7 @@ class BeheerModal {
       }
     } else {
       try {
-        await functies.lijst_opslaan(fd);
+        await server.post('lijst_opslaan', fd);
         this.on_lijst_veranderd.emit({
           id: this.lijst_id,
           naam: fd.get('naam')
@@ -1108,7 +1204,7 @@ class BeheerModal {
     const vraag = 'Deze lijst verwijderen?\nOok alle stemmen op nummers uit deze lijst worden verwijderd.';
     if ( confirm(vraag) ) {
       try {
-        await functies.verwijder_lijst(this.lijst_id)
+        await server.post('verwijder_lijst', {lijst: this.lijst_id});
         this.on_lijst_verwijderd.emit({
           id: this.lijst_id
         });

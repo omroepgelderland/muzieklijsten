@@ -2,7 +2,6 @@
 /**
  * 
  * @author Remy Glaser <rglaser@gld.nl>
- * @package muzieklijsten
  */
 
 namespace muzieklijsten;
@@ -224,7 +223,9 @@ function verwijder_stemmers_zonder_stemmen(): void {
 function filter_van_tot( string $waarde ): ?\DateTime {
     $str = filter_var($waarde);
     if ( $str !== '' ) {
-        return \DateTime::createFromFormat('d-m-Y', $str);
+        $dt = new \DateTime($str);
+        $dt->setTimezone(get_tijdzone());
+        return $dt;
     } else {
         return null;
     }
@@ -452,4 +453,12 @@ function set_env(): void {
     define('SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS1904', 24107);
     define('SPREADSHEET_EXCEL_READER_MSINADAY',          86400);
     define('SPREADSHEET_EXCEL_READER_DEF_NUM_FORMAT',    "%s");
+}
+
+/**
+ * Geeft de tijdzone van de server.
+ * @return \DateTimeZone
+ */
+function get_tijdzone(): \DateTimeZone {
+    return new \DateTimeZone(date_default_timezone_get());
 }

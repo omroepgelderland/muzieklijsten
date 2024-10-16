@@ -2,7 +2,8 @@
 import 'bootstrap';
 
 // Project js
-// import * as functies from '@muzieklijsten/functies.js';
+// import * as server from '@muzieklijsten/server';
+// import * as functies from '@muzieklijsten/functies';
 
 // Libraries css
 import 'bootstrap/dist/css/bootstrap.min.css';

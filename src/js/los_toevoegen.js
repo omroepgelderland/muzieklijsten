@@ -4,7 +4,8 @@ import 'angular';
 import 'angular-route';
 
 // Project js
-import * as functies from '@muzieklijsten/functies.js';
+import * as server from '@muzieklijsten/server';
+// import * as functies from '@muzieklijsten/functies';
 
 // Libraries css
 import '../scss/algemeen.scss';
@@ -50,7 +51,7 @@ class Lijst {
 }
 
 async function get_lijsten() {
-  const data = await functies.get_lijsten();
+  const data = await server.post('get_lijsten', {});
   let lijsten = [];
   for (const item of data) {
     lijsten.push(new Lijst(item.id, item.naam));
@@ -70,7 +71,7 @@ app.controller('MainCtrl', [
     $scope.inlog_error = false;
     $scope.inlog_ok = false;
 
-    functies.login().then(() => {
+    server.post('login', {}).then(() => {
       $scope.inlog_ok = true;
       $scope.$apply();
     }, (msg) => {
@@ -107,7 +108,10 @@ app.controller('MainCtrl', [
           geselecteerde_lijsten_ids.push(lijst.id);
         }
       }
-      functies.losse_nummers_toevoegen($scope.nummers, geselecteerde_lijsten_ids).then((data) => {
+      server.post('losse_nummers_toevoegen', {
+        nummers: $scope.nummers,
+        lijsten: geselecteerde_lijsten_ids
+      }).then((data) => {
         // Gelukt
         //console.log('gelukt');
         //console.log(data);

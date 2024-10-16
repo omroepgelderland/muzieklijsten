@@ -3,7 +3,6 @@
  * Anonimiseert persoonlijke data van stemmers.
  * 
  * @author Remy Glaser <rglaser@gld.nl>
- * @package muzieklijsten
  */
 
  namespace muzieklijsten;

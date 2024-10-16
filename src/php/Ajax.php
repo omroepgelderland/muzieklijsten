@@ -24,6 +24,7 @@ class Ajax {
     public function __construct($request) {
         $this->request = $request;
     }
+    
     /**
      * Geeft data over de stemlijst voor de stempagina.
      * @return array{
@@ -306,7 +307,7 @@ class Ajax {
      *     naam: string
      * }>
      */
-    public function ajax_get_lijsten(): array {
+    public function get_lijsten(): array {
         $respons = [];
         foreach ( get_muzieklijsten() as $lijst ) {
             $respons[] = [
@@ -547,7 +548,7 @@ class Ajax {
      *     draw: int,
      *     recordsTotal: int,
      *     recordsFiltered: int,
-     *     data: array<string[]>
+     *     data: list<list<string>>
      * }
      * @throws GeenLijstException
      */

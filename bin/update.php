@@ -13,7 +13,6 @@
  * - Voeg een static functie toe aan de class DBUpdates met de naam update_[0-9]+
  * 
  * @author Remy Glaser <rglaser@gld.nl>
- * @package muzieklijsten
  */
 
 namespace muzieklijsten;

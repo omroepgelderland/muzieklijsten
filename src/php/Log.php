@@ -3,7 +3,6 @@
  * Logging.
  * 
  * @author Remy Glaser <rglaser@gld.nl>
- * @package muzieklijsten
  */
 
 namespace muzieklijsten;

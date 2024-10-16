@@ -6,7 +6,6 @@
  * De oude resultaten worden dan bewaard in een archieflijst.
  * 
  * @author Remy Glaser <rglaser@gld.nl>
- * @package muzieklijsten
  */
 
 namespace muzieklijsten;

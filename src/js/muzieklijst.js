@@ -3,7 +3,8 @@ import 'bootstrap';
 import 'datatables.net-dt';
 
 // Project js
-import * as functies from '@muzieklijsten/functies.js';
+import * as server from '@muzieklijsten/server';
+import * as functies from '@muzieklijsten/functies';
 
 // Libraries css
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -176,7 +177,6 @@ class StemView {
   e_keuzeformulier;
   /** @type {HTMLFormElement} */
   e_stemmerformulier;
-  /** @type {Promise} */
   serverdata_promise;
   /** @type {HTMLDivElement} */
   e_errormsg;
@@ -307,10 +307,9 @@ class StemView {
 
   /**
    * Haalt gegevens over de stemlijst van de server.
-   * @returns {Promise<object>}
    */
   get_serverdata() {
-    return this.serverdata_promise ??= functies.post('get_stemlijst_frontend_data', {
+    return this.serverdata_promise ??= server.post('get_stemlijst_frontend_data', {
       lijst: this.lijst_id
     });
   }
@@ -324,11 +323,11 @@ class StemView {
 
   /**
    * Verwerkt het stemmen.
-   * @param {Event} e 
+   * @param {Event} event 
    */
-  submit_handler(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  async submit_handler(event) {
+    event.preventDefault();
+    event.stopPropagation();
     if ( Object.keys(this.geselecteerde_nummers).length < this.minkeuzes ) {
       alert(`U moet mimimaal ${this.minkeuzes} nummers selecteren.`);
       return;
@@ -362,16 +361,17 @@ class StemView {
       }
     }
 
-    let fd = new FormData(this.e_stemmerformulier);
+    const fd = new FormData(this.e_stemmerformulier);
     fd.append('lijst', this.lijst_id);
-    functies.stem(fd).then((data) => {
+    try {
+      const data = await server.post('stem', fd);
       let hoogte = document.getElementById('stemsegment').offsetHeight - 100;
       document.getElementById('stemsegment-placeholder').style.height = `${hoogte}px`;
       document.getElementById('result').innerHTML = data;
       this.e_body.classList.add('gestemd');
-    }, (msg) => {
+    } catch (msg) {
       alert(msg);
-    });
+    }
   }
 
   /**

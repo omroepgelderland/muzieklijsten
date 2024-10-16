@@ -608,7 +608,7 @@ class Ajax {
     /**
      * @return array{
      *     naam: string,
-     *     nummer_ids: list<string>,
+     *     nummer_ids: list<int>,
      *     iframe_url: string
      * }
      */
@@ -621,7 +621,7 @@ class Ajax {
         }
         $nummer_ids = [];
         foreach ( $lijst->get_nummers() as $nummer ) {
-            $nummer_ids[] = (string)$nummer->get_id();
+            $nummer_ids[] = $nummer->get_id();
         }
         return [
             'naam' => $lijst->get_naam(),

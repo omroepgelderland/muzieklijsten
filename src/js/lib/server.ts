@@ -170,7 +170,7 @@ export type AjaxMap = {
     }
     response: {
       naam: string
-      nummer_ids: string[]
+      nummer_ids: number[]
       iframe_url: string
     }
   }

@@ -30,6 +30,7 @@ class Main {
   e_geselecteerd_lijst;
   /** @type {HTMLSpanElement} */
   e_aantal_geselecteerde_nummers;
+  /** @type {number[]} */
   geselecteerde_nummers;
   tabel;
 
@@ -39,10 +40,11 @@ class Main {
     this.e_geselecteerd_lijst = document.getElementById('geselecteerd-lijst');
     this.e_aantal_geselecteerde_nummers = document.getElementById('aantal-geselecteerde-nummers');
     this.lijst_naam_promise = Promise.resolve('?');
+    this.geselecteerde_nummers = [];
 
     this.vul_metadata().then(() => {
-      let params = new URLSearchParams(document.location.search);
-      let lijst_id = params.get('lijst');
+      const params = new URLSearchParams(document.location.search);
+      const lijst_id = params.get('lijst');
       for ( const e_option of this.e_lijst_select.options ) {
         if ( e_option.value == lijst_id ) {
           e_option.selected = true;
@@ -67,7 +69,7 @@ class Main {
           orderable: false,
           className: 'dt-body-center',
           render: (nummer_id, type, [nummer_id2, titel, artiest, jaar], meta) => {
-            let input = document.createElement('input');
+            const input = document.createElement('input');
             input.setAttribute('type', 'checkbox');
             return input.outerHTML;
           }
@@ -91,8 +93,7 @@ class Main {
       }
     );
 
-    // Gebruiker klikt op een rij van de beschikbare nummers.
-    $('#beschikbare-nummers').on('click', 'tbody>tr', this.checkbox_handler.bind(this));
+    document.addEventListener('click', this.click_handler.bind(this));
 
     document.getElementById('lijstselect').addEventListener('change', this.lijst_select_handler.bind(this));
 
@@ -108,13 +109,29 @@ class Main {
 
   /**
    * 
+   * @param {Event} event 
+   */
+  click_handler(event) {
+    const target = event.target;
+    if ( !(target instanceof HTMLElement) ) {
+      return;
+    }
+
+    // Gebruiker klikt op een rij van de beschikbare nummers.
+    if ( target.closest('#beschikbare-nummers tbody>tr') ) {
+      this.checkbox_handler(target.closest('tr'));
+    }
+  }
+
+  /**
+   * 
    * @param {number} lijst_id 
    * @return {Promise<void>}
    */
   async set_lijst(lijst_id) {
     this.lijst_id = lijst_id;
-    let url = new URL(location.href);
-    let params = url.searchParams;
+    const url = new URL(location.href);
+    const params = url.searchParams;
     params.set('lijst', this.lijst_id);
     url.params = params;
     window.history.replaceState(null, null, url);
@@ -168,42 +185,47 @@ class Main {
     this.geselecteerde_nummers = data.nummer_ids;
     // Vult de tabel met geselecteerde nummers.
     this.vul_lijst_geselecteerde_nummers();
-    $('#beschikbare-nummers_length select').addClass('form-control');
-    $('#beschikbare-nummers_filter input').addClass('form-control');
+    const e_form_controls = document.querySelectorAll('#beschikbare-nummers_length select, #beschikbare-nummers_filter input');
+    for ( const elem of e_form_controls ) {
+      elem.classList.add('form-control');
+    }
     return data;
   }
 
-  async checkbox_handler(e) {
-    e.preventDefault();
-
-    let $row = $(e.target).closest('tr');
-    let $checkbox = $row.find('input[type="checkbox"]').addBack('input[type="checkbox"]');
-    let nummer_id, titel, artiest, jaar;
-    [nummer_id, titel, artiest, jaar] = this.tabel.row($row).data();
+  /**
+   * 
+   * @param {HTMLTableRowElement} e_rij 
+   */
+  async checkbox_handler(e_rij) {
+    const e_checkbox = e_rij.matches('input[type="checkbox"]')
+      ? e_rij
+      : e_rij.querySelector('input[type="checkbox"]');
+    let [nummer_id, titel, artiest, jaar] = this.tabel.row(e_rij).data();
+    nummer_id = Number.parseInt(nummer_id);
 
     // Determine whether row ID is in the list of selected row IDs 
-    let index = $.inArray(nummer_id, this.geselecteerde_nummers);
+    const index = this.geselecteerde_nummers.indexOf(nummer_id);
 
     if ( index === -1 ) {
       try {
         await this.nummer_toevoegen(nummer_id);
         this.geselecteerde_nummers.push(nummer_id);
-        $checkbox.prop('checked', true);
-        $row.addClass('selected');
+        e_checkbox.checked = true;
+        e_rij.classList.add('selected');
         await this.vul_lijst_geselecteerde_nummers();
       } catch (msg) {
-        $checkbox.prop('checked', false);
+        e_checkbox.prop.checked = false;
         alert(msg);
       }
     } else {
       try {
         await this.nummer_verwijderen(nummer_id);
         this.geselecteerde_nummers.splice(index, 1);
-        $checkbox.prop('checked', false);
-        $row.removeClass('selected');
+        e_checkbox.checked = false;
+        e_rij.classList.remove('selected');
         await this.vul_lijst_geselecteerde_nummers();
       } catch (msg) {
-        $checkbox.prop('checked', true);
+        e_checkbox.checked = true;
         alert(msg);
       }
     }
@@ -225,10 +247,11 @@ class Main {
    * Zet het vinkje geselecteerd aan of niet.
    */
   toon_geselecteerd(row, [nummer_id, titel, artiest, jaar], dataIndex) {
+    nummer_id = Number.parseInt(nummer_id);
     // If row ID is in the list of selected row IDs
-    if ($.inArray(nummer_id, this.geselecteerde_nummers) !== -1) {
-      $(row).find('input[type="checkbox"]').prop('checked', true);
-      $(row).addClass('selected');
+    if ( this.geselecteerde_nummers.includes(nummer_id) ) {
+      row.querySelector('input[type="checkbox"]').checked = true;
+      row.classList.add('selected');
     }
   }
 
@@ -267,15 +290,15 @@ class Main {
     }
     this.e_aantal_geselecteerde_nummers.innerText = nummers.length;
     for (const nummer of nummers) {
-      let e_tr = document.createElement('tr');
+      const e_tr = document.createElement('tr');
       this.e_geselecteerd_lijst.appendChild(e_tr);
-      let e_titel = document.createElement('td');
+      const e_titel = document.createElement('td');
       e_tr.appendChild(e_titel);
       e_titel.appendChild(document.createTextNode(nummer.titel));
-      let e_artiest = document.createElement('td');
+      const e_artiest = document.createElement('td');
       e_tr.appendChild(e_artiest);
       e_artiest.appendChild(document.createTextNode(nummer.artiest));
-      let e_jaar = document.createElement('td');
+      const e_jaar = document.createElement('td');
       e_tr.appendChild(e_jaar);
       e_jaar.appendChild(document.createTextNode(nummer.jaar ?? ''));
     }
@@ -292,13 +315,13 @@ class Main {
 
   nieuw_knop_handler(e) {
     e.preventDefault();
-    let modal = new BeheerModal();
+    const modal = new BeheerModal();
     modal.on_lijst_gemaakt.on(this.lijst_toegevoegd.bind(this));
   }
 
   beheer_knop_handler(e) {
     e.preventDefault();
-    let modal = new BeheerModal(this.lijst_id);
+    const modal = new BeheerModal(this.lijst_id);
     modal.on_lijst_veranderd.on(this.lijst_veranderd.bind(this));
     modal.on_lijst_verwijderd.on(this.lijst_verwijderd.bind(this));
   }
@@ -329,8 +352,8 @@ class Main {
   unset_lijst(event) {
     this.lijst_id = undefined;
 
-    let url = new URL(location.href);
-    let params = url.searchParams;
+    const url = new URL(location.href);
+    const params = url.searchParams;
     params.delete('lijst');
     url.params = params;
     window.history.replaceState(null, null, url);
@@ -418,15 +441,15 @@ class ResultatenModal {
   }
 
   async maak_resultaten_tabel() {
-    let labels_promise = server.post('get_resultaten_labels', {
+    const labels_promise = server.post('get_resultaten_labels', {
       lijst: this.lijst_id
     });
-    let nummers_stemmen = await server.post('get_resultaten', {
+    const nummers_stemmen = await server.post('get_resultaten', {
       lijst: this.lijst_id
     });
     this.totaal_aantal_stemmen = 0;
     for ( const nummer_stemmen of nummers_stemmen ) {
-      let resultaten_nummer = new ResultatenNummer(this, this.e_resultaten_tabel);
+      const resultaten_nummer = new ResultatenNummer(this, this.e_resultaten_tabel);
       resultaten_nummer.on_stem_verwijderd.on(this.stem_verwijderd_handler.bind(this));
       resultaten_nummer.on_verwijderd.on(this.nummer_verwijderd_handler.bind(this));
       resultaten_nummer.maak_velden_labels(labels_promise);
@@ -699,7 +722,7 @@ class ResultatenNummer {
       this.e_tr_uitklap.classList.add('heeft-stemmen');
     }
     for ( const stem of stemmen ) {
-      let resultaten_stem = new ResultatenStem(this, e_tbody, stem);
+      const resultaten_stem = new ResultatenStem(this, e_tbody, stem);
       resultaten_stem.on_change_is_behandeld.on(this.update_behandeld.bind(this));
       resultaten_stem.on_verwijderd.on(this.stem_verwijderd_handler.bind(this, resultaten_stem));
       this.resultaten_stemmen[stem.stemmer_id] = resultaten_stem;
@@ -909,10 +932,10 @@ class ResultatenStem {
     const e_insert_before = this.e_tr.firstChild;
     for ( const item of velden ) {
       this.metadata_voor_filter.push(item.waarde);
-      let e_td = document.createElement('td');
+      const e_td = document.createElement('td');
       if ( item.waarde !== null && item.waarde !== '' ) {
         if ( item.type === 'email' || item.type === 'tel' ) {
-          let e_a = document.createElement('a');
+          const e_a = document.createElement('a');
           let prefix = '';
           if ( item.type === 'email' ) {
             prefix = 'mailto:';
@@ -1125,14 +1148,14 @@ class BeheerModal {
     const zichtbaar_id = functies.get_random_string(16);
     const verplicht_id = functies.get_random_string(16);
 
-    let e_zichtbaar_container = document.createElement('div');
-    let e_zichtbaar_label = document.createElement('label');
-    let e_zichtbaar_check = document.createElement('input');
-    let e_zichtbaar_label_tekst = document.createTextNode(veld.label);
-    let e_verplicht_container = document.createElement('div');
-    let e_verplicht_label = document.createElement('label');
-    let e_verplicht_check = document.createElement('input');
-    let e_verplicht_label_tekst = document.createTextNode('Verplicht');
+    const e_zichtbaar_container = document.createElement('div');
+    const e_zichtbaar_label = document.createElement('label');
+    const e_zichtbaar_check = document.createElement('input');
+    const e_zichtbaar_label_tekst = document.createTextNode(veld.label);
+    const e_verplicht_container = document.createElement('div');
+    const e_verplicht_label = document.createElement('label');
+    const e_verplicht_check = document.createElement('input');
+    const e_verplicht_label_tekst = document.createTextNode('Verplicht');
 
     this.e_velden_zichtbaar_kolom.appendChild(e_zichtbaar_container);
     e_zichtbaar_container.appendChild(e_zichtbaar_label);
@@ -1170,7 +1193,7 @@ class BeheerModal {
    */
   async opslaan(e) {
     e.preventDefault();
-    let fd = new FormData(this.e_form);
+    const fd = new FormData(this.e_form);
     if ( this.is_nieuw() ) {
       try {
         const lijst_id = await server.post('lijst_maken', fd);
@@ -1218,8 +1241,8 @@ class BeheerModal {
    * @param {Event} e 
    */
   check_verplicht(e) {
-    let verplicht_id = e.target.getAttribute('data-input-verplicht');
-    let verplicht_elem = document.getElementById(verplicht_id);
+    const verplicht_id = e.target.getAttribute('data-input-verplicht');
+    const verplicht_elem = document.getElementById(verplicht_id);
     if ( verplicht_elem instanceof HTMLInputElement ) {
       if ( e.target.checked ) {
         verplicht_elem.disabled = false;
@@ -1245,6 +1268,4 @@ const resultaten_stem_template = functies.get_html_template(html_resultaten_stem
 /** @type {HTMLElement} */
 const beheer_modal_template = functies.get_html_template(html_beheer_modal).item(0);
 
-$(document).ready(() => {
-  new Main();
-});
+new Main();

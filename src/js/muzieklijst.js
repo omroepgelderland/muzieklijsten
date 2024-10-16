@@ -31,26 +31,26 @@ class Nummer {
   constructor(nummer_id, titel, artiest) {
     this.e_tr = document.createElement('tr');
 
-    let e_td_titel = document.createElement('td');
+    const e_td_titel = document.createElement('td');
     e_td_titel.appendChild(document.createTextNode(titel));
     this.e_tr.appendChild(e_td_titel);
 
-    let e_td_artiest = document.createElement('td');
+    const e_td_artiest = document.createElement('td');
     e_td_artiest.appendChild(document.createTextNode(artiest));
     this.e_tr.appendChild(e_td_artiest);
 
-    let e_td_toelichting = document.createElement('td');
+    const e_td_toelichting = document.createElement('td');
     e_td_toelichting.classList.add('remark');
     this.e_tr.appendChild(e_td_toelichting);
 
-    let e_toelichting = document.createElement('input');
+    const e_toelichting = document.createElement('input');
     e_toelichting.type = 'text';
     e_toelichting.classList.add('form-control');
     e_toelichting.maxLength = 1024;
     e_toelichting.name = `nummers[${nummer_id}][toelichting]`;
     e_td_toelichting.appendChild(e_toelichting);
 
-    let e_hidden = document.createElement('input');
+    const e_hidden = document.createElement('input');
     e_hidden.type = 'hidden';
     e_hidden.name = `nummers[${nummer_id}][id]`;
     e_hidden.value = nummer_id;
@@ -94,13 +94,13 @@ class Invoerveld {
     this.e_form_group = document.createElement('div');
     this.e_form_group.classList.add('form-group', 'row');
 
-    let e_label = document.createElement('label');
+    const e_label = document.createElement('label');
     this.e_form_group.appendChild(e_label);
     e_label.classList.add('control-label', 'col-sm-2');
     e_label.setAttribute('for', id_str);
     e_label.appendChild(document.createTextNode(label));
 
-    let e_col = document.createElement('div');
+    const e_col = document.createElement('div');
     this.e_form_group.appendChild(e_col);
     e_col.classList.add('col-sm-10');
 
@@ -156,7 +156,7 @@ class StemView {
   is_artiest_eenmalig;
   /** @type {boolean} */
   heeft_recaptcha;
-  /** @type {Array} */
+  /** @type {{[key: number]: Nummer}} */
   geselecteerde_nummers;
   /** @type {Array} */
   geselecteerde_artiesten;
@@ -287,7 +287,7 @@ class StemView {
     }
     for ( const e_captcha of document.querySelectorAll('.g-recaptcha') ) {
       e_captcha.setAttribute('data-sitekey', serverdata.recaptcha_sitekey);
-      let e_script = document.createElement('script');
+      const e_script = document.createElement('script');
       e_script.src = 'https://www.google.com/recaptcha/api.js?hl=nl';
       e_captcha.parentElement.appendChild(e_script);
     }
@@ -359,7 +359,7 @@ class StemView {
     fd.append('lijst', this.lijst_id);
     try {
       const data = await server.post('stem', fd);
-      let hoogte = document.getElementById('stemsegment').offsetHeight - 100;
+      const hoogte = document.getElementById('stemsegment').offsetHeight - 100;
       document.getElementById('stemsegment-placeholder').style.height = `${hoogte}px`;
       document.getElementById('result').innerHTML = data;
       this.e_body.classList.add('gestemd');
@@ -404,11 +404,8 @@ class StemView {
     const selecteren = checkbox_klik && e_checkbox.checked || !checkbox_klik && !e_checkbox.checked;
 
     // Get row data
-    let data = this.datatable.row($(e_rij)).data();
-    // Get row ID
-    let nummer_id = data[0];
-    let titel = data[1];
-    let artiest = data[2];
+    let [nummer_id, titel, artiest] = this.datatable.row(e_rij).data();
+    nummer_id = Number.parseInt(nummer_id);
 
     if ( selecteren ) {
       // Nummer selecteren
@@ -430,10 +427,10 @@ class StemView {
       e_rij.classList.add('selected');
     } else {
       // Nummer deselecteren
-      let nummer = this.geselecteerde_nummers[nummer_id];
+      const nummer = this.geselecteerde_nummers[nummer_id];
       nummer.destroy();
       delete this.geselecteerde_nummers[nummer_id];
-      let artiest_index = this.geselecteerde_artiesten.indexOf(artiest);
+      const artiest_index = this.geselecteerde_artiesten.indexOf(artiest);
       if ( artiest_index !== -1 ) {
         this.geselecteerde_artiesten.splice(artiest_index, 1);
       }

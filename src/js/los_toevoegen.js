@@ -48,7 +48,7 @@ class Lijst {
 
 async function get_lijsten() {
   const data = await server.post('get_lijsten', {});
-  let lijsten = [];
+  const lijsten = [];
   for (const item of data) {
     lijsten.push(new Lijst(item.id, item.naam));
   }
@@ -98,7 +98,7 @@ app.controller('MainCtrl', [
     };
     
     $scope.toevoegen = () => {
-      let geselecteerde_lijsten_ids = [];
+      const geselecteerde_lijsten_ids = [];
       for (const lijst of $scope.lijsten) {
         if ( lijst.geselecteerd ) {
           geselecteerde_lijsten_ids.push(lijst.id);

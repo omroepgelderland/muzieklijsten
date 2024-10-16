@@ -1,21 +1,16 @@
 // Libraries js
 import 'bootstrap';
-import 'datatables.net-dt';
+import DataTable, * as datatables from 'datatables.net-dt';
 
 // Project js
 import * as server from '@muzieklijsten/server';
 import * as functies from '@muzieklijsten/functies';
 
-// Libraries css
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'datatables.net-dt/css/jquery.dataTables.min.css';
-
-// Project css
-import '../scss/algemeen.scss';
-import '../scss/muzieklijst.scss';
+// css
+import '/src/scss/muzieklijst.scss';
 
 // Afbeeldingen
-// import '../../assets/afbeeldingen/fbshare_top100.jpg';
+// import '/assets/afbeeldingen/fbshare_top100.jpg';
 
 /**
  * Een door de bezoeker geselecteerd nummer.
@@ -68,7 +63,7 @@ class Nummer {
    * Verwijdert het nummer uit de DOM.
    */
   destroy() {
-    this.e_tr.parentNode.removeChild(this.e_tr);
+    this.e_tr.remove();
   }
 
 }
@@ -202,8 +197,7 @@ class StemView {
 
     const e_datatable = document.getElementById('nummers');
 
-    // datatables heeft jQuery nodig.
-    this.datatable = $(e_datatable).DataTable({
+    this.datatable = new DataTable(e_datatable, {
       processing: true,
       serverSide: true,
       ajax: (data, callback, settings) => {

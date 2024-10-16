@@ -1,26 +1,20 @@
-// Libraries css
+// Libraries js
 import 'bootstrap';
-import 'datatables.net-dt';
+import DataTable, * as datatables from 'datatables.net-dt';
 
 // Project js
 import * as functies from '@muzieklijsten/functies';
 import * as server from '@muzieklijsten/server';
 import TypedEvent from '@muzieklijsten/TypedEvent';
 
-// Libraries css
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'font-awesome/css/font-awesome.min.css';
-import 'datatables.net-dt/css/jquery.dataTables.min.css';
-
-// Project css
-import '../scss/algemeen.scss';
-import '../scss/admin.scss';
+// css
+import '/src/scss/admin.scss';
 
 // HTML
-import html_resultaten_modal from '../html/admin-resultaten-modal.html';
-import html_resultaten_nummer from '../html/admin-resultaten-nummer.html';
-import html_resultaten_stem from '../html/admin-resultaten-stem.html';
-import html_beheer_modal from '../html/admin-beheer-modal.html';
+import html_resultaten_modal from '/src/html/admin-resultaten-modal.html';
+import html_resultaten_nummer from '/src/html/admin-resultaten-nummer.html';
+import html_resultaten_stem from '/src/html/admin-resultaten-stem.html';
+import html_beheer_modal from '/src/html/admin-beheer-modal.html';
 
 class Main {
 
@@ -58,42 +52,44 @@ class Main {
       }
     });
 
-    this.tabel = $('#beschikbare-nummers').DataTable({
-      processing: true,
-      serverSide: true,
-      ajax: (data, callback, settings) => {
-        data.is_vrijekeuze = false;
-        functies.vul_datatables(data, callback, settings);
-      },
-      columnDefs: [{
-        targets: 0,
-        searchable: false,
-        orderable: false,
-        className: 'dt-body-center',
-        render: (nummer_id, type, [nummer_id2, titel, artiest, jaar], meta) => {
-          let input = document.createElement('input');
-          input.setAttribute('type', 'checkbox');
-          return input.outerHTML;
-        }
-      }],
-      order: [1, 'asc'],
-      rowCallback: this.toon_geselecteerd.bind(this),
-      language: {
-        lengthMenu: '_MENU_ nummers per pagina',
-        zeroRecords: 'Geen nummers gevonden',
-        info: 'Pagina _PAGE_ van _PAGES_',
-        infoEmpty: 'Geen nummers gevonden',
-        infoFiltered: '(gefilterd van _MAX_ totaal)',
-        search: 'Zoeken:',
-        paginate: {
-          first: 'Eerste',
-          last: 'Laatste',
-          next: 'Volgende',
-          previous: 'Vorige'
+    this.tabel = new DataTable(
+      document.getElementById('beschikbare-nummers'),
+      {
+        processing: true,
+        serverSide: true,
+        ajax: (data, callback, settings) => {
+          data.is_vrijekeuze = false;
+          functies.vul_datatables(data, callback, settings);
+        },
+        columnDefs: [{
+          targets: 0,
+          searchable: false,
+          orderable: false,
+          className: 'dt-body-center',
+          render: (nummer_id, type, [nummer_id2, titel, artiest, jaar], meta) => {
+            let input = document.createElement('input');
+            input.setAttribute('type', 'checkbox');
+            return input.outerHTML;
+          }
+        }],
+        order: [1, 'asc'],
+        rowCallback: this.toon_geselecteerd.bind(this),
+        language: {
+          lengthMenu: '_MENU_ nummers per pagina',
+          zeroRecords: 'Geen nummers gevonden',
+          info: 'Pagina _PAGE_ van _PAGES_',
+          infoEmpty: 'Geen nummers gevonden',
+          infoFiltered: '(gefilterd van _MAX_ totaal)',
+          search: 'Zoeken:',
+          paginate: {
+            first: 'Eerste',
+            last: 'Laatste',
+            next: 'Volgende',
+            previous: 'Vorige'
+          }
         }
       }
-
-    });
+    );
 
     // Gebruiker klikt op een rij van de beschikbare nummers.
     $('#beschikbare-nummers').on('click', 'tbody>tr', this.checkbox_handler.bind(this));
@@ -403,7 +399,7 @@ class ResultatenModal {
     //   keyboard: true
     // });
     // this.e_modal.addEventListener('hidden.bs.modal', e => {
-    //   this.e_modal.parentNode.removeChild(this.e_modal);
+    //   this.e_modal.remove();
     // });
     this.$modal = $(this.e_modal);
     this.$modal.modal({
@@ -412,7 +408,7 @@ class ResultatenModal {
         keyboard: true
       });
     this.$modal.on('hidden.bs.modal', e => {
-      this.e_modal.parentNode.removeChild(this.e_modal);
+      this.e_modal.remove();
     });
 
     this.e_modal.addEventListener('click', this.click_handler.bind(this));
@@ -738,8 +734,8 @@ class ResultatenNummer {
     this.update_aantal_stemmen();
     if ( this.get_aantal_stemmen() === 0 ) {
       // Nummer heeft geen stemmen meer.
-      this.e_tr_gegevens.parentElement.removeChild(this.e_tr_gegevens);
-      this.e_tr_uitklap.parentNode.removeChild(this.e_tr_uitklap);
+      this.e_tr_gegevens.remove();
+      this.e_tr_uitklap.remove();
     }
   }
 
@@ -775,8 +771,8 @@ class ResultatenNummer {
   //       lijst: this.lijst_id,
   //       nummer: this.nummer_id
   //     });
-  //     this.e_tr_gegevens.parentElement.removeChild(this.e_tr_gegevens);
-  //     this.e_tr_uitklap.parentNode.removeChild(this.e_tr_uitklap);
+  //     this.e_tr_gegevens.remove();
+  //     this.e_tr_uitklap.remove();
   //     this.on_verwijderd.emit(aantal_stemmen);
   //   }
   // }
@@ -974,7 +970,7 @@ class ResultatenStem {
       lijst: this.resultaten_nummer.resultaten_modal.lijst_id,
       stemmer: this.stemmer_id
     });
-    this.e_tr.parentNode.removeChild(this.e_tr);
+    this.e_tr.remove();
     this.on_verwijderd.emit();
   }
 
@@ -1070,7 +1066,7 @@ class BeheerModal {
     //   keyboard: true
     // });
     // this.e_modal.addEventListener('hidden.bs.modal', e => {
-    //   this.e_modal.parentNode.removeChild(this.e_modal);
+    //   this.e_modal.remove();
     // });
     this.$modal = $(this.e_modal);
     this.$modal.modal({
@@ -1235,7 +1231,7 @@ class BeheerModal {
   }
 
   destroy() {
-    this.e_modal.parentNode.removeChild(this.e_modal);
+    this.e_modal.remove();
   }
 
 }

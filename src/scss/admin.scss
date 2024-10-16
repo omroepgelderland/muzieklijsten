@@ -1,3 +1,10 @@
+// Libraries
+@import "font-awesome/css/font-awesome.min.css";
+@import "datatables.net-dt/css/jquery.dataTables.min.css";
+
+// Project
+@import "/src/scss/algemeen.scss";
+
 body:not(.lijst-geselecteerd) .lijst-geselecteerd {
     display: none;
 }

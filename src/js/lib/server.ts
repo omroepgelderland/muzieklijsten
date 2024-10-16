@@ -1,4 +1,4 @@
-type AjaxMap = {
+export type AjaxMap = {
   get_stemlijst_frontend_data: {
     request: {
       lijst: number

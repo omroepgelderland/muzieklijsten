@@ -1,3 +1,9 @@
+// Libraries
+@import 'datatables.net-dt/css/jquery.dataTables.min.css';
+
+// Project
+@import '/src/scss/algemeen.scss';
+
 body:not(.geladen),
 body:not(.gestemd) .gestemd,
 body.gestemd .not-gestemd,

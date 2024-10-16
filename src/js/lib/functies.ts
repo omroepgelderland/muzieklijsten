@@ -1,6 +1,10 @@
 import * as server from '@muzieklijsten/server';
 
-export async function vul_datatables(data: any, callback: any, settings: any) {
+export async function vul_datatables(
+  data: {[key: string]: any},
+  callback: (a: server.AjaxMap['vul_datatables']['response']) => void,
+  settings: {[key: string]: any}
+) {
   const respons = await server.post('vul_datatables', data);
   callback(respons);
 }

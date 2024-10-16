@@ -7,12 +7,8 @@ import 'angular-route';
 import * as server from '@muzieklijsten/server';
 // import * as functies from '@muzieklijsten/functies';
 
-// Libraries css
-import '../scss/algemeen.scss';
-import 'bootstrap/dist/css/bootstrap.min.css';
-
-// Project css
-import '../scss/los_toevoegen.scss';
+// css
+import '/src/scss/los_toevoegen.scss';
 
 class Nummer {
 

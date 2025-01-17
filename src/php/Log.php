@@ -1,9 +1,12 @@
 <?php
+
 /**
  * Logging.
- * 
+ *
  * @author Remy Glaser <rglaser@gld.nl>
  */
+
+declare(strict_types=1);
 
 namespace muzieklijsten;
 
@@ -11,52 +14,58 @@ namespace muzieklijsten;
  * Logger
  * Singleton class
  */
-class Log {
-    
+class Log
+{
     private static Log $obj;
     protected \Laminas\Log\Logger $logger;
-    
+
     /**
-    * Singleton classes kunnen niet worden gekloond.
+     * Singleton classes kunnen niet worden gekloond.
      */
-    private function __clone() {}
-    
-    protected static function get_obj(): self {
+    private function __clone()
+    {
+    }
+
+    protected static function get_obj(): self
+    {
         return self::$obj ??= new self();
     }
-    
-    protected function _get_logger( ?string $bestandsnaam=null ): \Laminas\Log\Logger {
-        if ( !isset($this->logger) ) {
+
+    protected function get_logger_i(?string $bestandsnaam = null): \Laminas\Log\Logger
+    {
+        if (!isset($this->logger)) {
             $this->logger = new \Laminas\Log\Logger();
             $this->add_writers($bestandsnaam);
         }
         return $this->logger;
     }
-    
-    protected static function get_logger( ?string $bestandsnaam=null ): \Laminas\Log\Logger {
-        return self::get_obj()->_get_logger($bestandsnaam);
+
+    protected static function get_logger(?string $bestandsnaam = null): \Laminas\Log\Logger
+    {
+        return self::get_obj()->get_logger_i($bestandsnaam);
     }
-    
-    protected function add_writers( ?string $bestandsnaam=null ): void {
-        if ( is_dev() || is_cli() ) {
+
+    protected function add_writers(?string $bestandsnaam = null): void
+    {
+        if (is_dev() || is_cli()) {
             $loglevel = new \Laminas\Log\Filter\Priority(\Laminas\Log\Logger::DEBUG);
         } else {
             $loglevel = new \Laminas\Log\Filter\Priority(\Laminas\Log\Logger::INFO);
         }
-        
+
         // Commandline writer
-        if ( is_cli() ) {
+        if (is_cli()) {
             $writer = new \Laminas\Log\Writer\Stream('php://output');
             $writer->addFilter($loglevel);
             $this->logger->addWriter($writer);
         }
-        
+
         // Bestandslog
         // Altijd naar bestand schrijven, ook als scripts interactief wordt uitgevoerd.
         $bestand_writer = new \Laminas\Log\Writer\Stream($this->get_pad($bestandsnaam), null, null, 0664);
         $bestand_writer->addFilter($loglevel);
         $this->logger->addWriter($bestand_writer);
-        
+
         // Logs per errortype
         $noticebestand_writer = new \Laminas\Log\Writer\Stream($this->get_pad('errors5_notice'), null, null, 0664);
         $noticebestand_writer->addFilter(new \Laminas\Log\Filter\Priority(\Laminas\Log\Logger::NOTICE, '=='));
@@ -77,12 +86,14 @@ class Log {
         $emergbestand_writer->addFilter(new \Laminas\Log\Filter\Priority(\Laminas\Log\Logger::EMERG, '=='));
         $this->logger->addWriter($emergbestand_writer);
     }
-    
+
     /**
      * Geeft het pad naar het logbestand.
+     *
      * @param $bestandsnaam Gebruik deze naam in plaats van de naam van het script (optioneel)
      */
-    protected function get_pad( ?string $bestandsnaam=null ): string {
+    protected function get_pad(?string $bestandsnaam = null): string
+    {
         $bestandsnaam ??= pathinfo(get_hoofdscript_pad())['filename'];
         $pad = path_join(
             __DIR__,
@@ -96,7 +107,7 @@ class Log {
                 (new \DateTime())->format('Y-m-d')
             )
         );
-        if ( !is_dir(dirname($pad)) ) {
+        if (!is_dir(dirname($pad))) {
             mkdir(dirname($pad), 0775, true);
         }
         return $pad;
@@ -104,69 +115,82 @@ class Log {
 
     /**
      * Stelt een andere bestandsnaam in (zonder extensie).
+     *
      * @param $bestandsnaam
      */
-    public static function set_bestandsnaam( string $bestandsnaam ): void {
-        self::get_obj()->_set_bestandsnaam($bestandsnaam);
+    public static function set_bestandsnaam(string $bestandsnaam): void
+    {
+        self::get_obj()->set_bestandsnaam_i($bestandsnaam);
     }
-    
+
     /**
      * Stelt een andere bestandsnaam in (zonder extensie).
+     *
      * @param $bestandsnaam
      */
-    protected function _set_bestandsnaam( string $bestandsnaam ): void {
+    protected function set_bestandsnaam_i(string $bestandsnaam): void
+    {
         unset($this->logger);
         $this->get_logger($bestandsnaam);
     }
-    
-    public static function emerg( string|int|float ...$args ): void {
+
+    public static function emerg(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::EMERG, ...$args);
     }
-    
-    public static function alert( string|int|float ...$args ): void {
+
+    public static function alert(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::ALERT, ...$args);
     }
-    
-    public static function crit( string|int|float ...$args ): void {
+
+    public static function crit(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::CRIT, ...$args);
     }
-    
-    public static function err( string|int|float ...$args ): void {
+
+    public static function err(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::ERR, ...$args);
     }
-    
-    public static function warn( string|int|float ...$args ): void {
+
+    public static function warn(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::WARN, ...$args);
     }
-    
-    public static function notice( string|int|float ...$args ): void {
+
+    public static function notice(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::NOTICE, ...$args);
     }
-    
-    public static function info( string|int|float ...$args ): void {
+
+    public static function info(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::INFO, ...$args);
     }
-    
-    public static function debug( string|int|float ...$args ): void {
+
+    public static function debug(string|int|float ...$args): void
+    {
         self::schrijf_log(self::get_logger()::DEBUG, ...$args);
     }
-    
-    private static function schrijf_log( int $priority, string|int|float ...$args ): void {
-        if ( count($args) === 1 ) {
+
+    private static function schrijf_log(int $priority, string|int|float ...$args): void
+    {
+        if (count($args) === 1) {
             $message = $args[0];
         } else {
             $message = sprintf(...$args);
         }
         self::get_logger()->log($priority, $message);
     }
-    
+
     /**
      * Sluit het log.
      * Nuttig voor continue processen om niet steeds het log open te hebben
      * staan en de bestandsnaam van het log aan te passen aan de datum.
      */
-    public static function sluiten(): void {
+    public static function sluiten(): void
+    {
         unset(self::$obj);
     }
-    
 }

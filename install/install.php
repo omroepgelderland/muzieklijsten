@@ -1,19 +1,23 @@
 <?php
+
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-function readline_met_default( string $prompt, bool $mag_leeg = true, string $default = '' ): string {
-    if ( $default !== '' ) {
+function readline_met_default(string $prompt, bool $mag_leeg = true, string $default = ''): string
+{
+    if ($default !== '') {
         $prompt = "{$prompt} [{$default}]: ";
     } else {
         $prompt = "{$prompt}: ";
     }
     $ans = trim(readline($prompt));
-    if ( $ans === '' && $default !== '' ) {
+    if ($ans === '' && $default !== '') {
         $ans = $default;
     }
-    if ( $ans === '' && !$mag_leeg ) {
+    if ($ans === '' && !$mag_leeg) {
         throw new Muzieklijsten_Exception('De invoer mag niet leeg zijn.');
     }
     return $ans;
@@ -23,10 +27,11 @@ set_env();
 
 // Configuratiebestand genereren.
 $root_url = readline_met_default('Root-URL naar deze installatie van muzieklijsten', false);
-echo "Vul de gegevens van de Google Recaptcha in. Je hebt de legacy-keys nodig. (https://cloud.google.com/recaptcha-enterprise/docs/create-key#find-key)\n";
+echo "Vul de gegevens van de Google Recaptcha in. Je hebt de legacy-keys nodig. "
+. "(https://cloud.google.com/recaptcha-enterprise/docs/create-key#find-key)\n";
 $recaptcha_sitekey = readline_met_default('Recaptcha site key', false);
 $recaptcha_secret = readline_met_default('Recaptcha secret', false);
-$root_url = rtrim($root_url, '/').'/';
+$root_url = rtrim($root_url, '/') . '/';
 $config = [
     'organisatie' => readline_met_default('Naam organisatie/bedrijf'),
     'root_url' => $root_url,
@@ -36,40 +41,43 @@ $config = [
         'server' => $sql_server = readline_met_default('SQL-server', false, 'localhost'),
         'database' => $sql_database = readline_met_default('Naam van de database', false, 'muzieklijsten'),
         'user' => $sql_user = readline_met_default('SQL gebruikersnaam', false, 'muzieklijsten'),
-        'password' => $sql_password = readline_met_default('Wachtwoord van de SQL-gebruiker (alleen als de gebruiker nog niet bestaat)', false)
+        'password' => $sql_password = readline_met_default(
+            'Wachtwoord van de SQL-gebruiker (alleen als de gebruiker nog niet bestaat)',
+            false
+        ),
     ],
     'php_auth' => [
         'user' => readline_met_default('Gebruikersnaam voor de beheerdersinterface', false),
-        'password' => readline_met_default('Wachtwoord voor de beheerdersinterface', false)
+        'password' => readline_met_default('Wachtwoord voor de beheerdersinterface', false),
     ],
     'mail' => [
         'sendmail_path' => '/usr/sbin/sendmail',
-        'afzender' => readline_met_default('Afzender voor e-mails naar de redactie', false)
+        'afzender' => readline_met_default('Afzender voor e-mails naar de redactie', false),
     ],
     'recaptcha' => [
         'sitekey' => $recaptcha_sitekey,
-        'secret' => $recaptcha_secret
-    ]
+        'secret' => $recaptcha_secret,
+    ],
 ];
 
 $configdir = path_join(__DIR__, '..', 'config');
-if ( !is_dir($configdir) ) {
+if (!is_dir($configdir)) {
     mkdir($configdir, 0770, true);
 }
 $configdir = realpath($configdir);
 $config_pad = path_join($configdir, 'config.json');
 file_put_contents(
     $config_pad,
-    json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    json_encode($config, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)
 );
 echo "De configuratie is opgeslagen in {$config_pad}. Je kunt dit bestand zo nodig aanpassen.\n";
 
 $public_pad = realpath(path_join(__DIR__, '..', 'public'));
-$root_host = parse_url($root_url, PHP_URL_HOST);
-$root_url_pad = parse_url($root_url, PHP_URL_PATH);
+$root_host = parse_url($root_url, \PHP_URL_HOST);
+$root_url_pad = parse_url($root_url, \PHP_URL_PATH);
 $root_url_pad = rtrim($root_url_pad, '/');
-$https_root_url = rtrim("https://{$root_host}/{$root_url_pad}/", '/').'/';
-if ( $root_url_pad === '' ) {
+$https_root_url = rtrim("https://{$root_host}/{$root_url_pad}/", '/') . '/';
+if ($root_url_pad === '') {
     $alias_regel = '';
 } else {
     $alias_regel = "Alias {$root_url_pad} {$public_pad}\n\n";
@@ -120,8 +128,8 @@ CREATE USER IF NOT EXISTS "{$sql_user}"@"{$sql_server}" IDENTIFIED BY "{$sql_pas
 GRANT ALL PRIVILEGES ON `{$sql_database}`.* TO "{$sql_user}"@"{$sql_server}";
 EOT;
 exec("sudo mysql -u {$db_root_user} {$root_password_param} -e '{$root_queries}'", $output, $result_code);
-if ( $result_code !== 0 ) {
-    echo implode('\n', $output)."\n";
+if ($result_code !== 0) {
+    echo implode('\n', $output) . "\n";
     echo <<<EOT
     Kan niet inloggen als root op MySQL. Voer de volgende queries zelf uit op je MySQL-server en druk daarna op enter.
     {$root_queries}
@@ -131,7 +139,8 @@ if ( $result_code !== 0 ) {
 
 $db = DB::getDB();
 $db->multi_query(file_get_contents(path_join(__DIR__, 'install.sql')));
-do {} while ( $db->next_result() );
+do {
+} while ($db->next_result());
 
 db_update();
 

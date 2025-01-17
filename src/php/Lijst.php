@@ -1,8 +1,10 @@
 <?php
+
 /**
- * 
  * @author Remy Glaser <rglaser@gld.nl>
  */
+
+declare(strict_types=1);
 
 namespace muzieklijsten;
 
@@ -48,11 +50,11 @@ namespace muzieklijsten;
  *     }>
  * }>
  */
-class Lijst {
-
+class Lijst
+{
     public const VELD_ZICHTBAAR_BIT = 0;
     public const VELD_VERPLICHT_BIT = 1;
-    
+
     private int $id;
     private bool $actief;
     private string $naam;
@@ -74,51 +76,60 @@ class Lijst {
     /** @var list<Stemmer> */
     private array $stemmers;
     private bool $db_props_set;
-    
+
     /**
      * @param $id ID van het object.
      * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
-    public function __construct( int $id, ?array $data = null ) {
+    public function __construct(int $id, ?array $data = null)
+    {
         $this->id = $id;
         $this->db_props_set = false;
-        if ( isset($data) ) {
+        if (isset($data)) {
             $this->set_data($data);
         }
     }
-    
-    public function get_id(): int {
+
+    public function get_id(): int
+    {
         return $this->id;
     }
-    
+
     /**
      * Geeft aan of twee muzieklijsten dezelfde zijn. Wanneer $obj geen Muzieklijst is wordt false gegeven.
+     *
      * @param $obj Object om deze instantie mee te vergelijken
+     *
      * @return bool Of $obj dezelfde muzieklijst is als deze instantie
      */
-    public function equals( mixed $obj ): bool {
+    public function equals(mixed $obj): bool
+    {
         return ( $obj instanceof Lijst && $obj->get_id() == $this->id );
     }
-    
+
     /**
      * Geeft aan of de lijst actief is.
      */
-    public function is_actief(): bool {
+    public function is_actief(): bool
+    {
         $this->set_db_properties();
         return $this->actief;
     }
-    
-    public function get_naam(): string {
+
+    public function get_naam(): string
+    {
         $this->set_db_properties();
         return $this->naam;
     }
-    
-    public function get_minkeuzes(): int {
+
+    public function get_minkeuzes(): int
+    {
         $this->set_db_properties();
         return $this->minkeuzes;
     }
-    
-    public function get_maxkeuzes(): int {
+
+    public function get_maxkeuzes(): int
+    {
         $this->set_db_properties();
         return $this->maxkeuzes;
     }
@@ -126,41 +137,47 @@ class Lijst {
     /**
      * Geeft het aantal vrije keuzes.
      */
-    public function get_vrijekeuzes(): int {
+    public function get_vrijekeuzes(): int
+    {
         $this->set_db_properties();
         return $this->vrijekeuzes;
     }
-    
-    public function get_max_stemmen_per_ip(): ?int {
+
+    public function get_max_stemmen_per_ip(): ?int
+    {
         $this->set_db_properties();
         return $this->stemmen_per_ip;
     }
-    
-    public function is_artiest_eenmalig(): bool {
+
+    public function is_artiest_eenmalig(): bool
+    {
         $this->set_db_properties();
         return $this->artiest_eenmalig;
     }
 
-    public function heeft_gebruik_recaptcha(): bool {
+    public function heeft_gebruik_recaptcha(): bool
+    {
         $this->set_db_properties();
         return $this->recaptcha;
     }
-    
+
     /**
-     * 
      * @return list<string>
      */
-    public function get_notificatie_email_adressen(): array {
+    public function get_notificatie_email_adressen(): array
+    {
         $this->set_db_properties();
         return $this->notificatie_email_adressen;
     }
-    
+
     /**
      * Geeft alle velden die bij de lijst horen.
+     *
      * @return list<Veld>
      */
-    public function get_velden(): array {
-        if ( !isset($this->velden) ) {
+    public function get_velden(): array
+    {
+        if (!isset($this->velden)) {
             $this->velden = [];
             $query = <<<EOT
                 SELECT veld_id, verplicht
@@ -168,7 +185,7 @@ class Lijst {
                 WHERE lijst_id = {$this->get_id()}
                 ORDER BY veld_id
             EOT;
-            foreach ( DB::query($query) as $entry ) {
+            foreach (DB::query($query) as $entry) {
                 $id = $entry['veld_id'];
                 $verplicht = $entry['verplicht'] == 1;
                 $this->velden[] = new Veld($id, null, $verplicht);
@@ -180,7 +197,8 @@ class Lijst {
     /**
      * @return VeldenData
      */
-    public function get_alle_velden_data(): array {
+    public function get_alle_velden_data(): array
+    {
         $respons = [];
         $query = <<<EOT
         SELECT
@@ -194,28 +212,32 @@ class Lijst {
             AND lv.veld_id = v.id
         ORDER BY v.id
         EOT;
-        foreach ( DB::query($query) as [
-            'id' => $id,
-            'label' => $label,
-            'tonen' => $tonen,
-            'verplicht' => $verplicht
-        ] ) {
+        foreach (
+            DB::query($query) as [
+                'id' => $id,
+                'label' => $label,
+                'tonen' => $tonen,
+                'verplicht' => $verplicht,
+            ]
+        ) {
             $respons[] = [
                 'id' => (int)$id,
                 'tonen' => $tonen == 1,
                 'label' => $label,
-                'verplicht' => $verplicht == 1
+                'verplicht' => $verplicht == 1,
             ];
         }
         return $respons;
     }
-    
+
     /**
      * Geeft alle nummers van deze lijst
+     *
      * @return list<Nummer>
      */
-    public function get_nummers(): array {
-        if ( !isset($this->nummers) ) {
+    public function get_nummers(): array
+    {
+        if (!isset($this->nummers)) {
             $query = <<<EOT
             SELECT nummer_id
             FROM lijsten_nummers
@@ -229,8 +251,9 @@ class Lijst {
     /**
      * @return list<Stemmer>
      */
-    private function get_alle_stemmers(): array {
-        if ( !isset($this->stemmers) ) {
+    private function get_alle_stemmers(): array
+    {
+        if (!isset($this->stemmers)) {
             $query = <<<EOT
             SELECT id
             FROM stemmers
@@ -240,23 +263,26 @@ class Lijst {
         }
         return $this->stemmers;
     }
-    
+
     /**
      * Geeft de stemmers op deze lijst.
+     *
      * @param $van Neem alleen de stemmers die gestemd hebben vanaf deze datum (optioneel).
      * @param $tot Neem alleen de stemmers die gestemd hebben tot en met deze datum (optioneel).
+     *
      * @return list<Stemmer>
      */
-    public function get_stemmers( ?\DateTime $van = null, ?\DateTime $tot = null ): array {
-        if ( $van === null && $tot === null ) {
+    public function get_stemmers(?\DateTime $van = null, ?\DateTime $tot = null): array
+    {
+        if ($van === null && $tot === null) {
             return $this->get_alle_stemmers();
         }
 
         $where = [];
-        if ( isset($van) ) {
+        if (isset($van)) {
             $where[] = "DATE(timestamp) >= \"{$van->format('Y-m-d')}\"";
         }
-        if ( isset($tot) ) {
+        if (isset($tot)) {
             $where[] = "DATE(timestamp) <= \"{$tot->format('Y-m-d')}\"";
         }
         $where_str = implode(' AND ', $where);
@@ -272,9 +298,11 @@ class Lijst {
 
     /**
      * Geeft alle nummers van deze lijst gesorteerd op titel.
+     *
      * @return list<Nummer>
      */
-    public function get_nummers_sorteer_titels(): array {
+    public function get_nummers_sorteer_titels(): array
+    {
         $nummers = [];
         $sql = <<<EOT
             SELECT n.*
@@ -284,17 +312,19 @@ class Lijst {
                 AND nl.nummer_id = n.id
             ORDER BY n.titel
         EOT;
-        foreach ( DB::query($sql) as $entry ) {
+        foreach (DB::query($sql) as $entry) {
             $nummers[] = new Nummer($entry['id'], $entry);
         }
         return $nummers;
     }
-    
+
     /**
      * Geeft de stemmen op alle nummers in de lijst.
+     *
      * @param $nummer Neem alleen de stemmen op dit nummer mee (optioneel).
      * @param $van Neem alleen de stemmen vanaf deze datum (optioneel).
      * @param $tot Neem alleen de stemmen tot en met deze datum (optioneel).
+     *
      * @return list<StemmerNummer> Stemmen
      */
     public function get_stemmen(
@@ -303,17 +333,17 @@ class Lijst {
         ?\DateTime $tot = null
     ): array {
         $where = [];
-        if ( isset($nummer) ) {
+        if (isset($nummer)) {
             $where[] = "sn.nummer_id = {$nummer->get_id()}";
         }
         $on = [
             "s.lijst_id = {$this->get_id()}",
-            's.id = sn.stemmer_id'
+            's.id = sn.stemmer_id',
         ];
-        if ( isset($van) ) {
+        if (isset($van)) {
             $on[] = "DATE(s.timestamp) >= \"{$van->format('Y-m-d')}\"";
         }
-        if ( isset($tot) ) {
+        if (isset($tot)) {
             $on[] = "DATE(s.timestamp) <= \"{$tot->format('Y-m-d')}\"";
         }
         $where_str = implode(' AND ', $where);
@@ -326,7 +356,7 @@ class Lijst {
                 {$where_str}
         EOT;
         $stemmen = [];
-        foreach ( DB::query($query) as $entry ) {
+        foreach (DB::query($query) as $entry) {
             $stem_nummer = $nummer ?? new Nummer($entry['nummer_id']);
             $stemmen[] = new StemmerNummer(
                 $stem_nummer,
@@ -340,8 +370,10 @@ class Lijst {
     /**
      * Geeft alle nummers met ten minste één stem uit de lijst gesorteerd op het
      * aantal stemmen (hoogste aantal eerst).
+     *
      * @param $van Neem alleen de stemmen vanaf deze datum (optioneel).
      * @param $tot Neem alleen de stemmen tot en met deze datum (optioneel).
+     *
      * @return list<Nummer>
      */
     public function get_nummers_volgorde_aantal_stemmen(
@@ -349,10 +381,10 @@ class Lijst {
         ?\DateTime $tot = null
     ): array {
         $datumvoorwaarden = [];
-        if ( isset($van) ) {
+        if (isset($van)) {
             $datumvoorwaarden[] = "DATE(s.timestamp) >= \"{$van->format('Y-m-d')}\"";
         }
-        if ( isset($tot) ) {
+        if (isset($tot)) {
             $datumvoorwaarden[] = "DATE(s.timestamp) <= \"{$tot->format('Y-m-d')}\"";
         }
         $datumvoorwaarden_str = implode(' AND ', $datumvoorwaarden);
@@ -367,11 +399,12 @@ class Lijst {
         EOT;
         return DB::selectObjectLijst($query, Nummer::class);
     }
-    
+
     /**
      * Geeft de tekst die stemmers te zien krijgen na het uitbrengen van een stem.
      */
-    public function get_bedankt_tekst(): string {
+    public function get_bedankt_tekst(): string
+    {
         $this->set_db_properties();
         return $this->bedankt_tekst;
     }
@@ -379,7 +412,8 @@ class Lijst {
     /**
      * Geeft de instelling of stemmers gemaild worden na het stemmen.
      */
-    public function is_mail_stemmers(): bool {
+    public function is_mail_stemmers(): bool
+    {
         $this->set_db_properties();
         return $this->mail_stemmers;
     }
@@ -387,40 +421,49 @@ class Lijst {
     /**
      * Geeft de instelling voor het random sorteren van nummers in de lijst.
      */
-    public function is_random_volgorde(): bool {
+    public function is_random_volgorde(): bool
+    {
         $this->set_db_properties();
         return $this->random_volgorde;
     }
-    
+
     /**
-     * Zet alle klassevariabelen terug naar null, behalve het ID. Dit is nuttig wanneer de lijst is verwijderd of zodanig is aangepast dat de klassevariabelen niet meer overeenkomen met de database, en dus opnieuw moeten worden opgehaald.
-     * Wanneer er na de reset functies worden aangeroepen kunnen er twee dingen gebeuren:
+     * Zet alle klassevariabelen terug naar null, behalve het ID. Dit is nuttig
+     * wanneer de lijst is verwijderd of zodanig is aangepast dat de
+     * klassevariabelen niet meer overeenkomen met de database, en dus opnieuw
+     * moeten worden opgehaald.
+     * Wanneer er na de reset functies worden aangeroepen kunnen er twee dingen
+     * gebeuren:
      * 1. Data wordt opnieuw opgehaald en is consistent met de database
-     * 2. Bij het ophalen van data wordt geconstateerd dat de lijst niet meer bestaat en een foutmelding gegeven.
+     * 2. Bij het ophalen van data wordt geconstateerd dat de lijst niet meer
+     *    bestaat en een foutmelding gegeven.
      */
-    public function reset(): void {
+    public function reset(): void
+    {
         $this->db_props_set = false;
         unset($this->velden);
         unset($this->nummers);
         unset($this->stemmers);
     }
-    
+
     /**
      * Verwijdert de lijst. Koppelingen met nummers, velden, stemmen e.d. worden ook verwijderd
      */
-    public function remove(): void {
+    public function remove(): void
+    {
         DB::query(sprintf(
             'DELETE FROM lijsten WHERE id = %d',
             $this->get_id()
         ));
         $this->reset();
     }
-    
+
     /**
      * Vul het object met velden uit de database.
      */
-    private function set_db_properties(): void {
-        if ( !$this->db_props_set ) {
+    private function set_db_properties(): void
+    {
+        if (!$this->db_props_set) {
             $this->set_data(DB::selectSingleRow(sprintf(
                 'SELECT * FROM lijsten WHERE id = %d',
                 $this->get_id()
@@ -430,9 +473,11 @@ class Lijst {
 
     /**
      * Plaatst metadata in het object
+     *
      * @param DBData $data Data.
      */
-    private function set_data( array $data ): void {
+    private function set_data(array $data): void
+    {
         $this->actief = $data['actief'] == 1;
         $this->naam = $data['naam'];
         $this->minkeuzes = $data['minkeuzes'];
@@ -442,9 +487,9 @@ class Lijst {
         $this->artiest_eenmalig = $data['artiest_eenmalig'] == 1;
         $this->recaptcha = $data['recaptcha'] == 1;
         $this->notificatie_email_adressen = [];
-        foreach ( explode(',', $data['email']) as $adres ) {
+        foreach (explode(',', $data['email']) as $adres) {
             $adres = trim($adres);
-            if ( strlen($adres) > 0 ) {
+            if (strlen($adres) > 0) {
                 $this->notificatie_email_adressen[] = $adres;
             }
         }
@@ -457,9 +502,11 @@ class Lijst {
     /**
      * Maakt een nieuwe inactieve lijst met dezelfde eigenschappen als deze en
      * verplaatst alle stemmen op deze lijst daar naartoe.
+     *
      * @param $naam Naam van de nieuwe lijst.
      */
-    public function dupliceer( string $naam ): Lijst {
+    public function dupliceer(string $naam): Lijst
+    {
         // Nieuwe lijst maken.
         $query = <<<EOT
             INSERT INTO lijsten
@@ -533,16 +580,19 @@ class Lijst {
 
     /**
      * Maakt een object uit een id aangeleverd door HTTP GET of POST.
+     *
      * @param object $request HTTP-request.
+     *
      * @throws GeenLijstException
      */
-    public static function maak_uit_request( object $request ): self {
+    public static function maak_uit_request(object $request): self
+    {
         try {
-            $id = filter_var($request->lijst, FILTER_VALIDATE_INT);
-        } catch ( UndefinedPropertyException ) {
+            $id = filter_var($request->lijst, \FILTER_VALIDATE_INT);
+        } catch (UndefinedPropertyException) {
             throw new GeenLijstException('Geen lijst in invoer');
         }
-        if ( $id === false ) {
+        if ($id === false) {
             throw new GeenLijstException(sprintf(
                 'Ongeldige muzieklijst id: %s',
                 filter_var($request->lijst)
@@ -551,8 +601,9 @@ class Lijst {
         return new self($id);
     }
 
-    public function is_max_stemmen_per_ip_bereikt(): bool {
-        if ( $this->get_max_stemmen_per_ip() === null ) {
+    public function is_max_stemmen_per_ip_bereikt(): bool
+    {
+        if ($this->get_max_stemmen_per_ip() === null) {
             return false;
         }
         $query = <<<EOT
@@ -568,14 +619,16 @@ class Lijst {
 
     /**
      * Voegt een nummer toe aan de stemlijst.
+     *
      * @param $nummer
      */
-    public function nummer_toevoegen( Nummer $nummer ): void {
+    public function nummer_toevoegen(Nummer $nummer): void
+    {
         DB::insertMulti('lijsten_nummers', [
             'nummer_id' => $nummer->get_id(),
-            'lijst_id' => $this->get_id()
+            'lijst_id' => $this->get_id(),
         ]);
-        if ( isset($this->nummers) ) {
+        if (isset($this->nummers)) {
             $this->nummers[] = $nummer;
         }
     }
@@ -586,9 +639,11 @@ class Lijst {
      * deze lijst gekoppeld.
      * Alle stemmen op dit nummer in deze lijst worden verwijderd.
      * Stemmers die geen stemmen meer hebben worden verwijderd.
+     *
      * @param $nummer
      */
-    public function verwijder_nummer( Nummer $nummer ): void {
+    public function verwijder_nummer(Nummer $nummer): void
+    {
         // Verwijder de koppeling.
         $query = <<<EOT
         DELETE
@@ -617,12 +672,13 @@ class Lijst {
     /**
      * Verwijdert de lijst.
      */
-    public function verwijderen(): void {
+    public function verwijderen(): void
+    {
         DB::query("DELETE FROM lijsten WHERE id = {$this->get_id()}");
         verwijder_stemmers_zonder_stemmen();
         $this->reset();
     }
-    
+
     // /**
     //  * Maakt HTML voor een invoerveld in het formulier.
     //  * @param $id ID en naam van het veld.
@@ -675,15 +731,17 @@ class Lijst {
     //     return $doc->saveHTML();
     // }
 
-    public function set_veld( Veld $veld, bool $verplicht ): void {
+    public function set_veld(Veld $veld, bool $verplicht): void
+    {
         DB::insert_update_multi('lijsten_velden', [
             'lijst_id' => $this->get_id(),
             'veld_id' => $veld->get_id(),
-            'verplicht' => $verplicht
+            'verplicht' => $verplicht,
         ]);
     }
 
-    public function remove_veld( Veld $veld ): void {
+    public function remove_veld(Veld $veld): void
+    {
         $query = <<<EOT
         DELETE
         FROM lijsten_velden
@@ -697,7 +755,8 @@ class Lijst {
     /**
      * @return Resultaten
      */
-    public function get_resultaten(): array {
+    public function get_resultaten(): array
+    {
         $query = <<<EOT
         SELECT
             n.id as nummer_id,
@@ -750,28 +809,30 @@ class Lijst {
             RAND()
         EOT;
         $nummers = [];
-        foreach ( DB::query($query) as [
-            'nummer_id' => $nummer_id,
-            'is_vrijekeuze' => $is_vrijekeuze,
-            'titel' => $titel,
-            'artiest' => $artiest,
-            'stemmer_id' => $stemmer_id,
-            'ip' => $ip,
-            'behandeld' => $is_behandeld,
-            'toelichting' => $toelichting,
-            'timestamp' => $timestamp,
-            'is_geanonimiseerd' => $is_geanonimiseerd,
-            'veld_id' => $veld_id,
-            'type' => $type,
-            'waarde' => $waarde
-        ]) {
+        foreach (
+            DB::query($query) as [
+                'nummer_id' => $nummer_id,
+                'is_vrijekeuze' => $is_vrijekeuze,
+                'titel' => $titel,
+                'artiest' => $artiest,
+                'stemmer_id' => $stemmer_id,
+                'ip' => $ip,
+                'behandeld' => $is_behandeld,
+                'toelichting' => $toelichting,
+                'timestamp' => $timestamp,
+                'is_geanonimiseerd' => $is_geanonimiseerd,
+                'veld_id' => $veld_id,
+                'type' => $type,
+                'waarde' => $waarde,
+            ]
+        ) {
             $nummer_id = (int)$nummer_id;
             $is_vrijekeuze = $is_vrijekeuze == 1;
             $stemmer_id = (int)$stemmer_id;
             $is_behandeld = $is_behandeld == 1;
             $is_geanonimiseerd = $is_geanonimiseerd == 1;
             $veld_id = (int)$veld_id;
-            if ( $is_geanonimiseerd ) {
+            if ($is_geanonimiseerd) {
                 $ip = $toelichting = $waarde = '🔒';
                 $type = 'text';
             }
@@ -780,7 +841,7 @@ class Lijst {
                 'id' => $nummer_id,
                 'titel' => $titel,
                 'artiest' => $artiest,
-                'is_vrijekeuze' => $is_vrijekeuze
+                'is_vrijekeuze' => $is_vrijekeuze,
             ];
             $nummers[$nummer_id]['stemmen'][$stemmer_id]['stemmer_id'] = $stemmer_id;
             $nummers[$nummer_id]['stemmen'][$stemmer_id]['ip'] = $ip;
@@ -790,11 +851,11 @@ class Lijst {
             // $nummers[$nummer_id]['stemmen'][$stemmer_id]['is_geanonimiseerd'] = $is_geanonimiseerd;
             $nummers[$nummer_id]['stemmen'][$stemmer_id]['velden'][$veld_id] = [
                 'type' => $type,
-                'waarde' => $waarde
+                'waarde' => $waarde,
             ];
         }
-        foreach ( $nummers as $nummer_id => $nummer ) {
-            foreach ( $nummers[$nummer_id]['stemmen'] as $stemmer_id => $stemmer ) {
+        foreach ($nummers as $nummer_id => $nummer) {
+            foreach ($nummers[$nummer_id]['stemmen'] as $stemmer_id => $stemmer) {
                 $nummers[$nummer_id]['stemmen'][$stemmer_id]['velden'] = array_values($stemmer['velden']);
             }
             $nummers[$nummer_id]['stemmen'] = array_values($nummers[$nummer_id]['stemmen']);
@@ -804,13 +865,15 @@ class Lijst {
 
     /**
      * Zoekt een stemmer op deze lijst aan de hand van een e-mailadres.
+     *
      * @return Stemmer|null De stemmer, of null als die niet kan  worden
      * gevonden.
      */
-    public function get_stemmer_uit_email( string $email ): ?Stemmer {
+    public function get_stemmer_uit_email(string $email): ?Stemmer
+    {
         $e_email = DB::escape_string(
             \strtolower(
-                \filter_var($email, FILTER_SANITIZE_EMAIL)
+                \filter_var($email, \FILTER_SANITIZE_EMAIL)
             )
         );
         $query = <<<EOT
@@ -826,17 +889,19 @@ class Lijst {
         EOT;
         try {
             return DB::selectObjectLijst($query, Stemmer::class)[0];
-        } catch ( IndexException ) {
+        } catch (IndexException) {
             return null;
         }
     }
 
     /**
      * Zoekt een stemmer op deze lijst aan de hand van een telefoonnummer.
+     *
      * @return Stemmer|null De stemmer, of null als die niet kan  worden
      * gevonden.
      */
-    public function get_stemmer_uit_telefoonnummer( string $telefoonnummer ): ?Stemmer {
+    public function get_stemmer_uit_telefoonnummer(string $telefoonnummer): ?Stemmer
+    {
         $e_telefoonnummer = filter_telefoonnummer($telefoonnummer);
         $query = <<<EOT
         SELECT sn.stemmer_id
@@ -851,9 +916,8 @@ class Lijst {
         EOT;
         try {
             return DB::selectObjectLijst($query, Stemmer::class)[0];
-        } catch ( IndexException ) {
+        } catch (IndexException) {
             return null;
         }
     }
-
 }

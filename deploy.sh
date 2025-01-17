@@ -39,14 +39,16 @@ fi
 if [[ $mode == "dev" ]]; then
     if [[ $2 != "kort" ]]; then
         npm install npm@latest -g || exit 1
+        npm install || exit 1
         npx update-browserslist-db@latest || exit 1
         npm audit fix
-        npm install || exit 1
         export COMPOSER_NO_DEV=0
         /usr/local/bin/composer8.1 install || exit 1
         /usr/local/bin/composer8.1 check-platform-reqs || exit 1
         /usr/local/bin/composer8.1 dump-autoload || exit 1
+        php8.1 vendor/bin/parallel-lint bin/ install/ public/ src/php/ || exit 1
         vendor/bin/phpstan analyse || exit 1
+        php8.1 vendor/bin/phpcs --standard=ruleset.xml -n || exit 1
     fi
     delete_dist_bestanden
     npx tsc --noEmit || exit 1
@@ -66,7 +68,6 @@ if [[ $mode == "production" || $mode == "staging" ]]; then
     export COMPOSER_NO_DEV=1
     /usr/local/bin/composer8.1 install || exit 1
     /usr/local/bin/composer8.1 dump-autoload || exit 1
-    vendor/bin/phpstan analyse || exit 1
     git add -f vendor/ || exit 1
     
     # Webpack output

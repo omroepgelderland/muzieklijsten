@@ -1,8 +1,10 @@
 <?php
+
 /**
- * 
  * @author Remy Glaser <rglaser@gld.nl>
  */
+
+declare(strict_types=1);
 
 namespace muzieklijsten;
 
@@ -15,23 +17,24 @@ namespace muzieklijsten;
  *     is_geanonimiseerd: positive-int
  * }
  */
-class Stemmer {
-    
+class Stemmer
+{
     private int $id;
     private Lijst $lijst;
     private string $ip;
     private \DateTime $tijdstip;
     private bool $is_geanonimiseerd;
     private bool $db_props_set;
-    
+
     /**
      * @param $id ID van het object.
      * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
-    public function __construct( int $id, ?array $data = null ) {
+    public function __construct(int $id, ?array $data = null)
+    {
         $this->id = $id;
         $this->db_props_set = false;
-        if ( isset($data) ) {
+        if (isset($data)) {
             $this->set_data($data);
         }
     }
@@ -39,44 +42,53 @@ class Stemmer {
     /**
      * Geeft de lijst waar deze stemmer op gestemd heeft.
      */
-    public function get_lijst(): Lijst {
+    public function get_lijst(): Lijst
+    {
         $this->set_db_properties();
         return $this->lijst;
     }
 
-    public function is_geanonimiseerd(): bool {
+    public function is_geanonimiseerd(): bool
+    {
         $this->set_db_properties();
         return $this->is_geanonimiseerd;
     }
-    
-    public function get_id(): int {
+
+    public function get_id(): int
+    {
         return $this->id;
     }
-    
+
     /**
      * Geeft aan of twee stemmers dezelfde zijn. Wanneer $obj geen Stemmer is wordt false gegeven.
+     *
      * @param $obj Object om deze instantie mee te vergelijken
+     *
      * @return bool Of $obj dezelfde stemmer is als deze instantie
      */
-    public function equals( mixed $obj ): bool {
+    public function equals(mixed $obj): bool
+    {
         return ( $obj instanceof Stemmer && $obj->get_id() == $this->id );
     }
-    
-    public function get_ip(): string {
+
+    public function get_ip(): string
+    {
         $this->set_db_properties();
         return $this->ip;
     }
-    
-    public function get_tijdstip(): \DateTime {
+
+    public function get_tijdstip(): \DateTime
+    {
         $this->set_db_properties();
         return $this->tijdstip;
     }
-    
+
     /**
      * Vul het object met velden uit de database.
      */
-    private function set_db_properties(): void {
-        if ( !$this->db_props_set ) {
+    private function set_db_properties(): void
+    {
+        if (!$this->db_props_set) {
             $this->set_data(DB::selectSingleRow(sprintf(
                 'SELECT * FROM stemmers WHERE id = %d',
                 $this->get_id()
@@ -86,9 +98,11 @@ class Stemmer {
 
     /**
      * Plaatst metadata in het object
+     *
      * @param DBData $data Data.
      */
-    private function set_data( array $data ): void {
+    private function set_data(array $data): void
+    {
         $this->lijst = new Lijst($data['lijst_id']);
         $this->ip = $data['ip'];
         $this->tijdstip = $data['timestamp'];
@@ -103,10 +117,10 @@ class Stemmer {
         try {
             $id = DB::insertMulti('stemmers', [
                 'lijst_id' => $lijst->get_id(),
-                'ip' => $ip
+                'ip' => $ip,
             ]);
             return new self($id);
-        } catch ( SQLException_DataTooLong ) {
+        } catch (SQLException_DataTooLong) {
             throw new GebruikersException('De invoer van een van de tekstvelden is te lang.');
         }
     }
@@ -124,30 +138,35 @@ class Stemmer {
                 'nummer_id' => $nummer->get_id(),
                 'stemmer_id' => $this->get_id(),
                 'toelichting' => $toelichting,
-                'is_vrijekeuze' => $is_vrijekeuze
+                'is_vrijekeuze' => $is_vrijekeuze,
             ]);
             return new StemmerNummer($nummer, $this);
-        } catch ( SQLException_DataTooLong ) {
+        } catch (SQLException_DataTooLong) {
             $max = DB::get_max_kolom_lengte('stemmers_nummers', 'toelichting');
-            throw new GebruikersException("De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens.");
-        } catch ( SQLException_DupEntry ) {
+            throw new GebruikersException(
+                "De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens."
+            );
+        } catch (SQLException_DupEntry) {
             // Bestaande stem teruggeven
             return new StemmerNummer($nummer, $this);
         }
     }
-    
+
     /**
      * Maakt een object uit een id aangeleverd door HTTP POST.
+     *
      * @param object $request HTTP-request.
+     *
      * @throws Muzieklijsten_Exception
      */
-    public static function maak_uit_request( object $request ): self {
+    public static function maak_uit_request(object $request): self
+    {
         try {
-            $id = filter_var($request->stemmer, FILTER_VALIDATE_INT);
-        } catch ( UndefinedPropertyException ) {
+            $id = filter_var($request->stemmer, \FILTER_VALIDATE_INT);
+        } catch (UndefinedPropertyException) {
             throw new Muzieklijsten_Exception('Geen stemmer in invoer');
         }
-        if ( $id === false ) {
+        if ($id === false) {
             throw new Muzieklijsten_Exception(sprintf(
                 'Ongeldig stemmer id: %s',
                 filter_var($request->stemmer)
@@ -159,7 +178,8 @@ class Stemmer {
     /**
      * Verwijdert de stemmer en al haar stemmen.
      */
-    public function verwijderen(): void {
+    public function verwijderen(): void
+    {
         DB::query("DELETE FROM stemmers WHERE id = {$this->get_id()}");
         $this->db_props_set = false;
     }
@@ -167,19 +187,21 @@ class Stemmer {
     /**
      * Mailt een notificatie van deze stem naar de redactie.
      */
-    public function mail_redactie(): void {
+    public function mail_redactie(): void
+    {
         $lijst = $this->get_lijst();
         // Velden
         $velden = [];
-        foreach ( $lijst->get_velden() as $veld ) {
+        foreach ($lijst->get_velden() as $veld) {
             try {
                 $velden[] = "{$veld->get_label()}: {$veld->get_stemmer_waarde($this)}";
-            } catch ( Muzieklijsten_Exception $e ) {}
+            } catch (Muzieklijsten_Exception $e) {
+            }
         }
         $velden_str = implode("\n", $velden);
 
         $nummers_lijst = [];
-        foreach ( $this->get_stemmen() as $stem ) {
+        foreach ($this->get_stemmen() as $stem) {
             $nummers_lijst[] = "{$stem->nummer->get_titel()} - {$stem->nummer->get_artiest()}";
             $nummers_lijst[] = "\tToelichting: {$stem->get_toelichting()}";
             $nummers_lijst[] = '';
@@ -196,7 +218,7 @@ class Stemmer {
 
         $onderwerp = "Er is gestemd - {$lijst->get_naam()}";
 
-        if ( count($lijst->get_notificatie_email_adressen()) > 0 ) {
+        if (count($lijst->get_notificatie_email_adressen()) > 0) {
             stuur_mail(
                 $lijst->get_notificatie_email_adressen(),
                 [],
@@ -205,34 +227,36 @@ class Stemmer {
                 $tekst_bericht
             );
         }
-
     }
 
     /**
      * Mailt een bevestiging naar de stemmer, als dat is geconfigureerd in de
      * lijst en als de stemmer een e-mailadres heeft opgegeven.
      */
-    public function mail_stemmer(): void {
+    public function mail_stemmer(): void
+    {
         $lijst = $this->get_lijst();
-        if ( !$lijst->is_mail_stemmers() ) {
+        if (!$lijst->is_mail_stemmers()) {
             return;
         }
 
         $onderwerp = "Je stem voor {$lijst->get_naam()}";
         $naam = 'stemmer';
-        foreach ( $lijst->get_velden() as $veld ) {
-            if ( $veld->get_label() === 'Naam' ) {
+        foreach ($lijst->get_velden() as $veld) {
+            if ($veld->get_label() === 'Naam') {
                 try {
                     $naam = $veld->get_stemmer_waarde($this);
-                } catch ( Muzieklijsten_Exception ) {}
+                } catch (Muzieklijsten_Exception) {
+                }
             }
-            if ( $veld->get_label() === 'E‑mailadres' || $veld->get_label() === 'E-mailadres' ) {
+            if ($veld->get_label() === 'E‑mailadres' || $veld->get_label() === 'E-mailadres') {
                 try {
                     $email = $veld->get_stemmer_waarde($this);
-                } catch ( Muzieklijsten_Exception ) {}
+                } catch (Muzieklijsten_Exception) {
+                }
             }
         }
-        if ( !isset($email) ) {
+        if (!isset($email)) {
             return;
         }
 
@@ -265,13 +289,13 @@ class Stemmer {
 
         $e_keuzes = $dom->getElementById('keuzes');
         $e_keuzes->removeAttribute('id');
-        foreach ( $this->get_stemmen() as $stem ) {
+        foreach ($this->get_stemmen() as $stem) {
             $e_strong = $e_keuzes->appendChild($dom->createElement('strong'));
             $e_strong->appendChild($dom->createTextNode(
                 "{$stem->nummer->get_artiest()} – {$stem->nummer->get_titel()}"
             ));
             $toelichting = $stem->get_toelichting();
-            if ( $toelichting !== null && $toelichting !== '' ) {
+            if ($toelichting !== null && $toelichting !== '') {
                 /** @var \DOMElement $e_span */
                 $e_span = $e_keuzes->appendChild($dom->createElement('span'));
                 $e_span->setAttribute('style', 'margin-left: 20px; font-style: italic;');
@@ -296,7 +320,8 @@ class Stemmer {
     /**
      * @return list<StemmerNummer>
      */
-    public function get_stemmen(): array {
+    public function get_stemmen(): array
+    {
         $query = <<<EOT
         SELECT *
         FROM stemmers_nummers
@@ -304,7 +329,7 @@ class Stemmer {
             stemmer_id = {$this->get_id()}
         EOT;
         $stemmen = [];
-        foreach ( DB::query($query) as $entry ) {
+        foreach (DB::query($query) as $entry) {
             $stemmen[] = new StemmerNummer(
                 new Nummer($entry['nummer_id']),
                 $this,
@@ -317,7 +342,8 @@ class Stemmer {
     /**
      * Verwijdert alle stemmen van deze stemmer op de lijst.
      */
-    public function verwijder_stemmen(): void {
+    public function verwijder_stemmen(): void
+    {
         $query = <<<EOT
         DELETE FROM stemmers_nummers
         WHERE
@@ -330,7 +356,8 @@ class Stemmer {
     /**
      * Verwijdert de inhoud van alle formuliervelden van deze stemmer.
      */
-    public function verwijder_velden(): void {
+    public function verwijder_velden(): void
+    {
         $query = <<<EOT
         DELETE FROM stemmers_velden
         WHERE
@@ -342,11 +369,13 @@ class Stemmer {
     /**
      * Anonimiseer tekstinvoeren van deze stemmer.
      */
-    public function anonimiseer(): void {
+    public function anonimiseer(): void
+    {
         DB::updateMulti(
-            'stemmers', [
+            'stemmers',
+            [
                 'ip' => anonimiseer($this->get_ip()),
-                'is_geanonimiseerd' => true
+                'is_geanonimiseerd' => true,
             ],
             "id = {$this->id}"
         );
@@ -358,7 +387,8 @@ class Stemmer {
     /**
      * Anonimiseer de toelichtingen die deze stemmer per nummer heeft ingevuld.
      */
-    private function anonimiseer_toelichtingen(): void {
+    private function anonimiseer_toelichtingen(): void
+    {
         $query = <<<EOT
             SELECT nummer_id, toelichting
             FROM stemmers_nummers
@@ -367,7 +397,7 @@ class Stemmer {
                 AND toelichting IS NOT NULL
                 AND toelichting != ''
         EOT;
-        foreach ( DB::query($query) as ['nummer_id' => $nummer_id, 'toelichting' => $toelichting] ) {
+        foreach (DB::query($query) as ['nummer_id' => $nummer_id, 'toelichting' => $toelichting]) {
             DB::updateMulti(
                 'stemmers_nummers',
                 ['toelichting' => anonimiseer($toelichting)],
@@ -379,7 +409,8 @@ class Stemmer {
     /**
      * Anonimiseer de formuliervelden.
      */
-    private function anonimiseer_velden(): void {
+    private function anonimiseer_velden(): void
+    {
         $query = <<<EOT
             SELECT veld_id, waarde
             FROM stemmers_velden
@@ -388,7 +419,7 @@ class Stemmer {
                 AND waarde IS NOT NULL
                 AND waarde != ''
         EOT;
-        foreach ( DB::query($query) as ['veld_id' => $veld_id, 'waarde' => $waarde] ) {
+        foreach (DB::query($query) as ['veld_id' => $veld_id, 'waarde' => $waarde]) {
             DB::updateMulti(
                 'stemmers_velden',
                 ['waarde' => anonimiseer($waarde)],
@@ -396,5 +427,4 @@ class Stemmer {
             );
         }
     }
-    
 }

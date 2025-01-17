@@ -1,12 +1,14 @@
 <?php
+
 /**
- * 
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 set_env();
 
@@ -25,7 +27,7 @@ try {
     $nummers_meta = [];
     $nummers_html_str = '';
     $i = 1;
-    foreach( $res as $r ) {
+    foreach ($res as $r) {
         $nummers_meta[] = sprintf(
             '%d) %s - %s',
             $i,
@@ -45,8 +47,8 @@ try {
     $og_url = "{$root_url}fbshare.php?stemmer={$stemmer->get_id()}";
     $og_image = "{$root_url}afbeeldingen/fbshare_top100.jpg";
     $jaar = (new \DateTime())->format('Y');
-} catch ( \Throwable $e ) {
-    Log::err($e);
+} catch (\Throwable $e) {
+    Log::err((string)$e);
     throw $e;
 }
 

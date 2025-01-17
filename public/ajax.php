@@ -1,18 +1,20 @@
 <?php
+
 /**
- * 
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 set_env();
 
 try {
     DB::disableAutocommit();
-    if ( $_SERVER['CONTENT_TYPE'] === 'application/json' ) {
+    if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
         $request = json_decode(file_get_contents('php://input'));
     } else {
         $request = json_decode(json_encode($_POST));
@@ -22,28 +24,28 @@ try {
     try {
         $respons = [
             'data' => $ajax->$functie(),
-            'error' => false
+            'error' => false,
         ];
-    } catch ( \Error $e ) {
-        if ( \str_starts_with($e->getMessage(), 'Call to private method') ) {
+    } catch (\Error $e) {
+        if (\str_starts_with($e->getMessage(), 'Call to private method')) {
             throw new Muzieklijsten_Exception("Onbekende ajax-functie: \"{$functie}\"");
         } else {
             throw $e;
         }
     }
     DB::commit();
-} catch ( GebruikersException $e ) {
+} catch (GebruikersException $e) {
     $respons = [
         'error' => true,
-        'errordata' => $e->getMessage()
+        'errordata' => $e->getMessage(),
     ];
-} catch ( \Throwable $e ) {
-    Log::err($e);
+} catch (\Throwable $e) {
+    Log::err((string)$e);
     $respons = [
         'error' => true,
         'errordata' => is_dev()
             ? $e->getMessage()
-            : 'fout'
+            : 'fout',
     ];
 }
 header('Content-Type: application/json');

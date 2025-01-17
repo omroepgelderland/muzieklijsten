@@ -1,13 +1,16 @@
 <?php
+
 /**
  * Anonimiseert persoonlijke data van stemmers.
- * 
+ *
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
- namespace muzieklijsten;
+declare(strict_types=1);
 
-require_once __DIR__.'/../vendor/autoload.php';
+namespace muzieklijsten;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 set_env();
 
@@ -21,7 +24,7 @@ $query = <<<EOT
         is_geanonimiseerd = 0
         AND timestamp < "{$toen->format('Y-m-d H:i:s')}"
 EOT;
-foreach ( DB::selectObjectLijst($query, Stemmer::class) as $stemmer ) {
+foreach (DB::selectObjectLijst($query, Stemmer::class) as $stemmer) {
     $stemmer->anonimiseer();
 }
 verwijder_ongekoppelde_vrije_keuze_nummers();

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Helper functions for building a DataTables server-side processing SQL query
  *
@@ -16,10 +17,8 @@
 
 namespace muzieklijsten;
 
-use mysqli_result;
-
-class SSP {
-
+class SSP
+{
     private object $request;
     private array $kolommen;
     private Lijst $lijst;
@@ -36,15 +35,17 @@ class SSP {
     /**
      * Create the data output array for the DataTables rows
      *
-     *  @param $data Data from the SQL get
-     *  @return array Formatted data in a row based format
+     * @param $data Data from the SQL get
+     *
+     * @return array Formatted data in a row based format
      */
-    protected function data_output ( \mysqli_result $data ): array {
+    protected function data_output(\mysqli_result $data): array
+    {
         $out = [];
 
-        foreach( $data as $entry ) {
+        foreach ($data as $entry) {
             $row = [];
-            foreach ( $this->kolommen as $kolom ) {
+            foreach ($this->kolommen as $kolom) {
                 $row[$kolom['dt']] = $entry[$kolom['db']];
             }
             $out[] = $row;
@@ -57,19 +58,17 @@ class SSP {
      * Paging
      *
      * Construct the LIMIT clause for server-side processing SQL query
-     *
      */
     protected function limit()
     {
-        $start = filter_var($this->request->start, FILTER_VALIDATE_INT);
-        $length = filter_var($this->request->length, FILTER_VALIDATE_INT);
-        if ( $start !== false && $start !== null && $length !== -1 ) {
+        $start = filter_var($this->request->start, \FILTER_VALIDATE_INT);
+        $length = filter_var($this->request->length, \FILTER_VALIDATE_INT);
+        if ($start !== false && $start !== null && $length !== -1) {
             return "LIMIT {$start}, {$length}";
         } else {
             return '';
         }
     }
-
 
     /**
      * Ordering
@@ -78,39 +77,39 @@ class SSP {
      *
      *  @return string SQL order by clause
      */
-    protected function order() {
+    protected function order()
+    {
         try {
             $is_random_volgorde = $this->get_lijst()->is_random_volgorde();
-        } catch ( GeenLijstException ) {
+        } catch (GeenLijstException) {
             $is_random_volgorde = false;
         }
-        if ( $is_random_volgorde ) {
+        if ($is_random_volgorde) {
             return "ORDER BY RAND({$this->request->random_seed})";
-        }
-        else if ( isset($this->request->order) && count($this->request->order) > 0 ) {
+        } elseif (isset($this->request->order) && count($this->request->order) > 0) {
             $orderBy = [];
-            $dtColumns = self::pluck( $this->kolommen, 'dt' );
+            $dtColumns = self::pluck($this->kolommen, 'dt');
 
-            foreach ( $this->request->order as $kolom_order ) {
+            foreach ($this->request->order as $kolom_order) {
             // for ( $i=0, $ien=count($order_request) ; $i<$ien ; $i++ ) {
                 // Convert the column index into the column data property
-                $columnIdx = filter_var($kolom_order->column, FILTER_VALIDATE_INT);
+                $columnIdx = filter_var($kolom_order->column, \FILTER_VALIDATE_INT);
                 $requestColumn = $this->request->columns[$columnIdx];
 
-                $columnIdx = array_search( $requestColumn->data, $dtColumns );
+                $columnIdx = array_search($requestColumn->data, $dtColumns);
                 $column = $this->kolommen[$columnIdx];
 
-                if ( filter_var($requestColumn->orderable, FILTER_VALIDATE_BOOLEAN) ) {
+                if (filter_var($requestColumn->orderable, \FILTER_VALIDATE_BOOLEAN)) {
                     $dir = $kolom_order->dir === 'asc' ?
                         'ASC' :
                         'DESC';
 
-                    $orderBy[] = '`'.$column['db'].'` '.$dir;
+                    $orderBy[] = '`' . $column['db'] . '` ' . $dir;
                 }
             }
 
-            if ( count($orderBy) > 0 ) {
-                return 'ORDER BY '.implode(', ', $orderBy);
+            if (count($orderBy) > 0) {
+                return 'ORDER BY ' . implode(', ', $orderBy);
             } else {
                 return '';
             }
@@ -118,7 +117,6 @@ class SSP {
             return '';
         }
     }
-
 
     /**
      * Searching / Filtering
@@ -131,36 +129,37 @@ class SSP {
      *
      *  @return string SQL where clause
      */
-    protected function filter (): string {
+    protected function filter(): string
+    {
         $search_value = DB::escape_string($this->request->search->value);
         $globalSearch = [];
         $columnSearch = [];
-        $dtColumns = self::pluck( $this->kolommen, 'dt' );
+        $dtColumns = self::pluck($this->kolommen, 'dt');
 
-        if ( $this->is_vrijekeuze() !== null ) {
+        if ($this->is_vrijekeuze() !== null) {
             $is_vrijekeuze = (int)$this->is_vrijekeuze();
             $columnSearch[] = "is_vrijekeuze = {$is_vrijekeuze}";
         }
 
-        if ( isset($this->request->search) && $search_value != '' ) {
-            foreach ( $this->request->columns as $requestColumn ) {
+        if (isset($this->request->search) && $search_value != '') {
+            foreach ($this->request->columns as $requestColumn) {
                 $columnIdx = array_search($requestColumn->data, $dtColumns);
                 $column = $this->kolommen[$columnIdx];
 
-                if ( $requestColumn->searchable ) {
+                if ($requestColumn->searchable) {
                     $globalSearch[] = "`{$column['db']}` LIKE \"%{$search_value}%\"";
                 }
             }
         }
 
         // Individual column filtering
-        foreach( $this->request->columns as $requestColumn ) {
+        foreach ($this->request->columns as $requestColumn) {
             $columnIdx = array_search($requestColumn->data, $dtColumns);
             $column = $this->kolommen[$columnIdx];
 
             $str = DB::escape_string($requestColumn->search->value);
 
-            if ( $requestColumn->searchable && $str != '' ) {
+            if ($requestColumn->searchable && $str != '') {
                 $columnSearch[] = "`{$column['db']}` LIKE \"%{$str}%\"";
             }
         }
@@ -168,23 +167,22 @@ class SSP {
         // Combine the filters into a single string
         $where = '';
 
-        if ( count( $globalSearch ) > 0 ) {
-            $where = '('.implode(' OR ', $globalSearch).')';
+        if (count($globalSearch) > 0) {
+            $where = '(' . implode(' OR ', $globalSearch) . ')';
         }
 
-        if ( count( $columnSearch ) > 0 ) {
+        if (count($columnSearch) > 0) {
             $where = $where === '' ?
                 implode(' AND ', $columnSearch) :
-                $where .' AND '. implode(' AND ', $columnSearch);
+                $where . ' AND ' . implode(' AND ', $columnSearch);
         }
 
-        if ( $where !== '' ) {
-            $where = 'WHERE '.$where;
+        if ($where !== '') {
+            $where = 'WHERE ' . $where;
         }
 
         return $where;
     }
-
 
     /**
      * Perform the SQL queries needed for an server-side processing requested,
@@ -193,10 +191,11 @@ class SSP {
      * in response to an SSP request, or can be modified if needed before
      * sending back to the client.
      *
-     *  @return array          Server-side processing response array
+     * @return array          Server-side processing response array
+     *
      * @throws GeenLijstException
      */
-    public function simple (): array
+    public function simple(): array
     {
         $db = DB::getDB();
 
@@ -228,7 +227,7 @@ class SSP {
                 SELECT COUNT(n.id) 
                 {$basis_query}
             EOT;
-        } catch ( Muzieklijsten_Exception $e ) {
+        } catch (Muzieklijsten_Exception $e) {
             $select = implode("`, `", self::pluck($this->kolommen, 'db'));
             $basis_query = "FROM nummers";
             // Resultaten
@@ -248,7 +247,7 @@ class SSP {
             EOT;
         }
         $data = DB::query($query);
-        
+
         // Data set length after filtering
         $recordsFiltered = DB::selectSingle($count_query);
 
@@ -257,25 +256,27 @@ class SSP {
 
         // Output
         return [
-            'draw'            => filter_var($this->request->draw, FILTER_VALIDATE_INT),
+            'draw'            => filter_var($this->request->draw, \FILTER_VALIDATE_INT),
             'recordsTotal'    => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
-            'data'            => $this->data_output($data)
+            'data'            => $this->data_output($data),
         ];
     }
 
     /**
-     * Pull a particular property from each assoc. array in a numeric array, 
+     * Pull a particular property from each assoc. array in a numeric array,
      * returning and array of the property values from each item.
      *
-     *  @param  $a    Array to get data from
-     *  @param  $prop Property to read
-     *  @return array        Array of property values
+     * @param $a    Array to get data from
+     * @param $prop Property to read
+     *
+     * @return array        Array of property values
      */
-    protected static function pluck( array $a, string $prop ): array {
+    protected static function pluck(array $a, string $prop): array
+    {
         $out = [];
 
-        for ( $i=0, $len=count($a) ; $i<$len ; $i++ ) {
+        for ($i = 0, $len = count($a); $i < $len; $i++) {
             $out[] = $a[$i][$prop];
         }
 
@@ -283,24 +284,26 @@ class SSP {
     }
 
     /**
-     * 
      * @throws GeenLijstException
      */
-    private function get_lijst(): Lijst {
+    private function get_lijst(): Lijst
+    {
         $this->lijst ??= Lijst::maak_uit_request($this->request);
         return $this->lijst;
     }
 
     /**
      * Geeft aan of vrije keuzenummers mogen voorkomen in het resultaat.
+     *
      * @return bool True is alleen vrije keuzes, False is geen vrije keuzes,
      * null is geen filter.
      */
-    private function is_vrijekeuze(): bool | null {
-        if ( !isset($this->is_vrijekeuze) ) {
+    private function is_vrijekeuze(): bool | null
+    {
+        if (!isset($this->is_vrijekeuze)) {
             try {
                 $this->is_vrijekeuze = $this->request->is_vrijekeuze;
-            } catch ( UndefinedPropertyException ) {
+            } catch (UndefinedPropertyException) {
                 $this->is_vrijekeuze = null;
             }
         }

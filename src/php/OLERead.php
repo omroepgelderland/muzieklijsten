@@ -8,6 +8,22 @@ namespace muzieklijsten;
 
 class OLERead
 {
+    private const NUM_BIG_BLOCK_DEPOT_BLOCKS_POS = 0x2c;
+    private const SMALL_BLOCK_DEPOT_BLOCK_POS = 0x3c;
+    private const ROOT_START_BLOCK_POS = 0x30;
+    private const BIG_BLOCK_SIZE = 0x200;
+    private const SMALL_BLOCK_SIZE = 0x40;
+    private const EXTENSION_BLOCK_POS = 0x44;
+    private const NUM_EXTENSION_BLOCK_POS = 0x48;
+    private const PROPERTY_STORAGE_BLOCK_SIZE = 0x80;
+    private const BIG_BLOCK_DEPOT_BLOCKS_POS = 0x4c;
+    private const SMALL_BLOCK_THRESHOLD = 0x1000;
+    private const SIZE_OF_NAME_POS = 0x40;
+    private const TYPE_POS = 0x42;
+    private const START_BLOCK_POS = 0x74;
+    private const SIZE_POS = 0x78;
+    private const IDENTIFIER_OLE = pack("CCCCCCCC", 0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
+
     public $data = '';
     public $error;
     public $numBigBlockDepotBlocks;
@@ -36,22 +52,22 @@ class OLERead
             return false;
         }
 
-        if (substr($this->data, 0, 8) != \IDENTIFIER_OLE) {
+        if (substr($this->data, 0, 8) != self::IDENTIFIER_OLE) {
             $this->error = 1;
             return false;
         }
-        $this->numBigBlockDepotBlocks = self::GetInt4d($this->data, \NUM_BIG_BLOCK_DEPOT_BLOCKS_POS);
-        $this->sbdStartBlock = self::GetInt4d($this->data, \SMALL_BLOCK_DEPOT_BLOCK_POS);
-        $this->rootStartBlock = self::GetInt4d($this->data, \ROOT_START_BLOCK_POS);
-        $this->extensionBlock = self::GetInt4d($this->data, \EXTENSION_BLOCK_POS);
-        $this->numExtensionBlocks = self::GetInt4d($this->data, \NUM_EXTENSION_BLOCK_POS);
+        $this->numBigBlockDepotBlocks = self::GetInt4d($this->data, self::NUM_BIG_BLOCK_DEPOT_BLOCKS_POS);
+        $this->sbdStartBlock = self::GetInt4d($this->data, self::SMALL_BLOCK_DEPOT_BLOCK_POS);
+        $this->rootStartBlock = self::GetInt4d($this->data, self::ROOT_START_BLOCK_POS);
+        $this->extensionBlock = self::GetInt4d($this->data, self::EXTENSION_BLOCK_POS);
+        $this->numExtensionBlocks = self::GetInt4d($this->data, self::NUM_EXTENSION_BLOCK_POS);
 
         $bigBlockDepotBlocks = [];
-        $pos = \BIG_BLOCK_DEPOT_BLOCKS_POS;
+        $pos = self::BIG_BLOCK_DEPOT_BLOCKS_POS;
         $bbdBlocks = $this->numBigBlockDepotBlocks;
 
         if ($this->numExtensionBlocks != 0) {
-            $bbdBlocks = (\BIG_BLOCK_SIZE - \BIG_BLOCK_DEPOT_BLOCKS_POS) / 4;
+            $bbdBlocks = (self::BIG_BLOCK_SIZE - self::BIG_BLOCK_DEPOT_BLOCKS_POS) / 4;
         }
 
         for ($i = 0; $i < $bbdBlocks; $i++) {
@@ -61,8 +77,8 @@ class OLERead
 
 
         for ($j = 0; $j < $this->numExtensionBlocks; $j++) {
-            $pos = ($this->extensionBlock + 1) * \BIG_BLOCK_SIZE;
-            $blocksToRead = min($this->numBigBlockDepotBlocks - $bbdBlocks, \BIG_BLOCK_SIZE / 4 - 1);
+            $pos = ($this->extensionBlock + 1) * self::BIG_BLOCK_SIZE;
+            $blocksToRead = min($this->numBigBlockDepotBlocks - $bbdBlocks, self::BIG_BLOCK_SIZE / 4 - 1);
 
             for ($i = $bbdBlocks; $i < $bbdBlocks + $blocksToRead; $i++) {
                 $bigBlockDepotBlocks[$i] = self::GetInt4d($this->data, $pos);
@@ -80,9 +96,9 @@ class OLERead
         $this->bigBlockChain = [];
 
         for ($i = 0; $i < $this->numBigBlockDepotBlocks; $i++) {
-            $pos = ($bigBlockDepotBlocks[$i] + 1) * \BIG_BLOCK_SIZE;
+            $pos = ($bigBlockDepotBlocks[$i] + 1) * self::BIG_BLOCK_SIZE;
 
-            for ($j = 0; $j < \BIG_BLOCK_SIZE / 4; $j++) {
+            for ($j = 0; $j < self::BIG_BLOCK_SIZE / 4; $j++) {
                 $this->bigBlockChain[$index] = self::GetInt4d($this->data, $pos);
                 $pos += 4;
                 $index++;
@@ -95,9 +111,9 @@ class OLERead
         $this->smallBlockChain = [];
 
         while ($sbdBlock != -2) {
-            $pos = ($sbdBlock + 1) * \BIG_BLOCK_SIZE;
+            $pos = ($sbdBlock + 1) * self::BIG_BLOCK_SIZE;
 
-            for ($j = 0; $j < \BIG_BLOCK_SIZE / 4; $j++) {
+            for ($j = 0; $j < self::BIG_BLOCK_SIZE / 4; $j++) {
                 $this->smallBlockChain[$index] = self::GetInt4d($this->data, $pos);
                 $pos += 4;
                 $index++;
@@ -120,8 +136,8 @@ class OLERead
         $data = '';
 
         while ($block != -2) {
-            $pos = ($block + 1) * \BIG_BLOCK_SIZE;
-            $data = $data . substr($this->data, $pos, \BIG_BLOCK_SIZE);
+            $pos = ($block + 1) * self::BIG_BLOCK_SIZE;
+            $data = $data . substr($this->data, $pos, self::BIG_BLOCK_SIZE);
             $block = $this->bigBlockChain[$block];
         }
         return $data;
@@ -132,13 +148,13 @@ class OLERead
         $offset = 0;
 
         while ($offset < strlen($this->entry)) {
-              $d = substr($this->entry, $offset, \PROPERTY_STORAGE_BLOCK_SIZE);
+              $d = substr($this->entry, $offset, self::PROPERTY_STORAGE_BLOCK_SIZE);
 
-              $nameSize = ord($d[\SIZE_OF_NAME_POS]) | (ord($d[\SIZE_OF_NAME_POS + 1]) << 8);
+              $nameSize = ord($d[self::SIZE_OF_NAME_POS]) | (ord($d[self::SIZE_OF_NAME_POS + 1]) << 8);
 
-              $type = ord($d[\TYPE_POS]);
-              $startBlock = self::GetInt4d($d, \START_BLOCK_POS);
-              $size = self::GetInt4d($d, \SIZE_POS);
+              $type = ord($d[self::TYPE_POS]);
+              $startBlock = self::GetInt4d($d, self::START_BLOCK_POS);
+              $size = self::GetInt4d($d, self::SIZE_POS);
 
             $name = '';
             for ($i = 0; $i < $nameSize; $i++) {
@@ -162,29 +178,29 @@ class OLERead
                 $this->rootentry = count($this->props) - 1;
             }
 
-            $offset += \PROPERTY_STORAGE_BLOCK_SIZE;
+            $offset += self::PROPERTY_STORAGE_BLOCK_SIZE;
         }
     }
 
     public function getWorkBook()
     {
-        if ($this->props[$this->wrkbook]['size'] < \SMALL_BLOCK_THRESHOLD) {
+        if ($this->props[$this->wrkbook]['size'] < self::SMALL_BLOCK_THRESHOLD) {
             $rootdata = $this->__readData($this->props[$this->rootentry]['startBlock']);
 
             $streamData = '';
             $block = $this->props[$this->wrkbook]['startBlock'];
             $pos = 0;
             while ($block != -2) {
-                  $pos = $block * \SMALL_BLOCK_SIZE;
-                $streamData .= substr($rootdata, $pos, \SMALL_BLOCK_SIZE);
+                  $pos = $block * self::SMALL_BLOCK_SIZE;
+                $streamData .= substr($rootdata, $pos, self::SMALL_BLOCK_SIZE);
 
                 $block = $this->smallBlockChain[$block];
             }
 
             return $streamData;
         } else {
-            $numBlocks = $this->props[$this->wrkbook]['size'] / \BIG_BLOCK_SIZE;
-            if ($this->props[$this->wrkbook]['size'] % \BIG_BLOCK_SIZE != 0) {
+            $numBlocks = $this->props[$this->wrkbook]['size'] / self::BIG_BLOCK_SIZE;
+            if ($this->props[$this->wrkbook]['size'] % self::BIG_BLOCK_SIZE != 0) {
                 $numBlocks++;
             }
 
@@ -197,8 +213,8 @@ class OLERead
             $pos = 0;
             //echo "block = $block";
             while ($block != -2) {
-                $pos = ($block + 1) * \BIG_BLOCK_SIZE;
-                $streamData .= substr($this->data, $pos, \BIG_BLOCK_SIZE);
+                $pos = ($block + 1) * self::BIG_BLOCK_SIZE;
+                $streamData .= substr($this->data, $pos, self::BIG_BLOCK_SIZE);
                 $block = $this->bigBlockChain[$block];
             }
             return $streamData;

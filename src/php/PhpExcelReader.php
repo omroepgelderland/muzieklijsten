@@ -24,6 +24,46 @@ namespace muzieklijsten;
 
 class PhpExcelReader
 {
+    private const BIFF8 = 0x600;
+    private const BIFF7 = 0x500;
+    private const WORKBOOKGLOBALS = 0x5;
+    private const WORKSHEET = 0x10;
+    private const TYPE_BOF = 0x809;
+    private const TYPE_EOF = 0x0a;
+    private const TYPE_BOUNDSHEET = 0x85;
+    private const TYPE_DIMENSION = 0x200;
+    private const TYPE_ROW = 0x208;
+    private const TYPE_DBCELL = 0xd7;
+    private const TYPE_FILEPASS = 0x2f;
+    private const TYPE_NOTE = 0x1c;
+    private const TYPE_TXO = 0x1b6;
+    private const TYPE_RK = 0x7e;
+    private const TYPE_RK2 = 0x27e;
+    private const TYPE_MULRK = 0xbd;
+    private const TYPE_MULBLANK = 0xbe;
+    private const TYPE_INDEX = 0x20b;
+    private const TYPE_SST = 0xfc;
+    private const TYPE_EXTSST = 0xff;
+    private const TYPE_CONTINUE = 0x3c;
+    private const TYPE_LABEL = 0x204;
+    private const TYPE_LABELSST = 0xfd;
+    private const TYPE_NUMBER = 0x203;
+    private const TYPE_NAME = 0x18;
+    private const TYPE_ARRAY = 0x221;
+    private const TYPE_STRING = 0x207;
+    private const TYPE_FORMULA = 0x406;
+    private const TYPE_FORMULA2 = 0x6;
+    private const TYPE_FORMAT = 0x41e;
+    private const TYPE_XF = 0xe0;
+    private const TYPE_BOOLERR = 0x205;
+    private const TYPE_UNKNOWN = 0xffff;
+    private const TYPE_NINETEENFOUR = 0x22;
+    private const TYPE_MERGEDCELLS = 0xE5;
+    private const UTCOFFSETDAYS = 25569;
+    private const UTCOFFSETDAYS1904 = 24107;
+    private const MSINADAY = 86400;
+    private const DEF_NUM_FORMAT = "%s";
+
     /**
      * Array of worksheets found
      */
@@ -68,7 +108,7 @@ class PhpExcelReader
     /**
      * Default number format
      */
-    private $_defaultFormat = \SPREADSHEET_EXCEL_READER_DEF_NUM_FORMAT;
+    private $_defaultFormat = self::DEF_NUM_FORMAT;
 
     /**
      * @todo
@@ -250,13 +290,13 @@ class PhpExcelReader
         $substreamType = ord($this->data[$pos + 6]) | ord($this->data[$pos + 7]) << 8;
 
         if (
-            ($version != \SPREADSHEET_EXCEL_READER_BIFF8) &&
-            ($version != \SPREADSHEET_EXCEL_READER_BIFF7)
+            ($version != self::BIFF8) &&
+            ($version != self::BIFF7)
         ) {
             return false;
         }
 
-        if ($substreamType != \SPREADSHEET_EXCEL_READER_WORKBOOKGLOBALS) {
+        if ($substreamType != self::WORKBOOKGLOBALS) {
             return false;
         }
 
@@ -265,9 +305,9 @@ class PhpExcelReader
         $code = ord($this->data[$pos]) | ord($this->data[$pos + 1]) << 8;
         $length = ord($this->data[$pos + 2]) | ord($this->data[$pos + 3]) << 8;
 
-        while ($code != \SPREADSHEET_EXCEL_READER_TYPE_EOF) {
+        while ($code != self::TYPE_EOF) {
             switch ($code) {
-                case \SPREADSHEET_EXCEL_READER_TYPE_SST:
+                case self::TYPE_SST:
                     //echo "Type_SST\n";
                      $spos = $pos + 4;
                      $limitpos = $spos + $length;
@@ -375,15 +415,15 @@ class PhpExcelReader
                     }
                     break;
 
-                case \SPREADSHEET_EXCEL_READER_TYPE_FILEPASS:
+                case self::TYPE_FILEPASS:
                     return false;
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_NAME:
+                case self::TYPE_NAME:
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_FORMAT:
+                case self::TYPE_FORMAT:
                         $indexCode = ord($this->data[$pos + 4]) | ord($this->data[$pos + 5]) << 8;
 
-                    if ($version == \SPREADSHEET_EXCEL_READER_BIFF8) {
+                    if ($version == self::BIFF8) {
                         $numchars = ord($this->data[$pos + 6]) | ord($this->data[$pos + 7]) << 8;
                         if (ord($this->data[$pos + 8]) == 0) {
                             $formatString = substr($this->data, $pos + 9, $numchars);
@@ -397,7 +437,7 @@ class PhpExcelReader
 
                     $this->formatRecords[$indexCode] = $formatString;
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_XF:
+                case self::TYPE_XF:
                         //global $dateFormats, $numberFormats;
                         $indexCode = ord($this->data[$pos + 6]) | ord($this->data[$pos + 7]) << 8;
                     if (array_key_exists($indexCode, $this->dateFormats)) {
@@ -439,23 +479,23 @@ class PhpExcelReader
                         }
                     }
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_NINETEENFOUR:
+                case self::TYPE_NINETEENFOUR:
                     $this->nineteenFour = (ord($this->data[$pos + 4]) == 1);
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_BOUNDSHEET:
+                case self::TYPE_BOUNDSHEET:
                         $rec_offset = $this->getInt4d($this->data, $pos + 4);
                         $rec_typeFlag = ord($this->data[$pos + 8]);
                         $rec_visibilityFlag = ord($this->data[$pos + 9]);
                         $rec_length = ord($this->data[$pos + 10]);
 
-                    if ($version == \SPREADSHEET_EXCEL_READER_BIFF8) {
+                    if ($version == self::BIFF8) {
                         $chartype =  ord($this->data[$pos + 11]);
                         if ($chartype == 0) {
                             $rec_name    = substr($this->data, $pos + 12, $rec_length);
                         } else {
                             $rec_name    = $this->encodeUTF16(substr($this->data, $pos + 12, $rec_length * 2));
                         }
-                    } elseif ($version == \SPREADSHEET_EXCEL_READER_BIFF7) {
+                    } elseif ($version == self::BIFF7) {
                             $rec_name    = substr($this->data, $pos + 11, $rec_length);
                     }
                     $this->boundsheets[] = ['name' => $rec_name,
@@ -490,11 +530,11 @@ class PhpExcelReader
         $version = ord($this->data[$spos + 4]) | ord($this->data[$spos + 5]) << 8;
         $substreamType = ord($this->data[$spos + 6]) | ord($this->data[$spos + 7]) << 8;
 
-        if (($version != \SPREADSHEET_EXCEL_READER_BIFF8) && ($version != \SPREADSHEET_EXCEL_READER_BIFF7)) {
+        if (($version != self::BIFF8) && ($version != self::BIFF7)) {
             return -1;
         }
 
-        if ($substreamType != \SPREADSHEET_EXCEL_READER_WORKSHEET) {
+        if ($substreamType != self::WORKSHEET) {
             return -2;
         }
 
@@ -502,7 +542,7 @@ class PhpExcelReader
 
         while ($cont) {
             $lowcode = ord($this->data[$spos]);
-            if ($lowcode == \SPREADSHEET_EXCEL_READER_TYPE_EOF) {
+            if ($lowcode == self::TYPE_EOF) {
                 break;
             }
             $code = $lowcode | ord($this->data[$spos + 1]) << 8;
@@ -513,10 +553,10 @@ class PhpExcelReader
             unset($this->rectype);
             $this->multiplier = 1; // need for format with %
             switch ($code) {
-                case \SPREADSHEET_EXCEL_READER_TYPE_DIMENSION:
+                case self::TYPE_DIMENSION:
                     //echo 'Type_DIMENSION ';
                     if (!isset($this->numRows)) {
-                        if (($length == 10) || ($version == \SPREADSHEET_EXCEL_READER_BIFF7)) {
+                        if (($length == 10) || ($version == self::BIFF7)) {
                             $this->sheets[$this->sn]['numRows'] = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                             $this->sheets[$this->sn]['numCols'] = ord($this->data[$spos + 6]) | ord($this->data[$spos + 7]) << 8;
                         } else {
@@ -525,7 +565,7 @@ class PhpExcelReader
                         }
                     }
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_MERGEDCELLS:
+                case self::TYPE_MERGEDCELLS:
                     $cellRanges = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                     for ($i = 0; $i < $cellRanges; $i++) {
                         $fr =  ord($this->data[$spos + 8 * $i + 2]) | ord($this->data[$spos + 8 * $i + 3]) << 8;
@@ -541,8 +581,8 @@ class PhpExcelReader
                         }
                     }
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_RK:
-                case \SPREADSHEET_EXCEL_READER_TYPE_RK2:
+                case self::TYPE_RK:
+                case self::TYPE_RK2:
                     $row = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                     $column = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                     $rknum = $this->getInt4d($this->data, $spos + 6);
@@ -558,14 +598,14 @@ class PhpExcelReader
                     }
                     $this->addcell($row, $column, $string, $raw);
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_LABELSST:
+                case self::TYPE_LABELSST:
                         $row        = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                         $column     = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                         $xfindex    = ord($this->data[$spos + 4]) | ord($this->data[$spos + 5]) << 8;
                         $index  = $this->getInt4d($this->data, $spos + 6);
                         $this->addcell($row, $column, $this->sst[$index]);
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_MULRK:
+                case self::TYPE_MULRK:
                     $row        = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                     $colFirst   = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                     $colLast    = ord($this->data[$spos + $length - 2]) | ord($this->data[$spos + $length - 1]) << 8;
@@ -586,7 +626,7 @@ class PhpExcelReader
                         $this->addcell($row, $colFirst + $i, $string, $raw);
                     }
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_NUMBER:
+                case self::TYPE_NUMBER:
                     $row    = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                     $column = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                     $tmp = unpack("ddouble", substr($this->data, $spos + 6, 8)); // It machine machine dependent
@@ -602,8 +642,8 @@ class PhpExcelReader
                     }
                     $this->addcell($row, $column, $string, $raw);
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_FORMULA:
-                case \SPREADSHEET_EXCEL_READER_TYPE_FORMULA2:
+                case self::TYPE_FORMULA:
+                case self::TYPE_FORMULA2:
                     $row    = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                     $column = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                     if ((ord($this->data[$spos + 6]) == 0) && (ord($this->data[$spos + 12]) == 255) && (ord($this->data[$spos + 13]) == 255)) {
@@ -630,23 +670,23 @@ class PhpExcelReader
                         $this->addcell($row, $column, $string, $raw);
                     }
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_BOOLERR:
+                case self::TYPE_BOOLERR:
                     $row    = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                     $column = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                     $string = ord($this->data[$spos + 6]);
                     $this->addcell($row, $column, $string);
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_ROW:
-                case \SPREADSHEET_EXCEL_READER_TYPE_DBCELL:
-                case \SPREADSHEET_EXCEL_READER_TYPE_MULBLANK:
+                case self::TYPE_ROW:
+                case self::TYPE_DBCELL:
+                case self::TYPE_MULBLANK:
                     break;
-                case \SPREADSHEET_EXCEL_READER_TYPE_LABEL:
+                case self::TYPE_LABEL:
                     $row    = ord($this->data[$spos]) | ord($this->data[$spos + 1]) << 8;
                     $column = ord($this->data[$spos + 2]) | ord($this->data[$spos + 3]) << 8;
                     $this->addcell($row, $column, substr($this->data, $spos + 8, ord($this->data[$spos + 6]) | ord($this->data[$spos + 7]) << 8));
                     break;
 
-                case \SPREADSHEET_EXCEL_READER_TYPE_EOF:
+                case self::TYPE_EOF:
                     $cont = false;
                     break;
                 default:
@@ -703,15 +743,15 @@ class PhpExcelReader
     private function createDate(int $numValue)
     {
         if ($numValue > 1) {
-            $utcDays = $numValue - ($this->nineteenFour ? \SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS1904 : \SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS);
-            $utcValue = round(($utcDays + 1) * \SPREADSHEET_EXCEL_READER_MSINADAY);
+            $utcDays = $numValue - ($this->nineteenFour ? self::UTCOFFSETDAYS1904 : self::UTCOFFSETDAYS);
+            $utcValue = round(($utcDays + 1) * self::MSINADAY);
             $string = date($this->curformat, $utcValue);
             $raw = $utcValue;
         } else {
             $raw = $numValue;
             $hours = floor($numValue * 24);
             $mins = floor($numValue * 24 * 60) - $hours * 60;
-            $secs = floor($numValue * \SPREADSHEET_EXCEL_READER_MSINADAY) - $hours * 60 * 60 - $mins * 60;
+            $secs = floor($numValue * self::MSINADAY) - $hours * 60 * 60 - $mins * 60;
             $string = date($this->curformat, mktime($hours, $mins, $secs));
         }
 

@@ -4,8 +4,6 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**
@@ -40,9 +38,13 @@ class Nummer
      * @param $id ID van het object.
      * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
-    public function __construct(int $id, ?array $data = null)
-    {
-        $this->id = $id;
+    public function __construct(
+        private DB $db,
+        private Factory $factory,
+        int|string $id,
+        ?array $data = null
+    ) {
+        $this->id = (int)$id;
         $this->db_props_set = false;
         if (isset($data)) {
             $this->set_data($data);
@@ -126,11 +128,11 @@ class Nummer
     {
         if (!isset($this->lijsten)) {
             $query = <<<EOT
-            SELECT lijst_id
+            SELECT lijst_id AS id
             FROM lijsten_nummers
             WHERE nummer_id = {$this->get_id()}
             EOT;
-            $this->lijsten = DB::selectObjectLijst($query, Lijst::class);
+            $this->lijsten = $this->factory->select_objecten(Lijst::class, $query);
         }
         return $this->lijsten;
     }
@@ -141,7 +143,7 @@ class Nummer
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data(DB::selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(sprintf(
                 'SELECT * FROM nummers WHERE id = %d',
                 $this->get_id()
             )));
@@ -158,72 +160,13 @@ class Nummer
         $this->muziek_id = $data['muziek_id'];
         $this->titel = $data['titel'];
         $this->artiest = $data['artiest'];
-        $this->jaar = $data['jaar'];
+        $this->jaar = isset($data['jaar'])
+            ? (int)$data['jaar']
+            : null;
         $this->categorie = $data['categorie'];
         $this->map = $data['map'];
-        $this->is_opener = $data['opener'] == 1;
-        $this->is_vrijekeuze = $data['is_vrijekeuze'] == 1;
+        $this->is_opener = (bool)$data['opener'];
+        $this->is_vrijekeuze = (bool)$data['is_vrijekeuze'];
         $this->db_props_set = true;
-    }
-
-    /**
-     * Maakt een object uit een id aangeleverd door HTTP POST.
-     *
-     * @param object $request HTTP-request.
-     *
-     * @throws Muzieklijsten_Exception
-     */
-    public static function maak_uit_request(object $request): self
-    {
-        try {
-            $id = filter_var($request->nummer, \FILTER_VALIDATE_INT);
-        } catch (UndefinedPropertyException) {
-            throw new Muzieklijsten_Exception('Geen nummer in invoer');
-        }
-        if ($id === false) {
-            throw new Muzieklijsten_Exception(sprintf(
-                'Ongeldige nummer id: %s',
-                filter_var($request->nummer)
-            ));
-        }
-        return new self($id);
-    }
-
-    /**
-     * Maakt een nieuw nummer aan als vrije keuze van een stemmer.
-     * Als er al een nummer bestaat met deze artiest en titel dan wordt het
-     * bestaan de nummer teruggegeven.
-     *
-     * @return self Het bestaande of nieuw toegevoegde nummer.
-     *
-     * @throws LegeVrijeKeuze Als de artiest of titel leeg is.
-     */
-    public static function vrijekeuze_toevoegen(string $artiest, string $titel): self
-    {
-        $artiest = trim($artiest);
-        $titel = trim($titel);
-        if ($artiest === '' || $titel === '') {
-            throw new LegeVrijeKeuze();
-        }
-        $q_artiest = DB::escape_string($artiest);
-        $q_titel = DB::escape_string($titel);
-        $query = <<<EOT
-        SELECT id
-        FROM nummers
-        WHERE
-            artiest LIKE "{$q_artiest}"
-            AND titel LIKE "{$q_titel}"
-        EOT;
-        $nummers = DB::selectObjectLijst($query, self::class);
-        if (count($nummers) > 0) {
-            return $nummers[0];
-        }
-
-        $id = DB::insertMulti('nummers', [
-            'artiest' => $artiest,
-            'titel' => $titel,
-            'is_vrijekeuze' => true,
-        ]);
-        return new self($id);
     }
 }

@@ -4,8 +4,6 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**
@@ -42,9 +40,14 @@ class Veld
      * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      * @param $verplicht Of het veld verplicht is (optioneel)
      */
-    public function __construct(int $id, ?array $data = null, ?bool $verplicht = null)
-    {
-        $this->id = $id;
+    public function __construct(
+        private Factory $factory,
+        private DB $db,
+        int|string $id,
+        ?array $data = null,
+        ?bool $verplicht = null
+    ) {
+        $this->id = (int)$id;
         $this->db_props_set = false;
         $this->verplicht = $verplicht;
         if (isset($data)) {
@@ -104,13 +107,13 @@ class Veld
      * Dat is geen vaste eigenschap van het veld, maar van de combinatie veld en
      * lijst. Of het verplicht is moet bij de constructor worden meegegeven.
      *
-     * @throws Muzieklijsten_Exception Als er bij de constructor niet is
+     * @throws MuzieklijstenException Als er bij de constructor niet is
      * aangegeven of het veld verplicht is.
      */
     public function is_verplicht(): bool
     {
         if (!isset($this->verplicht)) {
-            throw new Muzieklijsten_Exception('Niet bekend of dit veld verplicht is.');
+            throw new MuzieklijstenException('Niet bekend of dit veld verplicht is.');
         }
         return $this->verplicht;
     }
@@ -124,13 +127,12 @@ class Veld
     {
         if (!isset($this->lijsten)) {
             $this->lijsten = [];
-            $sql = sprintf(
-                'SELECT lijst_id FROM lijsten_velden WHERE veld_id = %d',
-                $this->get_id()
-            );
-            foreach (DB::selectSingleColumn($sql) as $lijst_id) {
-                $this->lijsten[] = new Lijst((int)$lijst_id);
-            }
+            $sql = <<<EOT
+            SELECT lijst_id AS id
+            FROM lijsten_velden
+            WHERE veld_id = {$this->get_id()}
+            EOT;
+            $this->lijsten = $this->factory->select_objecten(Lijst::class, $sql);
         }
         return $this->lijsten;
     }
@@ -150,21 +152,21 @@ class Veld
      *
      * @return mixed Waarde
      *
-     * @throws Muzieklijsten_Exception als er geen antwoord is.
+     * @throws MuzieklijstenException als er geen antwoord is.
      */
     public function get_stemmer_waarde(Stemmer $stemmer)
     {
         try {
-            $waarde = DB::selectSingle(sprintf(
+            $waarde = $this->db->selectSingle(sprintf(
                 'SELECT waarde FROM stemmers_velden WHERE stemmer_id = %d AND veld_id = %d',
                 $stemmer->get_id(),
                 $this->get_id()
             ));
             if ($waarde === null) {
-                throw new Muzieklijsten_Exception();
+                throw new MuzieklijstenException();
             }
-        } catch (Muzieklijsten_Exception $e) {
-            throw new Muzieklijsten_Exception(sprintf(
+        } catch (MuzieklijstenException $e) {
+            throw new MuzieklijstenException(sprintf(
                 'Geen waarde ingevuld door stemmer %d in veld %d',
                 $stemmer->get_id(),
                 $this->get_id()
@@ -179,7 +181,7 @@ class Veld
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data(DB::selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(sprintf(
                 'SELECT * FROM velden WHERE id = %d',
                 $this->get_id()
             )));
@@ -195,9 +197,15 @@ class Veld
     {
         $this->label = $data['label'];
         $this->leeg_feedback = $data['leeg_feedback'];
-        $this->max = $data['max'];
-        $this->maxlength = $data['maxlength'];
-        $this->min = $data['min'];
+        $this->max = isset($data['max'])
+            ? (int)$data['max']
+            : null;
+        $this->maxlength = isset($data['maxlength'])
+            ? (int)$data['maxlength']
+            : null;
+        $this->min = isset($data['min'])
+            ? (int)$data['min']
+            : null;
         $this->minlength = $data['minlength'];
         $this->placeholder = $data['placeholder'];
         $this->type = $data['type'];
@@ -210,7 +218,7 @@ class Veld
      * overschreven.
      *
      * @throws GebruikersException Als de invoer leeg is maar niet leeg mag zijn.
-     * @throws Muzieklijsten_Exception Als er bij de constructor niet is
+     * @throws MuzieklijstenException Als er bij de constructor niet is
      * aangegeven of het veld verplicht is.
      */
     public function set_waarde(Stemmer $stemmer, string $waarde): void
@@ -235,7 +243,7 @@ class Veld
         }
 
         if ($gefilterde_waarde !== false && $gefilterde_waarde !== null) {
-            DB::insert_update_multi('stemmers_velden', [
+            $this->db->insert_update_multi('stemmers_velden', [
                 'stemmer_id' => $stemmer->get_id(),
                 'veld_id' => $this->get_id(),
                 'waarde' => $gefilterde_waarde,

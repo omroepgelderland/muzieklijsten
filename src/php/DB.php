@@ -4,51 +4,22 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
-use mysqli;
-use mysqli_result;
-
 /**
- * Abstractielaag voor de database. Dit is een singleton class
+ * Abstractielaag voor de database.
  */
 class DB
 {
-    private static DB $muzieklijsten_db;
-    private mysqli $db;
+    private ?\mysqli $db;
 
     /**
      * Maakt een nieuw object. Mag alleen vanuit deze class worden aangeroepen
-     *
-     * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    protected function __construct()
-    {
-        $this->db = new \mysqli(
-            Config::get_instelling('sql', 'server'),
-            Config::get_instelling('sql', 'user'),
-            Config::get_instelling('sql', 'password'),
-            Config::get_instelling('sql', 'database')
-        );
-        if ($this->db->connect_error) {
-            throw new SQLException(
-                sprintf(
-                    'Kan geen verbinding met de database maken (fout %s). Details: %s',
-                    $this->db->connect_errno,
-                    $this->db->connect_error
-                ),
-                $this->db->connect_errno
-            );
-        }
-    }
-
-    /**
-     * Singleton classes kunnen niet worden gekloond.
-     */
-    private function __clone()
-    {
+    public function __construct(
+        private Config $config,
+    ) {
+        $this->db = null;
     }
 
     /**
@@ -56,20 +27,37 @@ class DB
      */
     public function __destruct()
     {
-        $this->db->close();
+        $this->db?->close();
     }
 
     /**
      * Geeft het database object.
      *
-     * @return mysqli Het database object
+     * @return \mysqli Het database object
      *
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function getDB(): mysqli
+    public function getDB(): \mysqli
     {
-        self::$muzieklijsten_db ??= new self();
-        return self::$muzieklijsten_db->db;
+        if (!isset($this->db)) {
+            $this->db = new \mysqli(
+                $this->config->get_instelling('sql', 'server'),
+                $this->config->get_instelling('sql', 'user'),
+                $this->config->get_instelling('sql', 'password'),
+                $this->config->get_instelling('sql', 'database'),
+            );
+            if ($this->db->connect_error) {
+                throw new SQLException(
+                    sprintf(
+                        'Kan geen verbinding met de database maken (fout %s). Details: %s',
+                        $this->db->connect_errno,
+                        $this->db->connect_error
+                    ),
+                    $this->db->connect_errno
+                );
+            }
+        }
+        return $this->db;
     }
 
     /**
@@ -78,11 +66,10 @@ class DB
      * @throws SQLException Als autocommit niet uitgezet kan worden.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function disableAutocommit(): void
+    public function disableAutocommit(): void
     {
-        $db = self::getDB();
-        if (! $db->autocommit(false)) {
-            self::throwException('Autocommit uitzetten mislukt');
+        if (!$this->getDB()->autocommit(false)) {
+            $this->throwException('Autocommit uitzetten mislukt');
         }
     }
 
@@ -93,9 +80,9 @@ class DB
      *
      * @return string Omgezette string
      */
-    public static function escape_string(string $str): string
+    public function escape_string(string $str): string
     {
-        return self::getDB()->escape_string($str);
+        return $this->getDB()->escape_string($str);
     }
 
     /**
@@ -104,10 +91,10 @@ class DB
      * @throws SQLException Als de commit is mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function commit(): void
+    public function commit(): void
     {
-        if (! self::getDB()->commit()) {
-            self::throwException('Commit mislukt');
+        if (!$this->getDB()->commit()) {
+            $this->throwException('Commit mislukt');
         }
     }
 
@@ -117,10 +104,10 @@ class DB
      * @throws SQLException Als de rollback is mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function rollback(): void
+    public function rollback(): void
     {
-        if (! self::getDB()->rollback()) {
-            self::throwException('Rollback mislukt');
+        if (!$this->getDB()->rollback()) {
+            $this->throwException('Rollback mislukt');
         }
     }
 
@@ -134,17 +121,17 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function query(string $sql): ?\mysqli_result
+    public function query(string $sql): ?\mysqli_result
     {
         try {
-            $res = self::getDB()->query($sql);
+            $res = $this->getDB()->query($sql);
             if ($res === false) {
-                self::throwQueryException($sql);
+                $this->throwQueryException($sql);
             }
         } catch (\mysqli_sql_exception $e) {
-            self::throwQueryException($sql, $e);
+            $this->throwQueryException($sql, $e);
         }
-        if ($res instanceof mysqli_result) {
+        if ($res instanceof \mysqli_result) {
             return $res;
         } else {
             return null;
@@ -163,9 +150,9 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function selectSingle(string $sql): mixed
+    public function selectSingle(string $sql): mixed
     {
-        $res = self::query($sql);
+        $res = $this->query($sql);
         if ($res->num_rows === 0) {
             throw new SQLException(sprintf(
                 'Geen resultaat bij query: "%s"',
@@ -187,9 +174,9 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function selectSingleRow(string $sql): array
+    public function selectSingleRow(string $sql): array
     {
-        $res = self::query($sql);
+        $res = $this->query($sql);
         if ($res->num_rows === 0) {
             throw new SQLException(sprintf(
                 'Geen resultaat bij query: "%s"',
@@ -213,42 +200,15 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function selectSingleColumn(string $sql): array
+    public function selectSingleColumn(string $sql): array
     {
-        $res = self::query($sql);
+        $res = $this->query($sql);
         $type = $res->fetch_field()->type;
         $ret = [];
         while (( $r = $res->fetch_row() ) !== null) {
             $ret[] = self::typecast($r[0], $type);
         }
         return $ret;
-    }
-
-    /**
-     * Geeft een lijst met objecten aan de hand van een query.
-     * De query moet als resultaat een enkele rij met id's als resultaat geven
-     * die overeenkomen met ID's van het gewenste objecttype.
-     *
-     * @template Type
-     *
-     * @param $sql De query
-     * @param class-string<Type> $object_type Naam van de class
-     * @param mixed $args,... Extra parameters voor de constructor van de class
-     * (na id)
-     *
-     * @return list<Type> resultaat. Kan leeg zijn.
-     *
-     * @throws SQLException Als de query mislukt.
-     * @throws SQLException Als er geen verbinding kan worden gemaakt met de
-     * database.
-     */
-    public static function selectObjectLijst(string $sql, $object_type, ...$args): array
-    {
-        $respons = [];
-        foreach (self::selectSingleColumn($sql) as $id) {
-            $respons[] = new $object_type($id, ...$args);
-        }
-        return $respons;
     }
 
     /**
@@ -262,9 +222,9 @@ class DB
      *
      * @throws SQLException bij databasefouten
      */
-    public static function recordBestaat(string $sql, int $min = 1, int $max = 1): bool
+    public function recordBestaat(string $sql, int $min = 1, int $max = 1): bool
     {
-        $res = self::query($sql);
+        $res = $this->query($sql);
         return ( $res->num_rows >= $min && $res->num_rows <= $max );
     }
 
@@ -280,17 +240,17 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function insertMulti(string $table, array $data): int|string
+    public function insertMulti(string $table, array $data): int|string
     {
-        $db = self::getDB();
-        $data = static::prepareer_data($data);
+        $db = $this->getDB();
+        $data = $this->prepareer_data($data);
         $query = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
             $table,
             implode(',', array_keys($data)),
             implode(',', array_values($data))
         );
-        static::query($query);
+        $this->query($query);
         if ($db->affected_rows == 0) {
             throw new SQLException(sprintf(
                 'Toevoegen van rij mislukt. Query: "%s"',
@@ -315,16 +275,16 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function updateMulti(string $table, array $data, string $conditions): int
+    public function updateMulti(string $table, array $data, string $conditions): int
     {
-        $db = self::getDB();
-        $data = static::prepareer_data($data);
+        $db = $this->getDB();
+        $data = $this->prepareer_data($data);
         $updates = [];
         foreach ($data as $key => $value) {
             $updates[] = "{$key}={$value}";
         }
         $updates_str = implode(',', $updates);
-        DB::query("UPDATE {$table} SET {$updates_str} WHERE {$conditions}");
+        $this->db->query("UPDATE {$table} SET {$updates_str} WHERE {$conditions}");
         return $db->affected_rows;
     }
 
@@ -450,9 +410,9 @@ class DB
      *
      * @throws SQLException
      */
-    private static function throwQueryException(string $sql, ?\mysqli_sql_exception $e = null): never
+    private function throwQueryException(string $sql, ?\mysqli_sql_exception $e = null): never
     {
-        self::throwException(sprintf(
+        $this->throwException(sprintf(
             'Query: "%s"',
             $sql
         ), $e);
@@ -466,9 +426,9 @@ class DB
      *
      * @throws SQLException
      */
-    private static function throwException(string $msg, ?\mysqli_sql_exception $e = null): never
+    private function throwException(string $msg, ?\mysqli_sql_exception $e = null): never
     {
-        $db = self::getDB();
+        $db = $this->getDB();
         if (isset($e)) {
             $error = $e->getMessage();
             $errno = $e->getCode();
@@ -498,9 +458,9 @@ class DB
      * @param $tabel Tabel.
      * @param $kolom Kolom.
      */
-    public static function get_max_kolom_lengte(string $tabel, string $kolom): int
+    public function get_max_kolom_lengte(string $tabel, string $kolom): int
     {
-        return (int)self::selectSingle("SELECT max(length(`{$kolom}`)) `max_column_length` from `{$tabel}`");
+        return (int)$this->selectSingle("SELECT max(length(`{$kolom}`)) `max_column_length` from `{$tabel}`");
     }
 
     /**
@@ -518,15 +478,15 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public static function insert_update_multi(string $table, array $data = []): object
+    public function insert_update_multi(string $table, array $data = []): object
     {
-        $db = static::getDB();
-        $data = static::prepareer_data($data);
+        $db = $this->getDB();
+        $data = $this->prepareer_data($data);
         $update_values = [];
         foreach ($data as $key => $value) {
             $update_values[] = sprintf('%s=%s', $key, $data[$key]);
         }
-        static::query(sprintf(
+        $this->query(sprintf(
             'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s',
             $table,
             implode(',', array_keys($data)),
@@ -550,7 +510,7 @@ class DB
      *
      * @return array<string, string> uitvoer
      */
-    protected static function prepareer_data(array $data): array
+    protected function prepareer_data(array $data): array
     {
         $respons = [];
         foreach ($data as $key => $value) {
@@ -568,9 +528,57 @@ class DB
             } elseif ($value instanceof \DateTime) {
                 $respons[$key] = $value->format('"Y-m-d H:i:s"');
             } else {
-                $respons[$key] = sprintf('"%s"', static::escape_string((string)$value));
+                $respons[$key] = sprintf('"%s"', $this->escape_string((string)$value));
             }
         }
         return $respons;
+    }
+
+    /**
+     * Geeft een error als het IP van de gebruiker op de blacklist staat.
+     *
+     * @param $ip
+     *
+     * @throws BlacklistException
+     */
+    public function check_ip_blacklist(string $ip): void
+    {
+        if ($this->recordBestaat("SELECT ip FROM blacklist WHERE ip = \"{$ip}\"")) {
+            throw new BlacklistException();
+        }
+    }
+
+    /**
+     * Verwijdert alle vrije keuzenummers uit de tabel nummers waar geen stemmen
+     * op zijn.
+     */
+    public function verwijder_ongekoppelde_vrije_keuze_nummers(): void
+    {
+        $this->query(<<<EOT
+        DELETE n
+        FROM nummers n
+        WHERE
+            n.is_vrijekeuze = 1
+            AND n.id NOT IN (
+                SELECT nummer_id
+                FROM stemmers_nummers
+            )
+        EOT);
+    }
+
+    /**
+     * Verwijder stemmers die geen stemmen meer hebben.
+     */
+    public function verwijder_stemmers_zonder_stemmen(): void
+    {
+        $query = <<<EOT
+        DELETE
+        FROM stemmers
+        WHERE id NOT IN (
+            SELECT stemmer_id
+            FROM stemmers_nummers
+        )
+        EOT;
+        $this->query($query);
     }
 }

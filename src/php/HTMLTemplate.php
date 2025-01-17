@@ -4,8 +4,6 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**

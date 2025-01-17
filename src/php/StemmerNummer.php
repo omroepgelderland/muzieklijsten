@@ -4,8 +4,6 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**
@@ -32,6 +30,7 @@ class StemmerNummer
      * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct(
+        private DB $db,
         Nummer $nummer,
         Stemmer $stemmer,
         ?array $data = null
@@ -89,7 +88,7 @@ class StemmerNummer
                 FROM stemmers_nummers
                 WHERE {$this->get_where_voorwaarden()}
             EOT;
-            $this->set_data(DB::selectSingleRow($query));
+            $this->set_data($this->db->selectSingleRow($query));
         }
     }
 
@@ -115,28 +114,13 @@ class StemmerNummer
     }
 
     /**
-     * Maakt een object uit een id aangeleverd door HTTP POST.
-     *
-     * @param object $request HTTP-request.
-     *
-     * @throws GeenLijstException
-     */
-    public static function maak_uit_request(object $request): self
-    {
-        return new self(
-            Nummer::maak_uit_request($request),
-            Stemmer::maak_uit_request($request)
-        );
-    }
-
-    /**
      * Stelt in of de stem al dan niet behandeld is.
      *
      * @param $waarde aan of uit.
      */
     public function set_behandeld(bool $waarde): void
     {
-        DB::updateMulti('stemmers_nummers', [
+        $this->db->updateMulti('stemmers_nummers', [
             'behandeld' => $waarde,
         ], $this->get_where_voorwaarden());
     }
@@ -146,8 +130,8 @@ class StemmerNummer
      */
     public function verwijderen(): void
     {
-        DB::query("DELETE FROM stemmers_nummers WHERE {$this->get_where_voorwaarden()}");
-        verwijder_stemmers_zonder_stemmen();
+        $this->db->query("DELETE FROM stemmers_nummers WHERE {$this->get_where_voorwaarden()}");
+        $this->db->verwijder_stemmers_zonder_stemmen();
         $this->db_props_set = false;
     }
 }

@@ -194,12 +194,6 @@
     <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHintSpacing"/>
     <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHintSpacing"/>
     <rule ref="SlevomatCodingStandard.TypeHints.UnionTypeHintFormat"/>
-    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
-        <type>warning</type>
-        <properties>
-            <property name="spacesCountAroundEqualsSign" value="0"/>
-        </properties>
-    </rule>
     <!-- Forbid useless @var for constants -->
     <rule ref="SlevomatCodingStandard.TypeHints.UselessConstantTypeHint"/>
 

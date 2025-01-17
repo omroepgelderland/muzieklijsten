@@ -25,6 +25,8 @@ class SSP
     private ?bool $is_vrijekeuze;
 
     public function __construct(
+        private Factory $factory,
+        private DB $db,
         object $request,
         array $kolommen
     ) {
@@ -131,7 +133,7 @@ class SSP
      */
     protected function filter(): string
     {
-        $search_value = DB::escape_string($this->request->search->value);
+        $search_value = $this->db->escape_string($this->request->search->value);
         $globalSearch = [];
         $columnSearch = [];
         $dtColumns = self::pluck($this->kolommen, 'dt');
@@ -157,7 +159,7 @@ class SSP
             $columnIdx = array_search($requestColumn->data, $dtColumns);
             $column = $this->kolommen[$columnIdx];
 
-            $str = DB::escape_string($requestColumn->search->value);
+            $str = $this->db->escape_string($requestColumn->search->value);
 
             if ($requestColumn->searchable && $str != '') {
                 $columnSearch[] = "`{$column['db']}` LIKE \"%{$str}%\"";
@@ -197,7 +199,7 @@ class SSP
      */
     public function simple(): array
     {
-        $db = DB::getDB();
+        $db = $this->db->getDB();
 
         // Build the SQL query string from the request
         $limit = $this->limit();
@@ -227,7 +229,7 @@ class SSP
                 SELECT COUNT(n.id) 
                 {$basis_query}
             EOT;
-        } catch (Muzieklijsten_Exception $e) {
+        } catch (MuzieklijstenException $e) {
             $select = implode("`, `", self::pluck($this->kolommen, 'db'));
             $basis_query = "FROM nummers";
             // Resultaten
@@ -246,13 +248,13 @@ class SSP
                 FROM nummers
             EOT;
         }
-        $data = DB::query($query);
+        $data = $this->db->query($query);
 
         // Data set length after filtering
-        $recordsFiltered = DB::selectSingle($count_query);
+        $recordsFiltered = $this->db->selectSingle($count_query);
 
         // Total data set length
-        $recordsTotal = DB::selectSingle($total_length_query);
+        $recordsTotal = $this->db->selectSingle($total_length_query);
 
         // Output
         return [
@@ -288,7 +290,7 @@ class SSP
      */
     private function get_lijst(): Lijst
     {
-        $this->lijst ??= Lijst::maak_uit_request($this->request);
+        $this->lijst ??= $this->factory->create_lijst_uit_request($this->request);
         return $this->lijst;
     }
 

@@ -4,13 +4,10 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**
  * Hiermee kunnen instellingen worden opgehaald uit de serverconfiguratie.
- * Dit is een singleton class.
  *
  * @phpstan-type ConfigData array{
  *     organisatie: string,
@@ -39,21 +36,13 @@ namespace muzieklijsten;
  */
 class Config
 {
-    private static Config $config;
-    /** @var ConfigData */
-    private array $data;
+    /** @var ?ConfigData */
+    private ?array $data;
 
     /**
      * Maakt een nieuw object. Mag alleen vanuit deze class worden gedaan
      */
-    protected function __construct()
-    {
-    }
-
-    /**
-     * Singleton classes kunnen niet worden gekloond.
-     */
-    private function __clone()
+    public function __construct()
     {
     }
 
@@ -62,42 +51,19 @@ class Config
      *
      * @return ConfigData Inhoud van het configuratiebestand
      *
-     * @throws Muzieklijsten_Exception Als het configuratiebestand niet kan worden geladen.
+     * @throws MuzieklijstenException Als het configuratiebestand niet kan worden geladen.
      */
-    protected function get_data_i(): array
+    public function get_data(): array
     {
         if (!isset($this->data)) {
             try {
                 $pad = __DIR__ . '/../../config/config.json';
                 $this->data = json_decode(file_get_contents($pad), true);
             } catch (\Throwable $e) {
-                throw new Muzieklijsten_Exception('Kan config.json niet laden.', 0, $e);
+                throw new MuzieklijstenException('Kan config.json niet laden.', 0, $e);
             }
         }
         return $this->data;
-    }
-
-    /**
-     * Geeft de niet-statische instantie van de Singletonclass.
-     *
-     * @return Config Object
-     */
-    public static function get_obj(): Config
-    {
-        self::$config ??= new Config();
-        return self::$config;
-    }
-
-    /**
-     * Haalt de JSON inhoud op.
-     *
-     * @return ConfigData Inhoud van het configuratiebestand
-     *
-     * @throws Muzieklijsten_Exception Als het configuratiebestand niet kan worden geladen.
-     */
-    public static function get_data(): array
-    {
-        return self::get_obj()->get_data_i();
     }
 
     /**
@@ -110,9 +76,9 @@ class Config
      *
      * @throws ConfigException Als de instelling niet kan worden gevonden.
      */
-    public static function get_instelling(string ...$args)
+    public function get_instelling(string ...$args)
     {
-        $sectie = self::get_data();
+        $sectie = $this->get_data();
         foreach (func_get_args() as $param) {
             if (!is_array($sectie) || !array_key_exists($param, $sectie)) {
                 throw new ConfigException(sprintf(
@@ -130,8 +96,79 @@ class Config
      *
      * @return \ReCaptcha\ReCaptcha
      */
-    public static function get_recaptcha(): \ReCaptcha\ReCaptcha
+    public function get_recaptcha(): \ReCaptcha\ReCaptcha
     {
-        return new \ReCaptcha\ReCaptcha(static::get_instelling('recaptcha', 'secret'));
+        return new \ReCaptcha\ReCaptcha($this->get_instelling('recaptcha', 'secret'));
+    }
+
+    public function is_captcha_ok(string $g_recaptcha_response): bool
+    {
+        $recaptcha = $this->get_recaptcha();
+        $resp = $recaptcha->verify($g_recaptcha_response, $_SERVER['REMOTE_ADDR']);
+        return $resp->isSuccess();
+    }
+
+    /**
+     * Verstuur een mail
+     *
+     * @param list<string>|string $aan Lijst met ontvangers
+     * @param list<string>|string $cc Lijst met ontvangers
+     * @param $van Adres van afzender
+     * @param $onderwerp Onderwerp
+     * @param $tekst_bericht Het bericht in plaintext
+     * @param $html_bericht Het bericht in HTML (optioneel)
+     * @param $bijlage Pad naar mee te sturen bijlage (optioneel, alleen pdf)
+     */
+    public function stuur_mail(
+        $aan,
+        $cc,
+        string $van,
+        string $onderwerp,
+        string $tekst_bericht,
+        ?string $html_bericht = null,
+        ?string $bijlage = null
+    ): void {
+        if (!is_array($aan)) {
+            $aan = [$aan];
+        }
+        if (!is_array($cc)) {
+            $cc = [$cc];
+        }
+        $ontvangers = array_merge($aan, $cc);
+        $crlf = "\n";
+        $headers = [
+            'From' => $van,
+            'To' => implode(',', $aan),
+            'Cc' => implode(',', $cc),
+            'Subject' => $onderwerp,
+        ];
+        $mime = new \Mail_mime($crlf);
+        $mime->setTXTBody($tekst_bericht);
+        if (isset($html_bericht)) {
+            $mime->setHTMLBody($html_bericht);
+        }
+
+        if (isset($bijlage)) {
+            $mime->addAttachment($bijlage, 'application/pdf');
+        }
+
+        $mime_params = [
+            'text_encoding' => '7bit',
+            'text_charset' => 'UTF-8',
+            'html_charset' => 'UTF-8',
+            'head_charset' => 'UTF-8',
+        ];
+        $body = $mime->get($mime_params);
+        $headers = $mime->headers($headers);
+
+        $params = [
+            'sendmail_path' => $this->get_instelling('mail', 'sendmail_path'),
+        ];
+        $mail_obj = \Mail::factory('sendmail', $params);
+        set_error_handler('\muzieklijsten\exception_error_handler', \E_ALL & ~\E_DEPRECATED);
+        error_reporting(\E_ALL & ~\E_DEPRECATED);
+        $mail_obj->send($ontvangers, $headers, $body);
+        error_reporting(\E_ALL);
+        set_error_handler('\muzieklijsten\exception_error_handler', \E_ALL);
     }
 }

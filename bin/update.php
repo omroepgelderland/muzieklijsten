@@ -16,17 +16,10 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 set_env();
-
-try {
-    db_update();
-} catch (\Throwable $e) {
-    Log::crit((string)$e);
-    exit(1);
-}
+$container = get_di_container();
+$container->call(db_update(...));

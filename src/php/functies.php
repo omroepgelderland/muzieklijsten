@@ -4,9 +4,17 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
+
+use DI\FactoryInterface;
+use gldstdlib\exception\NoticeErrorException;
+use gldstdlib\exception\WarningErrorException;
+use gldstdlib\Log;
+use gldstdlib\LogFactory;
+use Invoker\InvokerInterface;
+use Psr\Container\ContainerInterface;
+
+use function gldstdlib\get_tijdzone;
 
 /**
  * Geef aan of dit de ontwikkelingsversie is.
@@ -21,46 +29,18 @@ function is_dev(): bool
 /**
  * Geeft de naam van de developer op wiens omgeving het project nu draait.
  *
- * @throws Muzieklijsten_Exception Als het project niet op een ontwikkelingsomgeving draait.
+ * @throws MuzieklijstenException Als het project niet op een ontwikkelingsomgeving draait.
  */
 function get_developer(): string
 {
     if (!is_dev()) {
-        throw new Muzieklijsten_Exception();
+        throw new MuzieklijstenException();
     }
     $res = preg_match('~^/home/([^/]+)/~i', __DIR__, $m);
     if ($res !== 1) {
-        throw new Muzieklijsten_Exception();
+        throw new MuzieklijstenException();
     }
     return $m[1];
-}
-
-/**
- * Geeft aan of het script handmatig (niet via cron o.i.d.) via de commandline is aangeroepen.
- */
-function is_cli(): bool
-{
-    return php_sapi_name() === 'cli' && isset($_SERVER['TERM']);
-}
-
-/**
- * Geeft alle muzieklijsten.
- *
- * @return list<Lijst>
- */
-function get_muzieklijsten(): array
-{
-    return DB::selectObjectLijst('SELECT id FROM lijsten ORDER BY naam', Lijst::class);
-}
-
-/**
- * Geeft alle nummers.
- *
- * @return list<Nummer>
- */
-function get_nummers(): array
-{
-    return DB::selectObjectLijst('SELECT id FROM nummers', Nummer::class);
 }
 
 /**
@@ -89,64 +69,35 @@ function exception_error_handler(
     string $errstr,
     string $errfile,
     int $errline
-): never {
-    switch ($errno) {
-        case \E_ERROR:
-            throw new ErrorErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_WARNING:
-            if (strpos($errstr, 'No such file or directory') !== false) {
-                throw new PadBestaatNiet($errstr, 0, $errno, $errfile, $errline);
-            } elseif (strpos($errstr, 'Undefined array key') !== false) {
-                throw new IndexException($errstr, 0, $errno, $errfile, $errline);
-            } elseif (strpos($errstr, 'Undefined property: ') === 0) {
-                throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
-            } else {
-                throw new WarningErrorException($errstr, 0, $errno, $errfile, $errline);
-            }
-        case \E_PARSE:
-            throw new ParseErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_NOTICE:
-            if (strpos($errstr, 'Undefined index: ') === 0 || strpos($errstr, 'Undefined offset: ') === 0) {
-                throw new IndexException($errstr, 0, $errno, $errfile, $errline);
-            } elseif (strpos($errstr, 'Trying to get property ') === 0) {
-                throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
-            } elseif (strpos($errstr, 'Undefined property: ') === 0) {
-                throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
-            } else {
-                throw new NoticeErrorException($errstr, 0, $errno, $errfile, $errline);
-            }
-        case \E_CORE_ERROR:
-            throw new CoreErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_CORE_WARNING:
-            throw new CoreWarningErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_COMPILE_ERROR:
-            throw new CompileErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_COMPILE_WARNING:
-            throw new CompileWarningErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_USER_ERROR:
-            throw new UserErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_USER_WARNING:
-            throw new UserWarningErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_USER_NOTICE:
-            throw new UserNoticeErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_STRICT:
-            throw new StrictErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_RECOVERABLE_ERROR:
-            throw new RecoverableErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_DEPRECATED:
-            throw new DeprecatedErrorException($errstr, 0, $errno, $errfile, $errline);
-        case \E_USER_DEPRECATED:
-            throw new UserDeprecatedErrorException($errstr, 0, $errno, $errfile, $errline);
-        default:
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+): bool {
+    try {
+        return \gldstdlib\exception_error_handler(
+            $errno,
+            $errstr,
+            $errfile,
+            $errline,
+        );
+    } catch (WarningErrorException $e) {
+        if (\str_contains($errstr, 'No such file or directory')) {
+            throw new PadBestaatNiet($errstr, 0, $errno, $errfile, $errline);
+        } elseif (\str_contains($errstr, 'Undefined array key')) {
+            throw new IndexException($errstr, 0, $errno, $errfile, $errline);
+        } elseif (\str_starts_with($errstr, 'Undefined property: ')) {
+            throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
+        } else {
+            throw $e;
+        }
+    } catch (NoticeErrorException $e) {
+        if (\str_starts_with($errstr, 'Undefined index: ') || \str_starts_with($errstr, 'Undefined offset: ')) {
+            throw new IndexException($errstr, 0, $errno, $errfile, $errline);
+        } elseif (\str_starts_with($errstr, 'Trying to get property ')) {
+            throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
+        } elseif (\str_starts_with($errstr, 'Undefined property: ')) {
+            throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
+        } else {
+            throw $e;
+        }
     }
-}
-
-function is_captcha_ok(string $g_recaptcha_response): bool
-{
-    $recaptcha = Config::get_recaptcha();
-    $resp = $recaptcha->verify($g_recaptcha_response, $_SERVER['REMOTE_ADDR']);
-    return $resp->isSuccess();
 }
 
 /**
@@ -222,22 +173,6 @@ function filter_telefoonnummer(mixed $telefoonnummer): ?string
     }
 }
 
-/**
- * Verwijder stemmers die geen stemmen meer hebben.
- */
-function verwijder_stemmers_zonder_stemmen(): void
-{
-    $query = <<<EOT
-    DELETE
-    FROM stemmers
-    WHERE id NOT IN (
-        SELECT stemmer_id
-        FROM stemmers_nummers
-    )
-    EOT;
-    DB::query($query);
-}
-
 function filter_van_tot(string $waarde): ?\DateTime
 {
     $str = filter_var($waarde);
@@ -250,174 +185,12 @@ function filter_van_tot(string $waarde): ?\DateTime
     }
 }
 
-/**
- * Verstuur een mail
- *
- * @param list<string>|string $aan Lijst met ontvangers
- * @param list<string>|string $cc Lijst met ontvangers
- * @param $van Adres van afzender
- * @param $onderwerp Onderwerp
- * @param $tekst_bericht Het bericht in plaintext
- * @param $html_bericht Het bericht in HTML (optioneel)
- * @param $bijlage Pad naar mee te sturen bijlage (optioneel, alleen pdf)
- */
-function stuur_mail(
-    $aan,
-    $cc,
-    string $van,
-    string $onderwerp,
-    string $tekst_bericht,
-    ?string $html_bericht = null,
-    ?string $bijlage = null
-): void {
-    if (!is_array($aan)) {
-        $aan = [$aan];
-    }
-    if (!is_array($cc)) {
-        $cc = [$cc];
-    }
-    $ontvangers = array_merge($aan, $cc);
-    $crlf = "\n";
-    $headers = [
-        'From' => $van,
-        'To' => implode(',', $aan),
-        'Cc' => implode(',', $cc),
-        'Subject' => $onderwerp,
-    ];
-    $mime = new \Mail_mime($crlf);
-    $mime->setTXTBody($tekst_bericht);
-    if (isset($html_bericht)) {
-        $mime->setHTMLBody($html_bericht);
-    }
-
-    if (isset($bijlage)) {
-        $mime->addAttachment($bijlage, 'application/pdf');
-    }
-
-    $mime_params = [
-        'text_encoding' => '7bit',
-        'text_charset' => 'UTF-8',
-        'html_charset' => 'UTF-8',
-        'head_charset' => 'UTF-8',
-    ];
-    $body = $mime->get($mime_params);
-    $headers = $mime->headers($headers);
-
-    $params = [
-        'sendmail_path' => Config::get_instelling('mail', 'sendmail_path'),
-    ];
-    $mail_obj = \Mail::factory('sendmail', $params);
-    set_error_handler('\muzieklijsten\exception_error_handler', \E_ALL & ~\E_DEPRECATED);
-    error_reporting(\E_ALL & ~\E_DEPRECATED);
-    $mail_obj->send($ontvangers, $headers, $body);
-    error_reporting(\E_ALL);
-    set_error_handler('\muzieklijsten\exception_error_handler', \E_ALL);
-}
-
-/**
- * Plakt paden aan elkaar met slashes.
- *
- * @param $paths,... Meerdere paden die aan elkaar geplakt worden. Het
- * aantal parameters is variabel.
- *
- * @return string Het resulterende pad.
- */
-function path_join(string ...$paths): string
-{
-    $path = '';
-    foreach ($paths as $i => $arg) {
-        if ($i == 0) {
-            // eerste parameter
-            $path = rtrim($arg, '/') . '/';
-        } elseif ($i == count($paths) - 1) {
-            // laatste parameter
-            $path .= ltrim($arg, '/');
-        } else {
-            $path .= trim($arg, '/') . '/';
-        }
-    }
-    return $path;
-}
-
-/**
- * Geeft het pad naar het eerst gestartte script, los van de class van waaruit deze functie wordt aangeroepen.
- */
-function get_hoofdscript_pad(): string
-{
-    return get_included_files()[0];
-}
-
-/**
- * Geeft een error als het IP van de gebruiker op de blacklist staat.
- *
- * @param $ip
- *
- * @throws BlacklistException
- */
-function check_ip_blacklist(string $ip): void
-{
-    if (DB::recordBestaat("SELECT ip FROM blacklist WHERE ip = \"{$ip}\"")) {
-        throw new BlacklistException();
-    }
-}
-
-/**
- * @return list<Veld>
- */
-function get_velden(): array
-{
-    $velden = [];
-    $query = 'SELECT * FROM velden ORDER BY id';
-    foreach (DB::query($query) as $entry) {
-        $velden[] = new Veld($entry['id'], $entry);
-    }
-    return $velden;
-}
-
-/**
- * Verwijdert alle vrije keuzenummers uit de tabel nummers waar geen stemmen
- * op zijn.
- */
-function verwijder_ongekoppelde_vrije_keuze_nummers(): void
-{
-    DB::query(<<<EOT
-    DELETE n
-    FROM nummers n
-    WHERE
-        n.is_vrijekeuze = 1
-        AND n.id NOT IN (
-            SELECT nummer_id
-            FROM stemmers_nummers
-        )
-    EOT);
-}
-
-/**
- * Werkt de database bij naar de nieuwste versie. Zie docs in bin/update.php.
- */
-function db_update(): void
-{
-    DB::disableAutocommit();
-    try {
-        $versie = (int)DB::selectSingle('SELECT versie FROM versie') + 1;
-    } catch (SQLException) {
-        // De database heeft nog geen versienummer-tabel.
-        $versie = 1;
-    }
-    while (method_exists('\muzieklijsten\DBUpdates', "update_{$versie}")) {
-        call_user_func("\\muzieklijsten\\DBUpdates::update_{$versie}");
-        DB::updateMulti('versie', ['versie' => $versie], "TRUE");
-        DB::commit();
-        $versie++;
-    }
-}
-
 function set_env(): void
 {
-    set_error_handler(\muzieklijsten\exception_error_handler(...), error_reporting());
-    locale_set_default('nl_NL');
-    setlocale(\LC_TIME, 'nl', 'nl_NL', 'Dutch');
-    date_default_timezone_set('Europe/Amsterdam');
+    \set_error_handler(\muzieklijsten\exception_error_handler(...), error_reporting());
+    \locale_set_default('nl_NL');
+    \setlocale(\LC_TIME, 'nl', 'nl_NL', 'Dutch');
+    \date_default_timezone_set('Europe/Amsterdam');
 
     if (is_dev()) {
         ini_set('display_errors', 1);
@@ -427,11 +200,28 @@ function set_env(): void
 }
 
 /**
- * Geeft de tijdzone van de server.
- *
- * @return \DateTimeZone
+ * Maak de dependency injection container. Voer dit niet meer dan één keer uit
+ * per script.
  */
-function get_tijdzone(): \DateTimeZone
+function get_di_container(): FactoryInterface & ContainerInterface & InvokerInterface
 {
-    return new \DateTimeZone(date_default_timezone_get());
+    $config = [
+        'log.dir' => __DIR__ . '/../../data/log/',
+        'log.level' => fn() => is_dev() ? \Monolog\Level::Debug : \Monolog\Level::Info,
+        Log::class => \DI\autowire()->constructor(
+            \DI\get('log.level'),
+            \DI\get('log.dir'),
+            null,
+            \DI\get('log.mailinfo'),
+        ),
+        LogFactory::class => \DI\autowire()->constructor(
+            \DI\get('log.level'),
+            \DI\get('log.dir'),
+            null,
+            \DI\get('log.mailinfo'),
+        ),
+    ];
+    $builder = new \DI\ContainerBuilder();
+    $builder->addDefinitions($config);
+    return $builder->build();
 }

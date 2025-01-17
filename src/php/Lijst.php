@@ -4,8 +4,6 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**
@@ -81,9 +79,13 @@ class Lijst
      * @param $id ID van het object.
      * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
-    public function __construct(int $id, ?array $data = null)
-    {
-        $this->id = $id;
+    public function __construct(
+        private DB $db,
+        private Factory $factory,
+        int|string $id,
+        ?array $data = null
+    ) {
+        $this->id = (int)$id;
         $this->db_props_set = false;
         if (isset($data)) {
             $this->set_data($data);
@@ -185,10 +187,10 @@ class Lijst
                 WHERE lijst_id = {$this->get_id()}
                 ORDER BY veld_id
             EOT;
-            foreach (DB::query($query) as $entry) {
-                $id = $entry['veld_id'];
-                $verplicht = $entry['verplicht'] == 1;
-                $this->velden[] = new Veld($id, null, $verplicht);
+            foreach ($this->db->query($query) as $entry) {
+                $id = (int)$entry['veld_id'];
+                $verplicht = (bool)$entry['verplicht'];
+                $this->velden[] = $this->factory->create_veld($id, null, $verplicht);
             }
         }
         return $this->velden;
@@ -213,7 +215,7 @@ class Lijst
         ORDER BY v.id
         EOT;
         foreach (
-            DB::query($query) as [
+            $this->db->query($query) as [
                 'id' => $id,
                 'label' => $label,
                 'tonen' => $tonen,
@@ -222,9 +224,9 @@ class Lijst
         ) {
             $respons[] = [
                 'id' => (int)$id,
-                'tonen' => $tonen == 1,
+                'tonen' => (bool)$tonen,
                 'label' => $label,
-                'verplicht' => $verplicht == 1,
+                'verplicht' => (bool)$verplicht,
             ];
         }
         return $respons;
@@ -239,11 +241,11 @@ class Lijst
     {
         if (!isset($this->nummers)) {
             $query = <<<EOT
-            SELECT nummer_id
+            SELECT nummer_id AS id
             FROM lijsten_nummers
             WHERE lijst_id = {$this->get_id()}
             EOT;
-            $this->nummers = DB::selectObjectLijst($query, Nummer::class);
+            $this->nummers = $this->factory->select_objecten(Nummer::class, $query);
         }
         return $this->nummers;
     }
@@ -259,7 +261,7 @@ class Lijst
             FROM stemmers
             WHERE lijst_id = {$this->id}
             EOT;
-            $this->stemmers = DB::selectObjectLijst($query, Stemmer::class);
+            $this->stemmers = $this->factory->select_objecten(Stemmer::class, $query);
         }
         return $this->stemmers;
     }
@@ -293,7 +295,7 @@ class Lijst
                 lijst_id = {$this->get_id()}
                 AND {$where_str}
         EOT;
-        return DB::selectObjectLijst($query, Stemmer::class);
+        return $this->factory->select_objecten(Stemmer::class, $query);
     }
 
     /**
@@ -312,8 +314,8 @@ class Lijst
                 AND nl.nummer_id = n.id
             ORDER BY n.titel
         EOT;
-        foreach (DB::query($sql) as $entry) {
-            $nummers[] = new Nummer($entry['id'], $entry);
+        foreach ($this->db->query($sql) as $entry) {
+            $nummers[] = $this->factory->create_nummer((int)$entry['id'], $entry);
         }
         return $nummers;
     }
@@ -356,11 +358,11 @@ class Lijst
                 {$where_str}
         EOT;
         $stemmen = [];
-        foreach (DB::query($query) as $entry) {
-            $stem_nummer = $nummer ?? new Nummer($entry['nummer_id']);
-            $stemmen[] = new StemmerNummer(
+        foreach ($this->db->query($query) as $entry) {
+            $stem_nummer = $nummer ?? $this->factory->create_nummer((int)$entry['nummer_id']);
+            $stemmen[] = $this->factory->create_stemmer_nummer(
                 $stem_nummer,
-                new Stemmer($entry['stemmer_id']),
+                $this->factory->create_stemmer((int)$entry['stemmer_id']),
                 $entry
             );
         }
@@ -389,7 +391,7 @@ class Lijst
         }
         $datumvoorwaarden_str = implode(' AND ', $datumvoorwaarden);
         $query = <<<EOT
-            SELECT sn.nummer_id
+            SELECT sn.nummer_id AS id
             FROM stemmers_nummers sn
             INNER JOIN stemmers s ON
                 s.lijst_id = {$this->id}
@@ -397,7 +399,7 @@ class Lijst
             GROUP BY sn.nummer_id
             ORDER BY COUNT(sn.stemmer_id) DESC
         EOT;
-        return DB::selectObjectLijst($query, Nummer::class);
+        return $this->factory->select_objecten(Nummer::class, $query);
     }
 
     /**
@@ -451,7 +453,7 @@ class Lijst
      */
     public function remove(): void
     {
-        DB::query(sprintf(
+        $this->db->query(sprintf(
             'DELETE FROM lijsten WHERE id = %d',
             $this->get_id()
         ));
@@ -464,7 +466,7 @@ class Lijst
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data(DB::selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(sprintf(
                 'SELECT * FROM lijsten WHERE id = %d',
                 $this->get_id()
             )));
@@ -478,14 +480,16 @@ class Lijst
      */
     private function set_data(array $data): void
     {
-        $this->actief = $data['actief'] == 1;
+        $this->actief = (bool)$data['actief'];
         $this->naam = $data['naam'];
-        $this->minkeuzes = $data['minkeuzes'];
-        $this->maxkeuzes = $data['maxkeuzes'];
-        $this->vrijekeuzes = $data['vrijekeuzes'];
-        $this->stemmen_per_ip = $data['stemmen_per_ip'];
-        $this->artiest_eenmalig = $data['artiest_eenmalig'] == 1;
-        $this->recaptcha = $data['recaptcha'] == 1;
+        $this->minkeuzes = (int)$data['minkeuzes'];
+        $this->maxkeuzes = (int)$data['maxkeuzes'];
+        $this->vrijekeuzes = (int)$data['vrijekeuzes'];
+        $this->stemmen_per_ip = isset($data['stemmen_per_ip'])
+            ? (int)$data['stemmen_per_ip']
+            : $data['stemmen_per_ip'];
+        $this->artiest_eenmalig = (bool)$data['artiest_eenmalig'];
+        $this->recaptcha = (bool)$data['recaptcha'];
         $this->notificatie_email_adressen = [];
         foreach (explode(',', $data['email']) as $adres) {
             $adres = trim($adres);
@@ -538,8 +542,8 @@ class Lijst
                 FROM lijsten
                 WHERE id = {$this->get_id()}
         EOT;
-        DB::query($query);
-        $nieuw_id = DB::getDB()->insert_id;
+        $this->db->query($query);
+        $nieuw_id = $this->db->getDB()->insert_id;
 
         // Velden koppelen
         $query = <<<EOT
@@ -552,7 +556,7 @@ class Lijst
                 FROM lijsten_velden
                 WHERE lijst_id = {$this->get_id()}
         EOT;
-        DB::query($query);
+        $this->db->query($query);
 
         // Nummers koppelen
         $query = <<<EOT
@@ -562,7 +566,7 @@ class Lijst
                 FROM lijsten_nummers
                 WHERE lijst_id = {$this->get_id()}
         EOT;
-        DB::query($query);
+        $this->db->query($query);
 
         // Stemmen verplaatsen
         $query = <<<EOT
@@ -572,33 +576,10 @@ class Lijst
             WHERE
                 lijst_id = {$this->get_id()}
         EOT;
-        DB::query($query);
+        $this->db->query($query);
         $this->stemmers = [];
 
-        return new Lijst($nieuw_id);
-    }
-
-    /**
-     * Maakt een object uit een id aangeleverd door HTTP GET of POST.
-     *
-     * @param object $request HTTP-request.
-     *
-     * @throws GeenLijstException
-     */
-    public static function maak_uit_request(object $request): self
-    {
-        try {
-            $id = filter_var($request->lijst, \FILTER_VALIDATE_INT);
-        } catch (UndefinedPropertyException) {
-            throw new GeenLijstException('Geen lijst in invoer');
-        }
-        if ($id === false) {
-            throw new GeenLijstException(sprintf(
-                'Ongeldige muzieklijst id: %s',
-                filter_var($request->lijst)
-            ));
-        }
-        return new self($id);
+        return $this->factory->create_lijst($nieuw_id);
     }
 
     public function is_max_stemmen_per_ip_bereikt(): bool
@@ -614,7 +595,7 @@ class Lijst
                 s.lijst_id = {$this->id}
                 AND s.ip = "{$_SERVER['REMOTE_ADDR']}"
         EOT;
-        return (bool)DB::selectSingle($query);
+        return (bool)$this->db->selectSingle($query);
     }
 
     /**
@@ -624,7 +605,7 @@ class Lijst
      */
     public function nummer_toevoegen(Nummer $nummer): void
     {
-        DB::insertMulti('lijsten_nummers', [
+        $this->db->insertMulti('lijsten_nummers', [
             'nummer_id' => $nummer->get_id(),
             'lijst_id' => $this->get_id(),
         ]);
@@ -652,7 +633,7 @@ class Lijst
             nummer_id = {$nummer->get_id()}
             AND lijst_id = {$this->id}
         EOT;
-        DB::query($query);
+        $this->db->query($query);
 
         // Verwijder stemmen en stemmers
         $query = <<<EOT
@@ -665,8 +646,8 @@ class Lijst
             sn.nummer_id = {$nummer->get_id()}
         EOT;
 
-        verwijder_ongekoppelde_vrije_keuze_nummers();
-        verwijder_stemmers_zonder_stemmen();
+        $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
+        $this->db->verwijder_stemmers_zonder_stemmen();
     }
 
     /**
@@ -674,8 +655,8 @@ class Lijst
      */
     public function verwijderen(): void
     {
-        DB::query("DELETE FROM lijsten WHERE id = {$this->get_id()}");
-        verwijder_stemmers_zonder_stemmen();
+        $this->db->query("DELETE FROM lijsten WHERE id = {$this->get_id()}");
+        $this->db->verwijder_stemmers_zonder_stemmen();
         $this->reset();
     }
 
@@ -733,7 +714,7 @@ class Lijst
 
     public function set_veld(Veld $veld, bool $verplicht): void
     {
-        DB::insert_update_multi('lijsten_velden', [
+        $this->db->insert_update_multi('lijsten_velden', [
             'lijst_id' => $this->get_id(),
             'veld_id' => $veld->get_id(),
             'verplicht' => $verplicht,
@@ -749,7 +730,7 @@ class Lijst
             lijst_id = {$this->get_id()}
             AND veld_id = {$veld->get_id()}
         EOT;
-        DB::query($query);
+        $this->db->query($query);
     }
 
     /**
@@ -810,7 +791,7 @@ class Lijst
         EOT;
         $nummers = [];
         foreach (
-            DB::query($query) as [
+            $this->db->query($query) as [
                 'nummer_id' => $nummer_id,
                 'is_vrijekeuze' => $is_vrijekeuze,
                 'titel' => $titel,
@@ -827,10 +808,10 @@ class Lijst
             ]
         ) {
             $nummer_id = (int)$nummer_id;
-            $is_vrijekeuze = $is_vrijekeuze == 1;
+            $is_vrijekeuze = (bool)$is_vrijekeuze;
             $stemmer_id = (int)$stemmer_id;
-            $is_behandeld = $is_behandeld == 1;
-            $is_geanonimiseerd = $is_geanonimiseerd == 1;
+            $is_behandeld = (bool)$is_behandeld;
+            $is_geanonimiseerd = (bool)$is_geanonimiseerd;
             $veld_id = (int)$veld_id;
             if ($is_geanonimiseerd) {
                 $ip = $toelichting = $waarde = '🔒';
@@ -871,13 +852,13 @@ class Lijst
      */
     public function get_stemmer_uit_email(string $email): ?Stemmer
     {
-        $e_email = DB::escape_string(
+        $e_email = $this->db->escape_string(
             \strtolower(
                 \filter_var($email, \FILTER_SANITIZE_EMAIL)
             )
         );
         $query = <<<EOT
-        SELECT sn.stemmer_id
+        SELECT sn.stemmer_id AS id
         FROM stemmers_nummers sn
         INNER JOIN stemmers s ON
             s.id = sn.stemmer_id
@@ -888,7 +869,7 @@ class Lijst
             AND sv.waarde = "{$e_email}"
         EOT;
         try {
-            return DB::selectObjectLijst($query, Stemmer::class)[0];
+            return $this->factory->select_objecten(Stemmer::class, $query)[0];
         } catch (IndexException) {
             return null;
         }
@@ -904,7 +885,7 @@ class Lijst
     {
         $e_telefoonnummer = filter_telefoonnummer($telefoonnummer);
         $query = <<<EOT
-        SELECT sn.stemmer_id
+        SELECT sn.stemmer_id AS id
         FROM stemmers_nummers sn
         INNER JOIN stemmers s ON
             s.id = sn.stemmer_id
@@ -915,7 +896,7 @@ class Lijst
             AND sv.waarde = "{$e_telefoonnummer}"
         EOT;
         try {
-            return DB::selectObjectLijst($query, Stemmer::class)[0];
+            return $this->factory->select_objecten(Stemmer::class, $query)[0];
         } catch (IndexException) {
             return null;
         }

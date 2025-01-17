@@ -22,7 +22,7 @@ class OLERead
     private const TYPE_POS = 0x42;
     private const START_BLOCK_POS = 0x74;
     private const SIZE_POS = 0x78;
-    private const IDENTIFIER_OLE = pack("CCCCCCCC", 0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
+    private $identifier_ole;
 
     public $data = '';
     public $error;
@@ -40,6 +40,7 @@ class OLERead
 
     public function read($sFileName)
     {
+        $this->identifier_ole = \pack("CCCCCCCC", 0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
       // check if file exist and is readable (Darko Miljanovic)
         if (!is_readable($sFileName)) {
             $this->error = 1;
@@ -52,7 +53,7 @@ class OLERead
             return false;
         }
 
-        if (substr($this->data, 0, 8) != self::IDENTIFIER_OLE) {
+        if (substr($this->data, 0, 8) != $this->identifier_ole) {
             $this->error = 1;
             return false;
         }

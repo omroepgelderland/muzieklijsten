@@ -26,7 +26,7 @@ if [[ $2 != "kort" ]]; then
 fi
 export NODE_ENV=development
 . ~/.nvm/nvm.sh
-nvm install --lts || exit 1
+nvm install node || exit 1
 
 if [[ $mode == "production" ]]; then
     oude_versie="$(git tag --list 'v*' --sort=v:refname | tail -n1)"

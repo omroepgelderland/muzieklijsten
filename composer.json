@@ -19,15 +19,17 @@
 		"pear/mail_mime": "^1.10",
 		"pear/mail": "^1.4",
 		"google/recaptcha": "^1.2",
-		"laminas/laminas-log": "^2.16",
 		"ext-mysqli": "*",
-		"ext-intl": "*"
+		"ext-intl": "*",
+		"omroepgelderland/phpstdlib": "dev-master",
+		"php-di/php-di": "^7.0"
 	},
 	"autoload": {
 		"psr-4": {
 			"muzieklijsten\\": "src/php/"
 		},
 		"files": [
+			"src/php/controllers.php",
 			"src/php/functies.php",
 			"src/php/exceptions.php"
 		]

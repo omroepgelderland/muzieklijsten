@@ -4,8 +4,6 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**
@@ -30,9 +28,14 @@ class Stemmer
      * @param $id ID van het object.
      * @param ?DBData $data Metadata uit de databasevelden (optioneel).
      */
-    public function __construct(int $id, ?array $data = null)
-    {
-        $this->id = $id;
+    public function __construct(
+        private DB $db,
+        private Config $config,
+        private Factory $factory,
+        int|string $id,
+        ?array $data = null
+    ) {
+        $this->id = (int)$id;
         $this->db_props_set = false;
         if (isset($data)) {
             $this->set_data($data);
@@ -89,7 +92,7 @@ class Stemmer
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data(DB::selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(sprintf(
                 'SELECT * FROM stemmers WHERE id = %d',
                 $this->get_id()
             )));
@@ -103,26 +106,11 @@ class Stemmer
      */
     private function set_data(array $data): void
     {
-        $this->lijst = new Lijst($data['lijst_id']);
+        $this->lijst = $this->factory->create_lijst($data['lijst_id']);
         $this->ip = $data['ip'];
         $this->tijdstip = $data['timestamp'];
         $this->is_geanonimiseerd = (bool)$data['is_geanonimiseerd'];
         $this->db_props_set = true;
-    }
-
-    public static function maak(
-        Lijst $lijst,
-        string $ip
-    ): self {
-        try {
-            $id = DB::insertMulti('stemmers', [
-                'lijst_id' => $lijst->get_id(),
-                'ip' => $ip,
-            ]);
-            return new self($id);
-        } catch (SQLException_DataTooLong) {
-            throw new GebruikersException('De invoer van een van de tekstvelden is te lang.');
-        }
     }
 
     /**
@@ -134,45 +122,22 @@ class Stemmer
         bool $is_vrijekeuze = false
     ): StemmerNummer {
         try {
-            DB::insertMulti('stemmers_nummers', [
+            $this->db->insertMulti('stemmers_nummers', [
                 'nummer_id' => $nummer->get_id(),
                 'stemmer_id' => $this->get_id(),
                 'toelichting' => $toelichting,
                 'is_vrijekeuze' => $is_vrijekeuze,
             ]);
-            return new StemmerNummer($nummer, $this);
+            return $this->factory->create_stemmer_nummer($nummer, $this);
         } catch (SQLException_DataTooLong) {
-            $max = DB::get_max_kolom_lengte('stemmers_nummers', 'toelichting');
+            $max = $this->db->get_max_kolom_lengte('stemmers_nummers', 'toelichting');
             throw new GebruikersException(
                 "De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens."
             );
         } catch (SQLException_DupEntry) {
             // Bestaande stem teruggeven
-            return new StemmerNummer($nummer, $this);
+            return $this->factory->create_stemmer_nummer($nummer, $this);
         }
-    }
-
-    /**
-     * Maakt een object uit een id aangeleverd door HTTP POST.
-     *
-     * @param object $request HTTP-request.
-     *
-     * @throws Muzieklijsten_Exception
-     */
-    public static function maak_uit_request(object $request): self
-    {
-        try {
-            $id = filter_var($request->stemmer, \FILTER_VALIDATE_INT);
-        } catch (UndefinedPropertyException) {
-            throw new Muzieklijsten_Exception('Geen stemmer in invoer');
-        }
-        if ($id === false) {
-            throw new Muzieklijsten_Exception(sprintf(
-                'Ongeldig stemmer id: %s',
-                filter_var($request->stemmer)
-            ));
-        }
-        return new self($id);
     }
 
     /**
@@ -180,7 +145,7 @@ class Stemmer
      */
     public function verwijderen(): void
     {
-        DB::query("DELETE FROM stemmers WHERE id = {$this->get_id()}");
+        $this->db->query("DELETE FROM stemmers WHERE id = {$this->get_id()}");
         $this->db_props_set = false;
     }
 
@@ -195,7 +160,7 @@ class Stemmer
         foreach ($lijst->get_velden() as $veld) {
             try {
                 $velden[] = "{$veld->get_label()}: {$veld->get_stemmer_waarde($this)}";
-            } catch (Muzieklijsten_Exception $e) {
+            } catch (MuzieklijstenException $e) {
             }
         }
         $velden_str = implode("\n", $velden);
@@ -219,10 +184,10 @@ class Stemmer
         $onderwerp = "Er is gestemd - {$lijst->get_naam()}";
 
         if (count($lijst->get_notificatie_email_adressen()) > 0) {
-            stuur_mail(
+            $this->config->stuur_mail(
                 $lijst->get_notificatie_email_adressen(),
                 [],
-                Config::get_instelling('mail', 'afzender'),
+                $this->config->get_instelling('mail', 'afzender'),
                 $onderwerp,
                 $tekst_bericht
             );
@@ -246,13 +211,13 @@ class Stemmer
             if ($veld->get_label() === 'Naam') {
                 try {
                     $naam = $veld->get_stemmer_waarde($this);
-                } catch (Muzieklijsten_Exception) {
+                } catch (MuzieklijstenException) {
                 }
             }
             if ($veld->get_label() === 'E‑mailadres' || $veld->get_label() === 'E-mailadres') {
                 try {
                     $email = $veld->get_stemmer_waarde($this);
-                } catch (Muzieklijsten_Exception) {
+                } catch (MuzieklijstenException) {
                 }
             }
         }
@@ -307,10 +272,10 @@ class Stemmer
             $e_keuzes->appendChild($dom->createElement('br'));
         }
 
-        stuur_mail(
+        $this->config->stuur_mail(
             $email,
             [],
-            Config::get_instelling('mail', 'afzender'),
+            $this->config->get_instelling('mail', 'afzender'),
             $onderwerp,
             $dom->textContent,
             $dom->saveHTML()
@@ -329,9 +294,9 @@ class Stemmer
             stemmer_id = {$this->get_id()}
         EOT;
         $stemmen = [];
-        foreach (DB::query($query) as $entry) {
-            $stemmen[] = new StemmerNummer(
-                new Nummer($entry['nummer_id']),
+        foreach ($this->db->query($query) as $entry) {
+            $stemmen[] = $this->factory->create_stemmer_nummer(
+                $this->factory->create_nummer((int)$entry['nummer_id']),
                 $this,
                 $entry
             );
@@ -349,8 +314,8 @@ class Stemmer
         WHERE
             stemmer_id = {$this->get_id()}
         EOT;
-        DB::query($query);
-        verwijder_ongekoppelde_vrije_keuze_nummers();
+        $this->db->query($query);
+        $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
     }
 
     /**
@@ -363,7 +328,7 @@ class Stemmer
         WHERE
             stemmer_id = {$this->get_id()}
         EOT;
-        DB::query($query);
+        $this->db->query($query);
     }
 
     /**
@@ -371,7 +336,7 @@ class Stemmer
      */
     public function anonimiseer(): void
     {
-        DB::updateMulti(
+        $this->db->updateMulti(
             'stemmers',
             [
                 'ip' => anonimiseer($this->get_ip()),
@@ -397,8 +362,9 @@ class Stemmer
                 AND toelichting IS NOT NULL
                 AND toelichting != ''
         EOT;
-        foreach (DB::query($query) as ['nummer_id' => $nummer_id, 'toelichting' => $toelichting]) {
-            DB::updateMulti(
+        foreach ($this->db->query($query) as ['nummer_id' => $nummer_id, 'toelichting' => $toelichting]) {
+            $nummer_id = (int)$nummer_id;
+            $this->db->updateMulti(
                 'stemmers_nummers',
                 ['toelichting' => anonimiseer($toelichting)],
                 "nummer_id = {$nummer_id} AND stemmer_id = {$this->id}"
@@ -419,8 +385,9 @@ class Stemmer
                 AND waarde IS NOT NULL
                 AND waarde != ''
         EOT;
-        foreach (DB::query($query) as ['veld_id' => $veld_id, 'waarde' => $waarde]) {
-            DB::updateMulti(
+        foreach ($this->db->query($query) as ['veld_id' => $veld_id, 'waarde' => $waarde]) {
+            $veld_id = (int)$veld_id;
+            $this->db->updateMulti(
                 'stemmers_velden',
                 ['waarde' => anonimiseer($waarde)],
                 "veld_id = {$veld_id} AND stemmer_id = {$this->id}"

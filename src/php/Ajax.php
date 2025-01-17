@@ -4,8 +4,6 @@
  * @author Remy Glaser <rglaser@gld.nl>
  */
 
-declare(strict_types=1);
-
 namespace muzieklijsten;
 
 /**
@@ -18,14 +16,15 @@ namespace muzieklijsten;
  */
 class Ajax
 {
-    private object $request;
-
     /**
      * @param object $request Requestdata van de frontend.
      */
-    public function __construct($request)
-    {
-        $this->request = $request;
+    public function __construct(
+        private Factory $factory,
+        private Config $config,
+        private DB $db,
+        private object $request,
+    ) {
     }
 
     /**
@@ -62,7 +61,7 @@ class Ajax
     public function get_stemlijst_frontend_data(): array
     {
         try {
-            $lijst = Lijst::maak_uit_request($this->request);
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
             $lijst->get_naam(); // Forceer dat de lijst in de database wordt geopend.
         } catch (SQLException) {
             throw new GebruikersException('Ongeldige lijst');
@@ -105,13 +104,13 @@ class Ajax
             'maxkeuzes' => $lijst->get_maxkeuzes(),
             'vrijekeuzes' => $lijst->get_vrijekeuzes(),
             'is_artiest_eenmalig' => $lijst->is_artiest_eenmalig(),
-            'organisatie' => Config::get_instelling('organisatie'),
+            'organisatie' => $this->config->get_instelling('organisatie'),
             'lijst_naam' => $lijst->get_naam(),
             'heeft_gebruik_recaptcha' => $lijst->heeft_gebruik_recaptcha(),
             'is_actief' => $lijst->is_actief(),
             'velden' => $velden,
-            'recaptcha_sitekey' => Config::get_instelling('recaptcha', 'sitekey'),
-            'privacy_url' => Config::get_instelling('privacy_url'),
+            'recaptcha_sitekey' => $this->config->get_instelling('recaptcha', 'sitekey'),
+            'privacy_url' => $this->config->get_instelling('privacy_url'),
             'random_volgorde' => $lijst->is_random_volgorde(),
         ];
     }
@@ -124,7 +123,7 @@ class Ajax
     public function verwijder_lijst(): void
     {
         $this->login();
-        $lijst = Lijst::maak_uit_request($this->request);
+        $lijst = $this->factory->create_lijst_uit_request($this->request);
         $lijst->verwijderen();
     }
 
@@ -136,9 +135,9 @@ class Ajax
     public function lijst_opslaan(): void
     {
         $this->login();
-        $lijst = Lijst::maak_uit_request($this->request);
+        $lijst = $this->factory->create_lijst_uit_request($this->request);
         $data = $this->filter_lijst_metadata();
-        DB::updateMulti('lijsten', $data, "id = {$lijst->get_id()}");
+        $this->db->updateMulti('lijsten', $data, "id = {$lijst->get_id()}");
         try {
             $velden = $this->request->velden;
         } catch (UndefinedPropertyException) {
@@ -228,7 +227,7 @@ class Ajax
 
     private function set_lijst_velden(Lijst $lijst, object $input_velden): void
     {
-        $alle_velden = get_velden();
+        $alle_velden = $this->factory->get_velden();
         foreach ($alle_velden as $veld) {
             try {
                 $id = $veld->get_id();
@@ -255,7 +254,7 @@ class Ajax
     {
         $this->login();
         $data = $this->filter_lijst_metadata();
-        $lijst = new Lijst(DB::insertMulti('lijsten', $data));
+        $lijst = $this->factory->create_lijst($this->db->insertMulti('lijsten', $data));
         try {
             $velden = $this->request->velden;
         } catch (UndefinedPropertyException) {
@@ -288,8 +287,8 @@ class Ajax
             $artiest = trim($nummer->artiest);
             $titel = trim($nummer->titel);
             if ($titel !== '' && $artiest !== '') {
-                $zoekartiest = DB::escape_string(strtolower(str_replace(' ', '', $artiest)));
-                $zoektitel = DB::escape_string(strtolower(str_replace(' ', '', $titel)));
+                $zoekartiest = $this->db->escape_string(strtolower(str_replace(' ', '', $artiest)));
+                $zoektitel = $this->db->escape_string(strtolower(str_replace(' ', '', $titel)));
                 $sql = <<<EOT
                     SELECT id
                     FROM nummers
@@ -297,20 +296,20 @@ class Ajax
                         LOWER(REPLACE(artiest, " ", "")) = "{$zoekartiest}"
                         AND LOWER(REPLACE(titel, " ", "")) = "{$zoektitel}"
                 EOT;
-                $res = DB::query($sql);
+                $res = $this->db->query($sql);
                 if ($res->num_rows > 0) {
                     $json['dubbel']++;
                     $nummer_id = (int)$res->fetch_array()[0];
                 } else {
                     $json['toegevoegd']++;
-                    $nummer_id = DB::insertMulti('nummers', [
+                    $nummer_id = $this->db->insertMulti('nummers', [
                         'titel' => $titel,
                         'artiest' => $artiest,
                     ]);
                 }
                 foreach ($this->request->lijsten as $lijst) {
                     try {
-                        DB::insertMulti('lijsten_nummers', [
+                        $this->db->insertMulti('lijsten_nummers', [
                             'nummer_id' => $nummer_id,
                             'lijst_id' => $lijst,
                         ]);
@@ -334,7 +333,7 @@ class Ajax
     public function get_lijsten(): array
     {
         $respons = [];
-        foreach (get_muzieklijsten() as $lijst) {
+        foreach ($this->factory->get_muzieklijsten() as $lijst) {
             $respons[] = [
                 'id' => $lijst->get_id(),
                 'naam' => $lijst->get_naam(),
@@ -351,7 +350,7 @@ class Ajax
     public function stem_set_behandeld(): void
     {
         $this->login();
-        $stem = StemmerNummer::maak_uit_request($this->request);
+        $stem = $this->factory->create_stemmer_nummer_uit_request($this->request);
         $waarde = filter_var($this->request->waarde, \FILTER_VALIDATE_BOOL);
         $stem->set_behandeld($waarde);
     }
@@ -364,12 +363,9 @@ class Ajax
     public function verwijder_stem(): void
     {
         $this->login();
-        $stem = new StemmerNummer(
-            Nummer::maak_uit_request($this->request),
-            Stemmer::maak_uit_request($this->request)
-        );
+        $stem = $this->factory->create_stemmer_nummer_uit_request($this->request);
         $stem->verwijderen();
-        verwijder_ongekoppelde_vrije_keuze_nummers();
+        $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
     }
 
     /**
@@ -381,8 +377,8 @@ class Ajax
     public function verwijder_nummer(): void
     {
         $this->login();
-        $lijst = Lijst::maak_uit_request($this->request);
-        $lijst->verwijder_nummer(Nummer::maak_uit_request($this->request));
+        $lijst = $this->factory->create_lijst_uit_request($this->request);
+        $lijst->verwijder_nummer($this->factory->create_nummer_uit_request($this->request));
     }
 
     /**
@@ -393,7 +389,7 @@ class Ajax
     public function get_totaal_aantal_stemmers(): int
     {
         $this->login();
-        $lijst = Lijst::maak_uit_request($this->request);
+        $lijst = $this->factory->create_lijst_uit_request($this->request);
         try {
             $van = filter_van_tot($this->request->van);
         } catch (UndefinedPropertyException) {
@@ -416,11 +412,14 @@ class Ajax
      */
     public function stem(): string
     {
-        $lijst = Lijst::maak_uit_request($this->request);
+        $lijst = $this->factory->create_lijst_uit_request($this->request);
         $bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
         $html = "<h4>{$bedankt_tekst}</h4>";
 
-        if ($lijst->heeft_gebruik_recaptcha() && !is_captcha_ok($this->request->{'g-recaptcha-response'})) {
+        if (
+            $lijst->heeft_gebruik_recaptcha()
+            && !$this->config->is_captcha_ok($this->request->{'g-recaptcha-response'})
+        ) {
             throw new GebruikersException('Captcha verkeerd.');
         }
         if ($lijst->is_max_stemmen_per_ip_bereikt()) {
@@ -467,7 +466,7 @@ class Ajax
      */
     private function verwerk_stem(Lijst $lijst): Stemmer
     {
-        check_ip_blacklist($_SERVER['REMOTE_ADDR']);
+        $this->db->check_ip_blacklist($_SERVER['REMOTE_ADDR']);
 
         // Zoek bestaande stemmer.
         $stemmer = null;
@@ -485,13 +484,13 @@ class Ajax
         $stemmer?->verwijder_velden();
 
         // Maak nieuwe stemmer.
-        $stemmer ??= Stemmer::maak(
+        $stemmer ??= $this->factory->insert_stemmer(
             $lijst,
             $_SERVER['REMOTE_ADDR']
         );
 
         foreach ($this->request->nummers as $input_nummer) {
-            $nummer = new Nummer(filter_var($input_nummer->id, \FILTER_VALIDATE_INT));
+            $nummer = $this->factory->create_nummer(filter_var($input_nummer->id, \FILTER_VALIDATE_INT));
             $toelichting = filter_var($input_nummer->toelichting);
             $stemmer->add_stem($nummer, $toelichting, false);
         }
@@ -504,7 +503,7 @@ class Ajax
         }
         foreach ($vrijekeuzes as $vrijekeus_invoer) {
             try {
-                $nummer = Nummer::vrijekeuze_toevoegen(
+                $nummer = $this->factory->vrijekeuze_nummer_toevoegen(
                     $vrijekeus_invoer->artiest,
                     $vrijekeus_invoer->titel
                 );
@@ -547,10 +546,10 @@ class Ajax
     public function lijst_nummer_toevoegen(): void
     {
         $this->login();
-        DB::disableAutocommit();
-        $lijst = Lijst::maak_uit_request($this->request);
-        $lijst->nummer_toevoegen(Nummer::maak_uit_request($this->request));
-        DB::commit();
+        $this->db->disableAutocommit();
+        $lijst = $this->factory->create_lijst_uit_request($this->request);
+        $lijst->nummer_toevoegen($this->factory->create_nummer_uit_request($this->request));
+        $this->db->commit();
     }
 
     /**
@@ -561,10 +560,10 @@ class Ajax
     public function lijst_nummer_verwijderen(): void
     {
         $this->login();
-        DB::disableAutocommit();
-        $lijst = Lijst::maak_uit_request($this->request);
-        $lijst->verwijder_nummer(Nummer::maak_uit_request($this->request));
-        DB::commit();
+        $this->db->disableAutocommit();
+        $lijst = $this->factory->create_lijst_uit_request($this->request);
+        $lijst->verwijder_nummer($this->factory->create_nummer_uit_request($this->request));
+        $this->db->commit();
     }
 
     /**
@@ -578,9 +577,9 @@ class Ajax
     public function get_geselecteerde_nummers(): array
     {
         try {
-            $lijst = Lijst::maak_uit_request($this->request);
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
             $nummers = $lijst->get_nummers_sorteer_titels();
-        } catch (Muzieklijsten_Exception $e) {
+        } catch (MuzieklijstenException $e) {
             $nummers = [];
         }
         $respons = [];
@@ -607,7 +606,7 @@ class Ajax
      */
     public function vul_datatables(): array
     {
-        $ssp = new SSP(
+        $ssp = $this->factory->create_ssp(
             $this->request,
             [
                 [
@@ -636,7 +635,7 @@ class Ajax
     {
         $this->login();
         try {
-            $lijst = Lijst::maak_uit_request($this->request);
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
         } catch (GeenLijstException) {
             throw new GebruikersException('Ongeldige lijst');
         }
@@ -654,7 +653,7 @@ class Ajax
     {
         $this->login();
         try {
-            $lijst = Lijst::maak_uit_request($this->request);
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
         } catch (GeenLijstException) {
             throw new GebruikersException('Ongeldige lijst');
         }
@@ -672,7 +671,7 @@ class Ajax
     {
         $this->login();
         try {
-            $lijst = Lijst::maak_uit_request($this->request);
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
         } catch (GeenLijstException) {
             throw new GebruikersException('Ongeldige lijst');
         }
@@ -685,7 +684,7 @@ class Ajax
             'nummer_ids' => $nummer_ids,
             'iframe_url' => sprintf(
                 '%s?lijst=%d',
-                Config::get_instelling('root_url'),
+                $this->config->get_instelling('root_url'),
                 $lijst->get_id()
             ),
         ];
@@ -706,17 +705,17 @@ class Ajax
     {
         $this->login();
         $lijsten = [];
-        foreach (get_muzieklijsten() as $lijst) {
+        foreach ($this->factory->get_muzieklijsten() as $lijst) {
             $lijsten[] = [
                 'id' => $lijst->get_id(),
                 'naam' => $lijst->get_naam(),
             ];
         }
         return [
-            'organisatie' => Config::get_instelling('organisatie'),
+            'organisatie' => $this->config->get_instelling('organisatie'),
             'lijsten' => $lijsten,
-            'nimbus_url' => Config::get_instelling('nimbus_url'),
-            'totaal_aantal_nummers' => (int)DB::selectSingle('SELECT COUNT(*) FROM nummers'),
+            'nimbus_url' => $this->config->get_instelling('nimbus_url'),
+            'totaal_aantal_nummers' => (int)$this->db->selectSingle('SELECT COUNT(*) FROM nummers'),
         ];
     }
 
@@ -731,7 +730,7 @@ class Ajax
     public function get_alle_velden(): array
     {
         $respons = [];
-        foreach (get_velden() as $veld) {
+        foreach ($this->factory->get_velden() as $veld) {
             $respons[] = [
                 'id' => $veld->get_id(),
                 'tonen' => false,
@@ -763,7 +762,7 @@ class Ajax
     {
         $this->login();
         try {
-            $lijst = Lijst::maak_uit_request($this->request);
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
         } catch (GeenLijstException) {
             throw new GebruikersException('Ongeldige lijst');
         }
@@ -800,14 +799,14 @@ class Ajax
             exit();
         }
         if (
-            $_SERVER['PHP_AUTH_USER'] !== Config::get_instelling('php_auth', 'user')
-            || $_SERVER['PHP_AUTH_PW'] !== Config::get_instelling('php_auth', 'password')
+            $_SERVER['PHP_AUTH_USER'] !== $this->config->get_instelling('php_auth', 'user')
+            || $_SERVER['PHP_AUTH_PW'] !== $this->config->get_instelling('php_auth', 'password')
         ) {
             // header('WWW-Authenticate: Basic realm="Inloggen"');
             header('HTTP/1.0 401 Unauthorized');
             echo 'Verkeerd wachtwoord en/of gebruikersnaam. Ververs de pagina met F5 om het nog een keer te proberen.';
             session_destroy();
-            throw new Muzieklijsten_Exception('Verkeerd wachtwoord en/of gebruikersnaam');
+            throw new MuzieklijstenException('Verkeerd wachtwoord en/of gebruikersnaam');
         }
         $_SESSION['is_ingelogd'] = true;
     }

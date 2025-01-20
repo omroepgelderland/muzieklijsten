@@ -185,7 +185,7 @@ function get_fbshare_data(Factory $factory, Config $config, Log $log, DB $db): o
 /**
  * Interactief installatiescript.
  */
-function install(Config $config, DB $db, Log $log): void
+function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
 {
     // Configuratiebestand genereren.
     $root_url = readline_met_default('Root-URL naar deze installatie van muzieklijsten', mag_leeg: false);
@@ -303,7 +303,7 @@ function install(Config $config, DB $db, Log $log): void
     do {
     } while ($db->getDB()->next_result());
 
-    db_update($db, $log);
+    db_update($db, $log, $dbupdates);
 
     echo <<<EOT
     Installatie voltooid. Nadat je je webserver hebt ingesteld zijn de volgende interfaces bereikbaar:

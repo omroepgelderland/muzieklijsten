@@ -205,7 +205,7 @@ class Ajax
         if ($maxkeuzes < $minkeuzes) {
             throw new GebruikersException('Het maximum aantal keuzes kan niet lager zijn dan het minimum.');
         }
-        $vrijekeuzes = min(0, $vrijekeuzes);
+        $vrijekeuzes = max(0, $vrijekeuzes);
         if ($stemmen_per_ip < 1) {
             $stemmen_per_ip = null;
         }

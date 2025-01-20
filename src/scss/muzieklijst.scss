@@ -1,8 +1,8 @@
+// Project
+@use '/src/scss/algemeen.scss';
+
 // Libraries
 @import 'datatables.net-dt/css/dataTables.dataTables.css';
-
-// Project
-@import '/src/scss/algemeen.scss';
 
 body:not(.geladen),
 body:not(.gestemd) .gestemd,

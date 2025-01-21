@@ -60,10 +60,9 @@ vendor/
 /phpstan.neon
 
 /debug-php.sh
-config/
+/config/
 node_modules
 /*.md5
-/test/*.xls
-
 /public/**
 !/public/*.php
+/test/

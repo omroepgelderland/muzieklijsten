@@ -1,0 +1,2 @@
+# phpstdlib
+Shared PHP functions

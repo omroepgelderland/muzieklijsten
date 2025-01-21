@@ -47,9 +47,12 @@ function dupliceer_lijst(Factory $factory, DB $db): void
     $db->disableAutocommit();
 
     $origineel_id = filter_var(readline('id van de te dupliceren lijst: '), \FILTER_VALIDATE_INT);
-    $nieuwe_naam = filter_var(readline('nieuwe naam: '));
 
     $lijst = $factory->create_lijst($origineel_id);
+    echo "We gaan de lijst \"{$lijst->get_naam()}\" ({$origineel_id}) dupliceren\n";
+
+    $nieuwe_naam = filter_var(readline('nieuwe naam: '));
+
     $lijst->dupliceer($nieuwe_naam);
 
     $db->commit();

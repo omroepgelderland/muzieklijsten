@@ -512,6 +512,7 @@ class Lijst
     public function dupliceer(string $naam): Lijst
     {
         // Nieuwe lijst maken.
+        $e_naam = $this->db->escape_string($naam);
         $query = <<<EOT
             INSERT INTO lijsten
                 (
@@ -529,7 +530,7 @@ class Lijst
                 )
                 SELECT
                     0,
-                    "{$naam}",
+                    "{$e_naam}",
                     minkeuzes,
                     maxkeuzes,
                     stemmen_per_ip,

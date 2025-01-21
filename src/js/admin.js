@@ -449,12 +449,15 @@ class ResultatenModal {
     });
     this.totaal_aantal_stemmen = 0;
     for ( const nummer_stemmen of nummers_stemmen ) {
-      const resultaten_nummer = new ResultatenNummer(this, this.e_resultaten_tabel);
+      const resultaten_nummer = new ResultatenNummer(
+        this,
+        this.e_resultaten_tabel,
+        labels_promise,
+        nummer_stemmen.stemmen,
+        nummer_stemmen.nummer
+      );
       resultaten_nummer.on_stem_verwijderd.on(this.stem_verwijderd_handler.bind(this));
       resultaten_nummer.on_verwijderd.on(this.nummer_verwijderd_handler.bind(this));
-      resultaten_nummer.maak_velden_labels(labels_promise);
-      resultaten_nummer.set_nummer(nummer_stemmen.nummer);
-      resultaten_nummer.maak_stemmen(nummer_stemmen.stemmen);
       this.resultaten_nummers[nummer_stemmen.nummer.id] = resultaten_nummer;
       this.add_totaal_aantal_stemmen(nummer_stemmen.stemmen.length);
     }
@@ -551,6 +554,10 @@ class ResultatenModal {
     if ( target.closest('.stem-verwijderen') ) {
       this.stem_verwijderen_handler(target.closest('.stem-verwijderen'));
     }
+    // In- en uitklappen van stemmen op een nummer.
+    if (target.closest('.nummer')) {
+      this.toggle_nummer_stemmen_handler(target.closest('.nummer'));
+    }
   }
 
   /**
@@ -565,6 +572,18 @@ class ResultatenModal {
     if ( target.closest('.behandeld-check') ) {
       this.check_behandeld_handler(target.closest('.behandeld-check'));
     }
+  }
+
+  /**
+   * In- en uitklappen van de stemmen op een nummer.
+   * 
+   * @private
+   * @param {HTMLElement} elem 
+   */
+  toggle_nummer_stemmen_handler(elem) {
+    const nummer_id = Number.parseInt(elem.getAttribute('data-nummer-id'));
+    const resultaten_nummer = this.resultaten_nummers[nummer_id];
+    resultaten_nummer.toggle();
   }
 
   /**
@@ -640,7 +659,7 @@ class ResultatenNummer {
   e_tr_uitklap;
   /** @type {HTMLTableRowElement} */
   e_tr_gegevens;
-  /** @type {HTMLTableCellElement} */
+  /** @type {?HTMLTableCellElement} */
   e_aantal_stemmen;
   /** @type {number} */
   nummer_id;
@@ -654,13 +673,23 @@ class ResultatenNummer {
   on_verwijderd;
   /** @type {boolean} */
   is_zichtbaar;
+  /** @type {Promise<string[]>} */
+  labels_promise;
+  stemmen;
 
   /**
    * 
    * @param {ResultatenModal} resultaten_modal 
    * @param {HTMLTableSectionElement} e_container 
+   * @param {Promise<string[]>} labels_promise
    */
-  constructor(resultaten_modal, e_container) {
+  constructor(
+    resultaten_modal,
+    e_container,
+    labels_promise,
+    stemmen,
+    nummer
+  ) {
     this.resultaten_stemmen = {};
     this.on_stem_verwijderd = new TypedEvent();
     this.on_verwijderd = new TypedEvent();
@@ -668,15 +697,21 @@ class ResultatenNummer {
     this.e_container = e_container;
     this.resultaten_stemmen = [];
     this.is_zichtbaar = true;
-    this.e_tr_uitklap = resultaten_nummer_template.item(0).cloneNode(true);
-    this.e_tr_gegevens = resultaten_nummer_template.item(1).cloneNode(true);
+    this.labels_promise = labels_promise;
+    this.stemmen = stemmen;
 
+    this.e_tr_uitklap = resultaten_nummer_template.item(0).cloneNode(true);
     this.e_aantal_stemmen = this.e_tr_uitklap.getElementsByClassName('aantal-stemmen').item(0);
 
     // this.e_tr_uitklap.getElementsByClassName('verwijder-nummer').item(0).addEventListener('click', this.verwijderen.bind(this));
 
     this.e_container.appendChild(this.e_tr_uitklap);
-    this.e_container.appendChild(this.e_tr_gegevens);
+    this.set_nummer(nummer);
+    if ( this.stemmen.length > 0 ) {
+      this.e_tr_uitklap.classList.add('heeft-stemmen');
+    }
+    this.update_aantal_stemmen();
+    this.update_behandeld();
   }
 
   set_nummer({id, titel, artiest, is_vrijekeuze}) {
@@ -684,10 +719,7 @@ class ResultatenNummer {
     this.titel = titel;
     this.artiest = artiest;
 
-    this.e_tr_gegevens.id = `nummer-stemmers-${this.nummer_id}`;
     this.e_tr_uitklap.id = `nummer-${this.nummer_id}`;
-    this.e_tr_uitklap.setAttribute('data-target', `#${this.e_tr_gegevens.id}`);
-    this.e_tr_gegevens.setAttribute('data-nummer-id', this.nummer_id);
     this.e_tr_uitklap.setAttribute('data-nummer-id', this.nummer_id);
 
     for ( const e_nummer_titel of this.e_tr_uitklap.getElementsByClassName('nummer-titel') ) {
@@ -701,14 +733,13 @@ class ResultatenNummer {
     }
   }
 
-  /**
-   * 
-   * @param {Promise} labels_promise
-   */
-  async maak_velden_labels(labels_promise) {
+  async maak_velden_labels() {
+    if ( this.e_tr_gegevens == null ) {
+      throw new Error('Nummer is niet uitgeklapt');
+    }
     const e_container = this.e_tr_gegevens.querySelector('thead tr');
     const e_insert_before = e_container.firstChild;
-    const labels = await labels_promise;
+    const labels = await this.labels_promise;
     for ( const label of labels ) {
       const e_label = document.createElement('th');
       e_label.appendChild(document.createTextNode(label));
@@ -716,19 +747,17 @@ class ResultatenNummer {
     }
   }
 
-  maak_stemmen(stemmen) {
-    const e_tbody = this.e_tr_gegevens.getElementsByTagName('tbody').item(0);
-    if ( stemmen.length > 0 ) {
-      this.e_tr_uitklap.classList.add('heeft-stemmen');
+  maak_stemmen() {
+    if ( this.e_tr_gegevens == null ) {
+      throw new Error('Nummer is niet uitgeklapt');
     }
-    for ( const stem of stemmen ) {
+    const e_tbody = this.e_tr_gegevens.getElementsByTagName('tbody').item(0);
+    for ( const stem of this.stemmen ) {
       const resultaten_stem = new ResultatenStem(this, e_tbody, stem);
       resultaten_stem.on_change_is_behandeld.on(this.update_behandeld.bind(this));
       resultaten_stem.on_verwijderd.on(this.stem_verwijderd_handler.bind(this, resultaten_stem));
       this.resultaten_stemmen[stem.stemmer_id] = resultaten_stem;
     }
-    this.update_aantal_stemmen();
-    this.update_behandeld();
   }
 
   update_behandeld() {
@@ -757,7 +786,7 @@ class ResultatenNummer {
     this.update_aantal_stemmen();
     if ( this.get_aantal_stemmen() === 0 ) {
       // Nummer heeft geen stemmen meer.
-      this.e_tr_gegevens.remove();
+      this.inklappen();
       this.e_tr_uitklap.remove();
     }
   }
@@ -837,12 +866,41 @@ class ResultatenNummer {
     }
   }
 
+  /**
+   * Verwijdert de tabel met stemmers op dit nummer.
+   */
   inklappen() {
-    $(this.e_tr_gegevens).collapse('hide');
+    if (this.e_tr_gegevens != null) {
+      this.e_tr_gegevens.remove();
+      this.e_tr_gegevens = undefined;
+      this.e_tr_uitklap.classList.add('collapsed');
+    }
   }
 
+  /**
+   * Genereert de HTML van de tabel met stemmers op dit nummer en plaatst dit op de pagina.
+   */
   uitklappen() {
-    $(this.e_tr_gegevens).collapse('show');
+    if (this.e_tr_gegevens == null) {
+      this.e_tr_uitklap.classList.remove('collapsed');
+      this.e_tr_gegevens = resultaten_nummer_template.item(1).cloneNode(true);
+      this.e_tr_uitklap.after(this.e_tr_gegevens);
+      this.e_tr_gegevens.id = `nummer-stemmers-${this.nummer_id}`;
+      this.e_tr_gegevens.setAttribute('data-nummer-id', this.nummer_id);
+      this.maak_velden_labels();
+      this.maak_stemmen();
+    }
+  }
+
+  /**
+   * Toont de tabel met stemmen als die nu niet zichtbaar is en andersom.
+   */
+  toggle() {
+    if (this.e_tr_gegevens == null) {
+      this.uitklappen();
+    } else {
+      this.inklappen();
+    }
   }
 
   /**

@@ -647,6 +647,9 @@ class ResultatenModal {
   
 }
 
+/**
+ * Een nummer in de lijst met resultaten met uitklapbare lijst met stemmen op dat nummer.
+ */
 class ResultatenNummer {
 
   /** @type {ResultatenModal} */
@@ -719,7 +722,7 @@ class ResultatenNummer {
   }
 
   /**
-   * 
+   * Plaats metadata van het nummer.
    * @param {{artiest: string, id: number, is_vrijekeuze: boolean, titel: string}} param0 
    */
   set_nummer({id, titel, artiest, is_vrijekeuze}) {
@@ -741,6 +744,9 @@ class ResultatenNummer {
     }
   }
 
+  /**
+   * Maak de kolomtitels van de invulvelden van de stemmen (naam, e-mail e.d.).
+   */
   async maak_velden_labels() {
     if ( this.e_tr_gegevens == null ) {
       throw new Error('Nummer is niet uitgeklapt');
@@ -755,6 +761,9 @@ class ResultatenNummer {
     }
   }
 
+  /**
+   * Maakt views voor de stemmen. Alleen aanroepen bij het uitklappen.
+   */
   maak_stemmen() {
     if ( this.e_tr_gegevens == null ) {
       throw new Error('Nummer is niet uitgeklapt');
@@ -769,7 +778,7 @@ class ResultatenNummer {
   }
 
   /**
-   * 
+   * Zet een stem op behandeld of niet na een klik op het vinkhokje.
    * @param {number} stemmer_id 
    * @param {boolean} is_behanded
    */
@@ -791,7 +800,7 @@ class ResultatenNummer {
   }
 
   /**
-   * 
+   * Verwijdert een stem en eventueel de hele regel als er geen stemmen meer zijn.
    * @param {number} stemmer_id 
    */
   stem_verwijderd_handler(stemmer_id) {
@@ -810,6 +819,9 @@ class ResultatenNummer {
     }
   }
 
+  /**
+   * Update het veld met het aantal stemmen op dit nummer.
+   */
   update_aantal_stemmen() {
     this.e_aantal_stemmen.innerText = this.stemmen.length;
   }
@@ -829,6 +841,7 @@ class ResultatenNummer {
   // }
 
   /**
+   * Stelt een filter in. De regel wordt ingeklapt.
    * 
    * @param {string} nummers_tekst 
    * @param {string} stemmers_tekst 
@@ -866,6 +879,7 @@ class ResultatenNummer {
   }
 
   /**
+   * Past een filter toe. De gefilterde stemmen worden in stemmen_gefilterd opgeslagen.
    * 
    * @param {{tekst: string, van: ?Date, tot: ?Date}} filter 
    */

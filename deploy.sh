@@ -1,12 +1,7 @@
 #!/bin/bash
 
 function delete_dist_bestanden() {
-    rm -rf \
-        public/afbeeldingen/ \
-        public/css/ \
-        public/fonts/ \
-        public/js/ \
-        public/*.html
+    find public/* -not -iname '*.php' -delete
 }
 
 if [[ $1 == "" ]]; then
@@ -84,12 +79,15 @@ if [[ $mode == "production" || $mode == "staging" ]]; then
     git rm -r \
         assets/ \
         deploy.sh \
-        package.json \
         package-lock.json \
+        package.json \
+        phpstan.dist.neon \
+        ruleset.xml \
         src/html/ \
         src/js/ \
         src/scss/ \
         test/ \
+        tsconfig.json \
         webpack.* || exit 1
     if [[ $mode == "production" ]]; then
         git commit -m "[build] $git_versie" || exit 1

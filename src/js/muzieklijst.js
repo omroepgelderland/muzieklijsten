@@ -220,8 +220,8 @@ class StemView {
         }
       ],
       order: [
+        [1, 'asc'],
         [2, 'asc'],
-        [1, 'asc']
       ],
       ordering: !(await this.is_random_volgorde()),
       // rowCallback: this.row_callback.bind(this),

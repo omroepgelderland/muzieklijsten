@@ -35,6 +35,7 @@ if [[ $mode == "dev" ]]; then
     if [[ $2 != "kort" ]]; then
         npm install npm@latest -g || exit 1
         npm install || exit 1
+        npm update update-browserslist-db || exit 1
         npx update-browserslist-db@latest || exit 1
         npm audit fix
         export COMPOSER_NO_DEV=0

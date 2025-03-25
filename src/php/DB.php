@@ -56,6 +56,7 @@ class DB
                     $this->db->connect_errno
                 );
             }
+            $this->db->set_charset('utf8mb4');
         }
         return $this->db;
     }

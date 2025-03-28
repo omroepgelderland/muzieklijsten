@@ -37,4 +37,5 @@ npm audit fix
 # webpack compilen
 delete_dist_bestanden
 npx tsc --noEmit || exit 1
+npx prettier src/js/ src/scss/ ./*.js --write || exit 1
 npx webpack --config "webpack.dev.js" || exit 1

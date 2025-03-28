@@ -6,177 +6,177 @@
 @import "datatables.net-dt/css/dataTables.dataTables.css";
 
 body:not(.lijst-geselecteerd) .lijst-geselecteerd {
-    display: none;
+  display: none;
 }
 
 body {
-    padding-top: 70px;
+  padding-top: 70px;
 }
 
 nav .container-fluid {
-    padding-top: 10px;
+  padding-top: 10px;
 }
 
-table.dataTable.select tbody tr, table.dataTable thead th:first-child {
-    cursor: pointer;
+table.dataTable.select tbody tr,
+table.dataTable thead th:first-child {
+  cursor: pointer;
 }
 
 #beschikbare-nummers_length {
-    select {
-        width: 80px;
-        display: inline;
-    }
-    input {
-        width: 200px;
-        display: inline;
-    }
+  select {
+    width: 80px;
+    display: inline;
+  }
+  input {
+    width: 200px;
+    display: inline;
+  }
 }
 
 .beschikbaar hr {
-    border: 1px solid #333;
+  border: 1px solid #333;
 }
 
 .modal-dialog {
-    width: 90%;
+  width: 90%;
 }
 
 .modal-top {
-    border-radius: 6px 6px 0px 0px;
-    -moz-border-radius: 6px 6px 0px 0px;
-    -webkit-border-radius: 6px 6px 0px 0px;
-    background-clip: padding-box;
-    background-color: #fff;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  border-radius: 6px 6px 0px 0px;
+  -moz-border-radius: 6px 6px 0px 0px;
+  -webkit-border-radius: 6px 6px 0px 0px;
+  background-clip: padding-box;
+  background-color: #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
 .modal-end {
-    border-radius: 0px 0px 6px 6px;
-    -moz-border-radius: 0px 0px 6px 6px;
-    -webkit-border-radius: 0px 0px 6px 6px;
-    background-clip: padding-box;
-    background-color: #fff;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  border-radius: 0px 0px 6px 6px;
+  -moz-border-radius: 0px 0px 6px 6px;
+  -webkit-border-radius: 0px 0px 6px 6px;
+  background-clip: padding-box;
+  background-color: #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
 .modal-content {
-    box-shadow: none;
-    border: none;
-    border-radius: 0px;
+  box-shadow: none;
+  border: none;
+  border-radius: 0px;
 }
 
 .separator {
-    height: 10px; clear: both;
+  height: 10px;
+  clear: both;
 }
 
 .pointer {
-    cursor:pointer;
+  cursor: pointer;
 }
 
 #result hr {
-    border: 1px solid #333;
+  border: 1px solid #333;
 }
 
 #nieuw .beheer-bestaand {
-    display: none;
+  display: none;
 }
 
 #modal-embed input {
-    min-width: 75%;
+  min-width: 75%;
 }
 #modal-embed h5 {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .hidden-row .bs-callout {
-    margin: 0;
+  margin: 0;
 }
 
 .nobreak {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 .resultaten-modal {
+  margin-top: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
 
-    margin-top: 20px;
-    margin-left: 20px;
-    margin-right: 20px;
-    
-    // &.admin {
-    //     overflow: hidden;
-    // }
-    
-    // &:not(.admin) .admin,
-    tr:not(.heeft-stemmen) .heeft-stemmen {
-        display: none;
-    }
+  // &.admin {
+  //     overflow: hidden;
+  // }
 
-     tr:not(.collapsed) i.fa-plus-square,
-     tr.collapsed i.fa-minus-square {
-        display: none;
-     }
+  // &:not(.admin) .admin,
+  tr:not(.heeft-stemmen) .heeft-stemmen {
+    display: none;
+  }
 
-    form.filters {
-        display: flex;
-        justify-content: center;
-        padding: 20px 0 15px 0;
-        &>div {
-            margin-right: 30px;
-        }
-        .input-group {
-            display: flex;
-            flex-wrap: nowrap;
-            align-items: center;
-            label {
-                margin: 0 5px 0 0;
-            }
-        }
-    }
-    
-    .hidden-row {
-        padding: 0 !important;
-    }
-    
-    .hand {
-        cursor: pointer;
-    }
-    
-    .behandeld {
-        background: #ee7f01;
-    }
+  tr:not(.collapsed) i.fa-plus-square,
+  tr.collapsed i.fa-minus-square {
+    display: none;
+  }
 
-    .table-striped>tbody>tr.vrijekeuze {
-        background-color: hsl(327 78% 94% / 1);
+  form.filters {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0 15px 0;
+    & > div {
+      margin-right: 30px;
     }
-    
-    .bs-callout {
-        margin: 20px 0;
-        padding: 20px 20px 1px 20px;
-        border-left: 5px solid #eee;
+    .input-group {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      label {
+        margin: 0 5px 0 0;
+      }
     }
-    
-    .bs-callout p:last-child {
-        margin-bottom: 0;
-    }
-    
-    .bs-callout code,
-    .bs-callout .highlight {
-        background-color: #fff;
-    }
-    
-    .bs-callout-info {
-        background-color: #f0f7fd;
-        border-color: #d0e3f0;
-    }
-    
-    .text-center {
-        text-align:center;
-    }
+  }
 
+  .hidden-row {
+    padding: 0 !important;
+  }
+
+  .hand {
+    cursor: pointer;
+  }
+
+  .behandeld {
+    background: #ee7f01;
+  }
+
+  .table-striped > tbody > tr.vrijekeuze {
+    background-color: hsl(327 78% 94% / 1);
+  }
+
+  .bs-callout {
+    margin: 20px 0;
+    padding: 20px 20px 1px 20px;
+    border-left: 5px solid #eee;
+  }
+
+  .bs-callout p:last-child {
+    margin-bottom: 0;
+  }
+
+  .bs-callout code,
+  .bs-callout .highlight {
+    background-color: #fff;
+  }
+
+  .bs-callout-info {
+    background-color: #f0f7fd;
+    border-color: #d0e3f0;
+  }
+
+  .text-center {
+    text-align: center;
+  }
 }
 
 .beheer-modal {
-    &:not(.is-nieuw) .is-nieuw,
-    &.is-nieuw .not-is-nieuw {
-        display: none;
-    }
+  &:not(.is-nieuw) .is-nieuw,
+  &.is-nieuw .not-is-nieuw {
+    display: none;
+  }
 }

@@ -1,8 +1,8 @@
 // Project
-@use '/src/scss/algemeen.scss';
+@use "/src/scss/algemeen.scss";
 
 // Libraries
-@import 'datatables.net-dt/css/dataTables.dataTables.css';
+@import "datatables.net-dt/css/dataTables.dataTables.css";
 
 body:not(.geladen),
 body:not(.gestemd) .gestemd,
@@ -10,26 +10,26 @@ body.gestemd .not-gestemd,
 body:not(.error) .error,
 body.error .not-error,
 body:not(.heeft-nummers-geselecteerd) .heeft-nummers-geselecteerd {
-    display: none;
+  display: none;
 }
 
 table.dataTable.select tbody tr,
 table.dataTable thead th:first-child {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 #nummers_length select {
-    width: 80px;
-    display: inline;
+  width: 80px;
+  display: inline;
 }
 
 #nummers_filter input {
-    width: 200px;
-    display: inline;
+  width: 200px;
+  display: inline;
 }
 
 .remark {
-    padding-right: 0px !important;
+  padding-right: 0px !important;
 }
 
 input.postcode,
@@ -37,12 +37,12 @@ input[type="date"],
 input[type="month"],
 input[type="time"],
 input[type="week"] {
-    max-width: 10em;
+  max-width: 10em;
 }
 input[type="number"] {
-    max-width: 5em;
+  max-width: 5em;
 }
 
 .privacyinfo {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }

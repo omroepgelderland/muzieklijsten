@@ -8,10 +8,10 @@
     <config name="report_width" value="auto" />
     <config name="installed_paths" value="../../slevomat/coding-standard/" />
     <arg name="extensions" value="php" />
-    <file>./bin</file>
-    <file>./install/</file>
-    <file>./public/</file>
-    <file>./src/php/</file>
+    <file>./</file>
+    <exclude-pattern>./node_modules/</exclude-pattern>
+    <exclude-pattern>./vendor/</exclude-pattern>
+    <exclude-pattern>./test/</exclude-pattern>
     <rule ref="PSR12">
         <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps" />
         <exclude name="Squiz.Classes.ValidClassName" />

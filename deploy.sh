@@ -36,7 +36,7 @@ if [[ $mode == "production" ]]; then
     oude_versie="$(git tag --list 'v*' --sort=v:refname | tail -n1)"
     echo "De huidige versie is $oude_versie. Versieverhoging? (major|minor|patch|premajor|preminor|prepatch|prerelease) "
     read -r versie_type
-    nieuwe_versie="$(semver -i "$versie_type" "$oude_versie")"
+    nieuwe_versie="$(npx semver -i "$versie_type" "$oude_versie")" || exit 1
     git_versie="v$nieuwe_versie"
 fi
 

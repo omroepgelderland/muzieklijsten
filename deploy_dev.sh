@@ -12,10 +12,9 @@ export COMPOSER_NO_DEV=0
 composer8.1 install || exit 1
 composer8.1 check-platform-reqs || exit 1
 php8.1 vendor/bin/parallel-lint \
-    bin/ \
-    install/ \
-    public/ \
-    src/php/ || exit 1
+    --exclude node_modules/ \
+    --exclude vendor/ \
+    ./ || exit 1
 php8.1 vendor/bin/phpstan analyse || exit 1
 php8.1 vendor/bin/phpcs --standard=ruleset.xml -n || exit 1
 

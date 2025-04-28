@@ -11,9 +11,13 @@ projectnaam="$(basename "$projectdir")"
 tempdir="/tmp/dist_$projectnaam/"
 cd "$projectdir" || exit 1
 
+current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]]; then
-    echo "Not on branch master"
-    exit 1
+    echo "Op branch $current_branch ipv master. Toch doorgaan? (j/n)"
+    read -r ans
+    if [[ $ans != "j" ]]; then
+        exit 1
+    fi
 fi
 
 ./deploy_dev.sh || exit 1

@@ -28,10 +28,12 @@
     "psr-4": {
       "muzieklijsten\\": "src/php/"
     },
+    "classmap": [
+      "src/php/exceptions.php"
+    ],
     "files": [
       "src/php/controllers.php",
-      "src/php/functies.php",
-      "src/php/exceptions.php"
+      "src/php/functies.php"
     ]
   },
   "require-dev": {

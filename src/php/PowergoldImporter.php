@@ -27,13 +27,6 @@ class PowergoldImporter
         $this->kolomtitels = null;
     }
 
-    public static function controller(
-        Factory $factory,
-        string $filename
-    ): void {
-        $factory->create_powergold_importer($filename)->import();
-    }
-
     /**
      * Converteert een waarde uit Excel
      *

@@ -325,3 +325,10 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
     
     EOT;
 }
+
+function import_powergold(
+    Factory $factory,
+    string $filename
+): void {
+    $factory->create_powergold_importer($filename)->import();
+}

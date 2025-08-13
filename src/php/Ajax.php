@@ -6,6 +6,11 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\GLDException;
+use gldstdlib\exception\SQLDupEntryException;
+use gldstdlib\exception\SQLException;
+use gldstdlib\exception\UndefinedPropertyException;
+
 /**
  * Verwerking van AJAX-requests.
  * Alleen functies die rechtstreeks door de frontend mogen worden aangeroepen
@@ -314,7 +319,7 @@ class Ajax
                             'lijst_id' => $lijst,
                         ]);
                         $json['lijsten_nummers']++;
-                    } catch (SQLException_DupEntry) {
+                    } catch (SQLDupEntryException) {
                     }
                 }
             }
@@ -579,7 +584,7 @@ class Ajax
         try {
             $lijst = $this->factory->create_lijst_uit_request($this->request);
             $nummers = $lijst->get_nummers_sorteer_titels();
-        } catch (MuzieklijstenException $e) {
+        } catch (GLDException $e) {
             $nummers = [];
         }
         $respons = [];
@@ -806,7 +811,7 @@ class Ajax
             header('HTTP/1.0 401 Unauthorized');
             echo 'Verkeerd wachtwoord en/of gebruikersnaam. Ververs de pagina met F5 om het nog een keer te proberen.';
             session_destroy();
-            throw new MuzieklijstenException('Verkeerd wachtwoord en/of gebruikersnaam');
+            throw new GLDException('Verkeerd wachtwoord en/of gebruikersnaam');
         }
         $_SESSION['is_ingelogd'] = true;
     }

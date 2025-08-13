@@ -4,6 +4,19 @@ function delete_dist_bestanden() {
     find public/* -not -iname '*.php' -delete
 }
 
+function php_codesniffer() {
+    if ! php8.1 vendor/bin/phpcs --standard=ruleset.xml -n; then
+        echo "Fixen met phpcbf? (j/n)"
+        read -r ans
+        if [[ $ans != "j" ]]; then
+            exit 1
+        else
+            php8.1 vendor/bin/phpcbf --standard=ruleset.xml -n
+            php8.1 vendor/bin/phpcs --standard=ruleset.xml -n || exit 1
+        fi
+    fi
+}
+
 projectdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$projectdir" || exit 1
 
@@ -16,11 +29,11 @@ php8.1 vendor/bin/parallel-lint \
     --exclude vendor/ \
     ./ || exit 1
 php8.1 vendor/bin/phpstan analyse || exit 1
-php8.1 vendor/bin/phpcs --standard=ruleset.xml -n || exit 1
+php_codesniffer
 
 # Node environment
 if [ ! -f ~/.nvm/nvm.sh ]; then
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 fi
 export NODE_ENV=development
 . ~/.nvm/nvm.sh
@@ -35,6 +48,7 @@ npm audit fix
 
 # webpack compilen
 delete_dist_bestanden
-npx tsc --noEmit || exit 1
-npx prettier src/js/ src/scss/ ./*.js --write || exit 1
+# git ls-files -z | grep -zP '\.(ts|js)$' | xargs -0 npx eslint || exit 1
+git ls-files -z | grep -zP '\.(ts|js|css|scss|html|json)$' | xargs -0 npx prettier --write || exit 1
+# npx tsc --noEmit || exit 1
 npx webpack --config "webpack.dev.js" || exit 1

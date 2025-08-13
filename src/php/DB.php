@@ -6,6 +6,10 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\SQLDataTooLongException;
+use gldstdlib\exception\SQLDupEntryException;
+use gldstdlib\exception\SQLException;
+
 /**
  * Abstractielaag voor de database.
  */
@@ -445,9 +449,9 @@ class DB
         );
         switch ($errno) {
             case 1062:
-                throw new SQLException_DupEntry($e_msg, $db->errno);
+                throw new SQLDupEntryException($e_msg, $db->errno);
             case 1406:
-                throw new SQLException_DataTooLong($e_msg, $db->errno);
+                throw new SQLDataTooLongException($e_msg, $db->errno);
             default:
                 throw new SQLException($e_msg, $db->errno);
         }

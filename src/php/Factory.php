@@ -3,6 +3,10 @@
 namespace muzieklijsten;
 
 use DI\FactoryInterface;
+use gldstdlib\exception\GLDException;
+use gldstdlib\exception\SQLDataTooLongException;
+use gldstdlib\exception\SQLException;
+use gldstdlib\exception\UndefinedPropertyException;
 
 /**
  * @phpstan-import-type DBData from Lijst as LijstDBData
@@ -143,17 +147,17 @@ class Factory
      *
      * @param object $request HTTP-request.
      *
-     * @throws MuzieklijstenException
+     * @throws GLDException
      */
     public function create_nummer_uit_request(object $request): Nummer
     {
         try {
             $id = filter_var($request->nummer, \FILTER_VALIDATE_INT);
         } catch (UndefinedPropertyException) {
-            throw new MuzieklijstenException('Geen nummer in invoer');
+            throw new GLDException('Geen nummer in invoer');
         }
         if ($id === false) {
-            throw new MuzieklijstenException(sprintf(
+            throw new GLDException(sprintf(
                 'Ongeldige nummer id: %s',
                 filter_var($request->nummer)
             ));
@@ -183,17 +187,17 @@ class Factory
      *
      * @param object $request HTTP-request.
      *
-     * @throws MuzieklijstenException
+     * @throws GLDException
      */
     public function create_stemmer_uit_request(object $request): Stemmer
     {
         try {
             $id = filter_var($request->stemmer, \FILTER_VALIDATE_INT);
         } catch (UndefinedPropertyException) {
-            throw new MuzieklijstenException('Geen stemmer in invoer');
+            throw new GLDException('Geen stemmer in invoer');
         }
         if ($id === false) {
-            throw new MuzieklijstenException(sprintf(
+            throw new GLDException(sprintf(
                 'Ongeldig stemmer id: %s',
                 filter_var($request->stemmer)
             ));
@@ -211,7 +215,7 @@ class Factory
                 'ip' => $ip,
             ]);
             return $this->create_stemmer($id);
-        } catch (SQLException_DataTooLong) {
+        } catch (SQLDataTooLongException) {
             throw new GebruikersException('De invoer van een van de tekstvelden is te lang.');
         }
     }

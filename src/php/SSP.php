@@ -17,6 +17,9 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\GLDException;
+use gldstdlib\exception\UndefinedPropertyException;
+
 class SSP
 {
     private object $request;
@@ -229,7 +232,7 @@ class SSP
                 SELECT COUNT(n.id) 
                 {$basis_query}
             EOT;
-        } catch (MuzieklijstenException $e) {
+        } catch (GLDException $e) {
             $select = implode("`, `", self::pluck($this->kolommen, 'db'));
             $basis_query = "FROM nummers";
             // Resultaten

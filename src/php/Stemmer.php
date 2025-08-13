@@ -6,6 +6,10 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\GLDException;
+use gldstdlib\exception\SQLDataTooLongException;
+use gldstdlib\exception\SQLDupEntryException;
+
 /**
  * @phpstan-type DBData array{
  *     id: positive-int,
@@ -129,12 +133,12 @@ class Stemmer
                 'is_vrijekeuze' => $is_vrijekeuze,
             ]);
             return $this->factory->create_stemmer_nummer($nummer, $this);
-        } catch (SQLException_DataTooLong) {
+        } catch (SQLDataTooLongException) {
             $max = $this->db->get_max_kolom_lengte('stemmers_nummers', 'toelichting');
             throw new GebruikersException(
                 "De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens."
             );
-        } catch (SQLException_DupEntry) {
+        } catch (SQLDupEntryException) {
             // Bestaande stem teruggeven
             return $this->factory->create_stemmer_nummer($nummer, $this);
         }
@@ -160,7 +164,7 @@ class Stemmer
         foreach ($lijst->get_velden() as $veld) {
             try {
                 $velden[] = "{$veld->get_label()}: {$veld->get_stemmer_waarde($this)}";
-            } catch (MuzieklijstenException $e) {
+            } catch (GLDException $e) {
             }
         }
         $velden_str = implode("\n", $velden);
@@ -211,13 +215,13 @@ class Stemmer
             if ($veld->get_label() === 'Naam') {
                 try {
                     $naam = $veld->get_stemmer_waarde($this);
-                } catch (MuzieklijstenException) {
+                } catch (GLDException) {
                 }
             }
             if ($veld->get_label() === 'E‑mailadres' || $veld->get_label() === 'E-mailadres') {
                 try {
                     $email = $veld->get_stemmer_waarde($this);
-                } catch (MuzieklijstenException) {
+                } catch (GLDException) {
                 }
             }
         }

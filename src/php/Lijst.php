@@ -6,6 +6,8 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\IndexException;
+
 /**
  * @phpstan-type DBData array{
  *     id: positive-int,

@@ -6,6 +6,8 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\GLDException;
+
 /**
  * @phpstan-type DBData array{
  *     id: positive-int,
@@ -107,13 +109,13 @@ class Veld
      * Dat is geen vaste eigenschap van het veld, maar van de combinatie veld en
      * lijst. Of het verplicht is moet bij de constructor worden meegegeven.
      *
-     * @throws MuzieklijstenException Als er bij de constructor niet is
+     * @throws GLDException Als er bij de constructor niet is
      * aangegeven of het veld verplicht is.
      */
     public function is_verplicht(): bool
     {
         if (!isset($this->verplicht)) {
-            throw new MuzieklijstenException('Niet bekend of dit veld verplicht is.');
+            throw new GLDException('Niet bekend of dit veld verplicht is.');
         }
         return $this->verplicht;
     }
@@ -152,7 +154,7 @@ class Veld
      *
      * @return mixed Waarde
      *
-     * @throws MuzieklijstenException als er geen antwoord is.
+     * @throws GLDException als er geen antwoord is.
      */
     public function get_stemmer_waarde(Stemmer $stemmer)
     {
@@ -163,10 +165,10 @@ class Veld
                 $this->get_id()
             ));
             if ($waarde === null) {
-                throw new MuzieklijstenException();
+                throw new GLDException();
             }
-        } catch (MuzieklijstenException $e) {
-            throw new MuzieklijstenException(sprintf(
+        } catch (GLDException $e) {
+            throw new GLDException(sprintf(
                 'Geen waarde ingevuld door stemmer %d in veld %d',
                 $stemmer->get_id(),
                 $this->get_id()
@@ -218,7 +220,7 @@ class Veld
      * overschreven.
      *
      * @throws GebruikersException Als de invoer leeg is maar niet leeg mag zijn.
-     * @throws MuzieklijstenException Als er bij de constructor niet is
+     * @throws GLDException Als er bij de constructor niet is
      * aangegeven of het veld verplicht is.
      */
     public function set_waarde(Stemmer $stemmer, string $waarde): void

@@ -6,60 +6,13 @@
 
 namespace muzieklijsten;
 
-/**
- * Generieke fout binnen het project
- */
-class MuzieklijstenException extends \Exception
+use gldstdlib\exception\GLDException;
+
+class ConfigException extends GLDException
 {
 }
 
-/**
- * Databasefout. Bevat de foutmelding van SQL.
- */
-class SQLException extends MuzieklijstenException
-{
-}
-
-/**
- * Databasefout voor MySQL error 1062: er_dup_entry
- */
-class SQLException_DupEntry extends SQLException
-{
-}
-
-/**
- * Databasefout voor MySQL error 1406: er_data_too_long
- */
-class SQLException_DataTooLong extends SQLException
-{
-}
-
-/**
- * Bij het benaderen van een niet-bestaand pad.
- */
-class PadBestaatNiet extends \ErrorException
-{
-}
-
-/**
- * Voor adressering van niet-bestaande elementen in arrays
- */
-class IndexException extends \ErrorException
-{
-}
-
-/**
- * Bij het opvragen van niet-bestaande objectproperties.
- */
-class UndefinedPropertyException extends \ErrorException
-{
-}
-
-class ConfigException extends MuzieklijstenException
-{
-}
-
-class GebruikersException extends MuzieklijstenException
+class GebruikersException extends GLDException
 {
 }
 
@@ -70,11 +23,11 @@ class OngeldigeInvoer extends GebruikersException
 /**
  * Stemmer staat op de blacklist
  */
-class BlacklistException extends MuzieklijstenException
+class BlacklistException extends GLDException
 {
 }
 
-class ObjectEigenschapOntbreekt extends MuzieklijstenException
+class ObjectEigenschapOntbreekt extends GLDException
 {
 }
 
@@ -88,6 +41,6 @@ class GeenLijstException extends GebruikersException
 /**
  * Ingestuurde vrije keuze met lege artiest of titel.
  */
-class LegeVrijeKeuze extends MuzieklijstenException
+class LegeVrijeKeuze extends GLDException
 {
 }

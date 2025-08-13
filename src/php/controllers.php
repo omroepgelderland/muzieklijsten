@@ -6,6 +6,8 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\GLDException;
+use gldstdlib\exception\SQLException;
 use gldstdlib\Log;
 
 use function gldstdlib\path_join;
@@ -102,7 +104,7 @@ function ajax(Factory $factory, DB $db, Log $log): void
             ];
         } catch (\Error $e) {
             if (\str_starts_with($e->getMessage(), 'Call to private method')) {
-                throw new MuzieklijstenException("Onbekende ajax-functie: \"{$functie}\"");
+                throw new GLDException("Onbekende ajax-functie: \"{$functie}\"");
             } else {
                 throw $e;
             }

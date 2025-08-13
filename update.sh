@@ -4,7 +4,7 @@
 
 function rollback() {
     echo "update mislukt. Terugdraaien naar vorige versie."
-    git reset --hard $vorige_git_hash
+    git reset --hard "$vorige_git_hash"
     exit 1
 }
 

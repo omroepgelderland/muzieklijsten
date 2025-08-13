@@ -2,6 +2,10 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\GLDException;
+use gldstdlib\exception\IndexException;
+use gldstdlib\exception\SQLException;
+
 class PowergoldImporter
 {
     public function __construct(
@@ -29,7 +33,7 @@ class PowergoldImporter
         $string = self::filter_cell_string($waarde, false);
         $res = filter_var($string, \FILTER_VALIDATE_INT);
         if ($res === false) {
-            throw new MuzieklijstenException("Ongeldige integer: {$string}");
+            throw new GLDException("Ongeldige integer: {$string}");
         }
         return $res;
     }
@@ -69,7 +73,7 @@ class PowergoldImporter
         $ontbrekende_kolommen = array_diff($verplichte_kolommen, array_keys($keys));
         if (count($ontbrekende_kolommen) > 0) {
             $ontbrekende_kolommen_str = implode(', ', $ontbrekende_kolommen);
-            throw new MuzieklijstenException(
+            throw new GLDException(
                 "De volgende verplichte velden ontbreken in de sheet: {$ontbrekende_kolommen_str}"
             );
         }

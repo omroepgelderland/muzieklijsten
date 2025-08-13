@@ -6,6 +6,10 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\exception\GLDException;
+
+use function gldstdlib\exception_error_handler_plus;
+
 /**
  * Hiermee kunnen instellingen worden opgehaald uit de serverconfiguratie.
  *
@@ -51,7 +55,7 @@ class Config
      *
      * @return ConfigData Inhoud van het configuratiebestand
      *
-     * @throws MuzieklijstenException Als het configuratiebestand niet kan worden geladen.
+     * @throws GLDException Als het configuratiebestand niet kan worden geladen.
      */
     public function get_data(): array
     {
@@ -60,7 +64,7 @@ class Config
                 $pad = __DIR__ . '/../../config/config.json';
                 $this->data = json_decode(file_get_contents($pad), true);
             } catch (\Throwable $e) {
-                throw new MuzieklijstenException('Kan config.json niet laden.', 0, $e);
+                throw new GLDException('Kan config.json niet laden.', 0, $e);
             }
         }
         return $this->data;
@@ -165,10 +169,10 @@ class Config
             'sendmail_path' => $this->get_instelling('mail', 'sendmail_path'),
         ];
         $mail_obj = \Mail::factory('sendmail', $params);
-        set_error_handler('\muzieklijsten\exception_error_handler', \E_ALL & ~\E_DEPRECATED);
+        set_error_handler(exception_error_handler_plus(...), \E_ALL & ~\E_DEPRECATED);
         error_reporting(\E_ALL & ~\E_DEPRECATED);
         $mail_obj->send($ontvangers, $headers, $body);
         error_reporting(\E_ALL);
-        set_error_handler('\muzieklijsten\exception_error_handler', \E_ALL);
+        set_error_handler(exception_error_handler_plus(...), \E_ALL);
     }
 }

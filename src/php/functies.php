@@ -7,13 +7,13 @@
 namespace muzieklijsten;
 
 use DI\FactoryInterface;
-use gldstdlib\exception\NoticeErrorException;
-use gldstdlib\exception\WarningErrorException;
+use gldstdlib\exception\GLDException;
 use gldstdlib\Log;
 use gldstdlib\LogFactory;
 use Invoker\InvokerInterface;
 use Psr\Container\ContainerInterface;
 
+use function gldstdlib\exception_error_handler_plus;
 use function gldstdlib\get_tijdzone;
 
 /**
@@ -29,16 +29,16 @@ function is_dev(): bool
 /**
  * Geeft de naam van de developer op wiens omgeving het project nu draait.
  *
- * @throws MuzieklijstenException Als het project niet op een ontwikkelingsomgeving draait.
+ * @throws GLDException Als het project niet op een ontwikkelingsomgeving draait.
  */
 function get_developer(): string
 {
     if (!is_dev()) {
-        throw new MuzieklijstenException();
+        throw new GLDException();
     }
     $res = preg_match('~^/home/([^/]+)/~i', __DIR__, $m);
     if ($res !== 1) {
-        throw new MuzieklijstenException();
+        throw new GLDException();
     }
     return $m[1];
 }
@@ -57,46 +57,6 @@ function anonimiseer(mixed $waarde): ?string
         return $waarde;
     } else {
         return hash('sha224', $waarde);
-    }
-}
-
-/**
- * Overkoepelende error handler voor aanroep met exception_error_handler.
- * Maakt een echte PHP exception bij fouten.
- */
-function exception_error_handler(
-    int $errno,
-    string $errstr,
-    string $errfile,
-    int $errline
-): bool {
-    try {
-        return \gldstdlib\exception_error_handler(
-            $errno,
-            $errstr,
-            $errfile,
-            $errline,
-        );
-    } catch (WarningErrorException $e) {
-        if (\str_contains($errstr, 'No such file or directory')) {
-            throw new PadBestaatNiet($errstr, 0, $errno, $errfile, $errline);
-        } elseif (\str_contains($errstr, 'Undefined array key')) {
-            throw new IndexException($errstr, 0, $errno, $errfile, $errline);
-        } elseif (\str_starts_with($errstr, 'Undefined property: ')) {
-            throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
-        } else {
-            throw $e;
-        }
-    } catch (NoticeErrorException $e) {
-        if (\str_starts_with($errstr, 'Undefined index: ') || \str_starts_with($errstr, 'Undefined offset: ')) {
-            throw new IndexException($errstr, 0, $errno, $errfile, $errline);
-        } elseif (\str_starts_with($errstr, 'Trying to get property ')) {
-            throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
-        } elseif (\str_starts_with($errstr, 'Undefined property: ')) {
-            throw new UndefinedPropertyException($errstr, 0, $errno, $errfile, $errline);
-        } else {
-            throw $e;
-        }
     }
 }
 
@@ -187,7 +147,7 @@ function filter_van_tot(string $waarde): ?\DateTime
 
 function set_env(): void
 {
-    \set_error_handler(\muzieklijsten\exception_error_handler(...), error_reporting());
+    \set_error_handler(exception_error_handler_plus(...), error_reporting());
     \locale_set_default('nl_NL');
     \setlocale(\LC_TIME, 'nl', 'nl_NL', 'Dutch');
     \date_default_timezone_set('Europe/Amsterdam');

@@ -150,6 +150,7 @@ export type AjaxMap = {
         id: number;
         is_vrijekeuze: boolean;
         titel: string;
+        duur: number | null;
       };
       stemmen: {
         ip: string;

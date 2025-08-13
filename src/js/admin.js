@@ -713,6 +713,8 @@ class ResultatenNummer {
   titel;
   /** @type {string} */
   artiest;
+  /** @type {number | null} */
+  duur;
   /** @type {TypedEvent<void>} */
   on_stem_verwijderd;
   /** @type {TypedEvent<number>} */
@@ -731,7 +733,7 @@ class ResultatenNummer {
    * @param {HTMLTableSectionElement} e_container
    * @param {Promise<string[]>} labels_promise
    * @param {{ip: string, is_behandeld: boolean, stemmer_id: number, timestamp: string, toelichting: string, velden: {type: string, waarde: string}[]}[]} stemmen
-   * @param {{artiest: string, id: number, is_vrijekeuze: boolean, titel: string}} nummer
+   * @param {{artiest: string, duur: number | null, id: number, is_vrijekeuze: boolean, titel: string}} nummer
    */
   constructor(resultaten_modal, e_container, labels_promise, stemmen, nummer) {
     this.resultaten_stemmen = {};
@@ -762,12 +764,13 @@ class ResultatenNummer {
 
   /**
    * Plaats metadata van het nummer.
-   * @param {{artiest: string, id: number, is_vrijekeuze: boolean, titel: string}} param0
+   * @param {{artiest: string, duur: number | null, id: number, is_vrijekeuze: boolean, titel: string}} param0
    */
-  set_nummer({ id, titel, artiest, is_vrijekeuze }) {
+  set_nummer({ id, titel, artiest, duur, is_vrijekeuze }) {
     this.nummer_id = id;
     this.titel = titel;
     this.artiest = artiest;
+    this.duur = duur;
 
     this.e_tr_uitklap.id = `nummer-${this.nummer_id}`;
     this.e_tr_uitklap.setAttribute("data-nummer-id", this.nummer_id);
@@ -781,6 +784,13 @@ class ResultatenNummer {
       "nummer-artiest",
     )) {
       e_nummer_artiest.appendChild(document.createTextNode(this.artiest));
+    }
+    for (const e_nummer_duur of this.e_tr_uitklap.getElementsByClassName(
+      "nummer-duur",
+    )) {
+      e_nummer_duur.appendChild(
+        document.createTextNode(functies.format_duur(this.duur)),
+      );
     }
     if (is_vrijekeuze) {
       this.e_tr_uitklap.classList.add("vrijekeuze");

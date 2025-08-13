@@ -50,5 +50,5 @@ npm audit fix
 delete_dist_bestanden
 # git ls-files -z | grep -zP '\.(ts|js)$' | xargs -0 npx eslint || exit 1
 git ls-files -z | grep -zP '\.(ts|js|css|scss|html|json)$' | xargs -0 npx prettier --write || exit 1
-# npx tsc --noEmit || exit 1
+npx tsc --noEmit || exit 1
 npx webpack --config "webpack.dev.js" || exit 1

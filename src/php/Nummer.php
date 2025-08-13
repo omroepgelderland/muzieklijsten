@@ -16,6 +16,7 @@ namespace muzieklijsten;
  *     categorie: ?string,
  *     map: ?string,
  *     opener: positive-int,
+ *     duur: ?positive-int,
  *     is_vrijekeuze: positive-int
  * }
  */
@@ -29,6 +30,7 @@ class Nummer
     private ?string $categorie;
     private ?string $map;
     private bool $is_opener;
+    private ?int $duur;
     private bool $is_vrijekeuze;
     /** @var list<Lijst> */
     private array $lijsten;
@@ -113,6 +115,12 @@ class Nummer
         return $this->is_opener;
     }
 
+    public function get_duur(): ?int
+    {
+        $this->set_db_properties();
+        return $this->duur;
+    }
+
     public function is_vrijekeuze(): bool
     {
         $this->set_db_properties();
@@ -166,6 +174,7 @@ class Nummer
         $this->categorie = $data['categorie'];
         $this->map = $data['map'];
         $this->is_opener = (bool)$data['opener'];
+        $this->duur = $data['duur'];
         $this->is_vrijekeuze = (bool)$data['is_vrijekeuze'];
         $this->db_props_set = true;
     }

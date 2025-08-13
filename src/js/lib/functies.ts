@@ -62,3 +62,18 @@ export function get_random_string(lengte: number) {
   }
   return respons.substring(0, lengte);
 }
+
+/**
+ * Formatteert een duur in seconden naar een string in het formaat "[U.]M.S".
+ */
+export function format_duur(duur: number | null): string {
+  if (duur === null) {
+    return "";
+  }
+  const uren = Math.floor(duur / 3600);
+  const minuten = Math.floor((duur % 3600) / 60);
+  const seconden = duur % 60;
+  return uren === 0
+    ? `${String(minuten)}.${String(seconden).padStart(2, "0")}`
+    : `${String(uren)}.${String(minuten).padStart(2, "0")}.${String(seconden).padStart(2, "0")}`;
+}

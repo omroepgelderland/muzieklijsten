@@ -367,4 +367,12 @@ class Factory
         }
         return $velden;
     }
+
+    public function create_powergold_importer(string $filename): PowergoldImporter
+    {
+        return $this->container->make(
+            PowergoldImporter::class,
+            ['filename' => $filename]
+        );
+    }
 }

@@ -6,11 +6,32 @@ use gldstdlib\exception\GLDException;
 use gldstdlib\exception\IndexException;
 use gldstdlib\exception\SQLException;
 
+use function gldstdlib\readline_met_default;
+
+/**
+ * @phpstan-type KolomKeysType 'muziek_id'|'titel'|'artiest'|'jaar'|'categorie'|'map'|'opener'|'duur'
+ * @phpstan-type KeysType array<KolomKeysType, int>
+ */
 class PowergoldImporter
 {
+    private readonly PhpExcelReader $excel;
+    /** @var KeysType */
+    private ?array $kolomtitels;
+
     public function __construct(
         private DB $db,
+        string $filename,
     ) {
+        $this->excel = new PhpExcelReader();
+        $this->excel->read($filename);
+        $this->kolomtitels = null;
+    }
+
+    public static function controller(
+        Factory $factory,
+        string $filename
+    ): void {
+        $factory->create_powergold_importer($filename)->import();
     }
 
     /**
@@ -39,59 +60,67 @@ class PowergoldImporter
     }
 
     /**
-     * @param array<int, string> $rij
+     * Geeft per kolom key in welke kolom de data staat.
      *
-     * @return array<string, int>
+     * @return KeysType Key is de naam van de kolom, waarde is de index van de kolom (A=1, B=2 etc.).
      */
-    private static function verwerk_kolomtitels(array $rij): array
+    private function get_kolomtitels(): array
     {
-        $keys = [];
-        foreach ($rij as $i => $cel) {
-            $waarde = self::filter_cell_string($cel, true);
-            if ($waarde === 'Miscellaneous') {
-                $keys['muziek_id'] = $i;
-            } elseif ($waarde === 'Title') {
-                $keys['titel'] = $i;
-            } elseif ($waarde === 'Artist(s)') {
-                $keys['artiest'] = $i;
-            } elseif ($waarde === 'Year') {
-                $keys['jaar'] = $i;
-            } elseif ($waarde === 'Category') {
-                $keys['categorie'] = $i;
-            } elseif ($waarde === 'Folder') {
-                $keys['map'] = $i;
-            } elseif ($waarde === 'Opener') {
-                $keys['opener'] = $i;
+        if ($this->kolomtitels === null) {
+            $this->kolomtitels = [];
+            /** @var list<string> $rij */
+            $rij = $this->excel->sheets[0]['cells'][7];
+            foreach ($rij as $i => $cel) {
+                $waarde = self::filter_cell_string($cel, true);
+                if ($waarde === 'Miscellaneous') {
+                    $this->kolomtitels['muziek_id'] = $i;
+                } elseif ($waarde === 'Title') {
+                    $this->kolomtitels['titel'] = $i;
+                } elseif ($waarde === 'Artist(s)') {
+                    $this->kolomtitels['artiest'] = $i;
+                } elseif ($waarde === 'Year') {
+                    $this->kolomtitels['jaar'] = $i;
+                } elseif ($waarde === 'Category') {
+                    $this->kolomtitels['categorie'] = $i;
+                } elseif ($waarde === 'Folder') {
+                    $this->kolomtitels['map'] = $i;
+                } elseif ($waarde === 'Opener') {
+                    $this->kolomtitels['opener'] = $i;
+                } elseif ($waarde === 'Run Time') {
+                    $this->kolomtitels['duur'] = $i;
+                }
+            }
+            $verplichte_kolommen = [
+                'muziek_id',
+                'titel',
+                'artiest',
+                'jaar',
+            ];
+            $ontbrekende_kolommen = array_diff($verplichte_kolommen, array_keys($this->kolomtitels));
+            if (count($ontbrekende_kolommen) > 0) {
+                $ontbrekende_kolommen_str = implode(', ', $ontbrekende_kolommen);
+                throw new GLDException(
+                    "De volgende verplichte velden ontbreken in de sheet: {$ontbrekende_kolommen_str}"
+                );
             }
         }
-        $verplichte_kolommen = [
-            'muziek_id',
-            'titel',
-            'artiest',
-            'jaar',
-        ];
-        $ontbrekende_kolommen = array_diff($verplichte_kolommen, array_keys($keys));
-        if (count($ontbrekende_kolommen) > 0) {
-            $ontbrekende_kolommen_str = implode(', ', $ontbrekende_kolommen);
-            throw new GLDException(
-                "De volgende verplichte velden ontbreken in de sheet: {$ontbrekende_kolommen_str}"
-            );
-        }
-        return $keys;
+        return $this->kolomtitels;
     }
 
     /**
      * @param array<int, string> $rij
-     * @param array<string, int> $keys
+     * @param KolomKeysType $key
      * @param 'string'|'int' $type
+     *
+     * @return ($type is 'string' ? ($null_als_leeg is true ? ?string : string) : ($null_als_leeg is true ? ?int : int))
      */
-    private static function get_cel(
+    private function get_cel(
         array $rij,
-        array $keys,
         string $key,
         string $type,
         bool $null_als_leeg
     ): null|string|int {
+        $keys = $this->get_kolomtitels();
         try {
             if ($type === 'string') {
                 return self::filter_cell_string($rij[$keys[$key]], $null_als_leeg);
@@ -105,138 +134,224 @@ class PowergoldImporter
         }
     }
 
-    public function import(string $filename): void
+    public function import(): void
     {
-        $excel = new PhpExcelReader();
-        $excel->read($filename);
+        $this->db->disableAutocommit();
+        $this->toevoegen();
+        $this->verwijderen();
+        $this->db->commit();
+    }
 
-        $data = $excel->sheets[0]['cells'];
+    /**
+     * Verwijderen van nummers in de database die niet meer in de Excel sheet
+     * staan.
+     */
+    private function verwijderen(): void
+    {
+        /** @var list<list<string>> $data */
+        $data = $this->excel->sheets[0]['cells'];
 
-        $keys = self::verwerk_kolomtitels($data[7]);
+        $data = array_slice($data, 2);
+        $powergold_ids = [];
+        foreach ($data as $rij) {
+            $powergold_id = self::get_cel($rij, 'muziek_id', 'string', true);
+            if (isset($powergold_id)) {
+                $powergold_ids[] = $this->db->escape_string($powergold_id);
+            }
+        }
+        $i_powergold_ids = \implode(
+            '","',
+            $powergold_ids
+        );
+        $aantal = (int)$this->db->selectSingle(<<<EOT
+        SELECT COUNT(id)
+        FROM `nummers`
+        WHERE
+            `muziek_id` IS NOT NULL
+            AND `muziek_id` NOT IN ("{$i_powergold_ids}");
+        EOT);
+        if ($aantal > 0) {
+            $ans = readline_met_default(
+                "{$aantal} nummers staan wel in de database, maar niet in de "
+                . "het importbestand. Wilt u deze verwijderen? (j/n)",
+                'n'
+            );
+            if (\strtolower(\trim($ans)) === 'j') {
+                $this->db->query(<<<EOT
+                DELETE FROM `nummers`
+                WHERE
+                    `muziek_id` IS NOT NULL
+                    AND `muziek_id` NOT IN ("{$i_powergold_ids}");
+                EOT);
+                echo "{$aantal} nummers verwijderd.\n";
+            }
+        }
+    }
+
+    /**
+     * Toevoegen en updaten van nummers.
+     */
+    private function toevoegen(): void
+    {
+        /** @var list<list<string>> $data */
+        $data = $this->excel->sheets[0]['cells'];
 
         $data = array_slice($data, 2);
 
         $db = $this->db->getDB();
-        $query = <<<EOT
-        INSERT INTO nummers (muziek_id, titel, artiest, jaar, categorie, map, opener)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
+        $insert_query = <<<EOT
+        INSERT INTO `nummers` (`muziek_id`, `titel`, `artiest`, `jaar`, `categorie`, `map`, `opener`, `duur`)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        EOT;
+        $update_query = <<<EOT
+        UPDATE nummers
+        SET
             muziek_id = ?,
             titel = ?,
             artiest = ?,
             jaar = ?,
             categorie = ?,
             map = ?,
-            opener = ?
+            opener = ?,
+            duur = ?
+        WHERE
+            id = ?
         EOT;
-        $toevoegen = $db->prepare($query);
-        if ($toevoegen === false) {
+        $insert = $db->prepare($insert_query);
+        if ($insert === false) {
             throw new SQLException('Prepared statement mislukt: ' . $db->error, $db->errno);
         }
-        $muziek_id =
+        $update = $db->prepare($update_query);
+        if ($update === false) {
+            throw new SQLException('Prepared statement mislukt: ' . $db->error, $db->errno);
+        }
+        $nummer_id =
+            $powergold_id =
             $titel =
             $artiest =
             $jaar =
             $categorie =
             $map =
             $opener =
-            $muziek_id =
-            $titel =
-            $artiest =
-            $jaar =
-            $categorie =
-            $map =
-            $opener = null;
-        $res = $toevoegen->bind_param(
-            'sssississsissi',
-            $muziek_id,
+            $duur = null;
+        $res = $insert->bind_param(
+            'sssissii',
+            $powergold_id,
             $titel,
             $artiest,
             $jaar,
             $categorie,
             $map,
             $opener,
-            $muziek_id,
+            $duur,
+        );
+        if ($res === false) {
+            throw new SQLException('Prepared statement mislukt: ' . $insert->error, $insert->errno);
+        }
+        $res = $update->bind_param(
+            'sssissiii',
+            $powergold_id,
             $titel,
             $artiest,
             $jaar,
             $categorie,
             $map,
-            $opener
+            $opener,
+            $duur,
+            $nummer_id,
         );
         if ($res === false) {
-            throw new SQLException('Prepared statement mislukt: ' . $toevoegen->error, $toevoegen->errno);
+            throw new SQLException('Prepared statement mislukt: ' . $update->error, $update->errno);
         }
         $aantal_toegevoegd = 0;
         $aantal_bijgewerkt = 0;
-        foreach ($data as $key => $rij) {
-            $titel = self::get_cel($rij, $keys, 'titel', 'string', true);
+        foreach ($data as $rij) {
+            $titel = self::get_cel($rij, 'titel', 'string', true);
             if ($titel === 'Title' || $titel === null) {
                 // Rij zonder nummer of herhaalde kolomtitels.
                 continue;
             }
-            $muziek_id = self::get_cel($rij, $keys, 'muziek_id', 'string', true);
-            if ($muziek_id !== null && preg_match('~[^0-9a-zA-Z\-]~', $muziek_id) === 1) {
+            $powergold_id = self::get_cel($rij, 'muziek_id', 'string', true);
+            if ($powergold_id !== null && preg_match('~[^0-9a-zA-Z\-]~', $powergold_id) === 1) {
                 // Ongeldige ID's
-                $muziek_id = null;
+                $powergold_id = null;
             }
-            $artiest = self::get_cel($rij, $keys, 'artiest', 'string', false);
-            $jaar = self::get_cel($rij, $keys, 'jaar', 'int', true);
+            $artiest = self::get_cel($rij, 'artiest', 'string', false);
+            $jaar = self::get_cel($rij, 'jaar', 'int', true);
             if ($jaar === 0) {
                 $jaar = null;
             }
-            $categorie = self::get_cel($rij, $keys, 'categorie', 'string', true);
-            $map = self::get_cel($rij, $keys, 'map', 'string', true);
-            $opener_str = self::get_cel($rij, $keys, 'opener', 'string', false);
+            $categorie = self::get_cel($rij, 'categorie', 'string', true);
+            $map = self::get_cel($rij, 'map', 'string', true);
+            $opener_str = self::get_cel($rij, 'opener', 'string', false);
             $opener = strtolower($opener_str) === 'yes';
+            $duur_str = self::get_cel($rij, 'duur', 'string', false);
+            $duur_array = \explode(':', $duur_str);
+            if (count($duur_array) === 2) {
+                // Duur in minuten en seconden
+                $duur = (int)$duur_array[0] * 60 + (int)$duur_array[1];
+            } elseif (count($duur_array) === 1 && $duur_array[0] !== '') {
+                // Duur in seconden
+                $duur = (int)$duur_array[0];
+            } else {
+                $duur = null;
+            }
 
-            if ($muziek_id === null && $jaar === null) {
-                // Bij nummers zonder muziek ID en jaar handmatig checken op dubbelingen
-                // omdat jaar NULL niet wordt meegenomen bij de unique primary key.
-                $e_titel = $this->db->escape_string($titel);
-                $e_artiest = $this->db->escape_string($artiest);
+            // Query samenstellen om te kijken of het nummer al bestaat.
+            $e_titel = $this->db->escape_string($titel);
+            $e_artiest = $this->db->escape_string($artiest);
+            $cond_jaar = $jaar === null ? 'jaar IS NULL' : "jaar = {$jaar}";
+            if ($powergold_id === null) {
                 $query = <<<EOT
                 SELECT id
                 FROM nummers
                 WHERE
-                    muziek_id IS NULL
-                    AND titel = "{$e_titel}"
+                    titel = "{$e_titel}"
                     AND artiest = "{$e_artiest}"
-                    AND jaar IS NULL
+                    AND {$cond_jaar}
+                ORDER BY id
                 EOT;
-                try {
-                    $nummer_id = $this->db->selectSingle($query);
-                    $aantal_bijgewerkt += $this->db->updateMulti('nummers', [
-                        'categorie' => $categorie,
-                        'map' => $map,
-                        'opener' => $opener,
-                    ], "id = {$nummer_id}");
-                } catch (SQLException $e) {
-                    $this->db->insertMulti('nummers', [
-                        'titel' => $titel,
-                        'artiest' => $artiest,
-                        'categorie' => $categorie,
-                        'map' => $map,
-                        'opener' => $opener,
-                    ]);
-                    $aantal_toegevoegd++;
-                }
             } else {
-                // Unique keys maken het verschil tussen insert en update.
-                $res = $toevoegen->execute();
+                $e_powergold_id = $this->db->escape_string($powergold_id);
+                $query = <<<EOT
+                SELECT id
+                FROM nummers
+                WHERE
+                    muziek_id = "{$e_powergold_id}"
+                    OR (
+                        titel = "{$e_titel}"
+                        AND artiest = "{$e_artiest}"
+                        AND {$cond_jaar}
+                    )
+                ORDER BY id
+                EOT;
+            }
+
+            $nummer_ids = \array_map(fn($i) => (int)$i, $this->db->selectSingleColumn($query));
+            $nummer_id = \array_shift($nummer_ids);
+            if ($nummer_id === null) {
+                // Nummer bestaat nog niet, dus toevoegen.
+                $res = $insert->execute();
                 if ($res === false) {
-                    throw new SQLException('Query mislukt: ' . $toevoegen->error, $toevoegen->errno);
+                    throw new SQLException('Query mislukt: ' . $insert->error, $insert->errno);
                 }
-                if ($db->affected_rows === 1) {
-                    // insert
-                    $aantal_toegevoegd++;
-                } elseif ($db->affected_rows === 2) {
-                    // update
-                    $aantal_bijgewerkt += $db->affected_rows;
+                $aantal_toegevoegd++;
+            } else {
+                // Nummer bestaat al, dus bijwerken.
+                if (count($nummer_ids) > 0) {
+                    // Er bestaat een nummer met dezelfde titel en artiest, maar een andere Powergold ID.
+                    // Deze moeten worden samengevoegd voordat het powergold ID kan worden ge-update.
+                    nummers_samenvoegen($this->db, $nummer_id, $nummer_ids);
                 }
+                $res = $update->execute();
+                if ($res === false) {
+                    throw new SQLException('Query mislukt: ' . $update->error, $update->errno);
+                }
+                $aantal_bijgewerkt += $db->affected_rows;
             }
         }
-        $toevoegen->close();
+        $insert->close();
+        $update->close();
         echo "{$aantal_toegevoegd} nummers geïmporteerd en {$aantal_bijgewerkt} bijgewerkt.\n";
     }
 }

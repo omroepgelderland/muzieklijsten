@@ -185,3 +185,31 @@ function get_di_container(): FactoryInterface & ContainerInterface & InvokerInte
     $builder->addDefinitions($config);
     return $builder->build();
 }
+
+/**
+ * Verwijdert dubbele nummers.
+ *
+ * Lijsten waarin de duplicaten voorkomen worden aangepast naar het juiste
+ * nummer.
+ *
+ * Stemmen worden ook bijgewerkt naar het juiste nummer.
+ *
+ * @param $id int Het id van het nummer dat overblijft.
+ * @param list<int> $duplicaten_ids Een lijst van id's van de nummers die
+ * verwijderd moeten worden.
+ */
+function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
+{
+    $i_duplicaten_ids = \implode(',', $duplicaten_ids);
+    $db->query(<<<EOT
+    UPDATE IGNORE `lijsten_nummers`
+    SET `nummer_id` = {$id}
+    WHERE `nummer_id` IN ({$i_duplicaten_ids});
+    EOT);
+    $db->query(<<<EOT
+    UPDATE IGNORE `stemmers_nummers`
+    SET `nummer_id` = {$id}
+    WHERE `nummer_id` IN ({$i_duplicaten_ids});
+    EOT);
+    $db->query("DELETE FROM nummers WHERE id IN ({$i_duplicaten_ids})");
+}

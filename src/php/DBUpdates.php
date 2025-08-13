@@ -126,4 +126,12 @@ class DBUpdates
         RENAME TABLE `stemmen` TO `stemmers_nummers`;
         EOT);
     }
+
+    public function update_7(): void
+    {
+        $this->db->query(<<<EOT
+        ALTER TABLE `nummers`
+        ADD `duur` INT UNSIGNED NULL DEFAULT NULL AFTER `opener`;
+        EOT);
+    }
 }

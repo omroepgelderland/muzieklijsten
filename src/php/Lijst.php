@@ -35,7 +35,8 @@ use gldstdlib\exception\IndexException;
  *         id: int,
  *         titel: string,
  *         artiest: string,
- *         is_vrijekeuze: bool
+ *         is_vrijekeuze: bool,
+ *         duur: ?int,
  *     },
  *     stemmen: list<array{
  *         stemmer_id: int,
@@ -747,6 +748,7 @@ class Lijst
             sn.is_vrijekeuze,
             n.titel,
             n.artiest,
+            n.duur,
             s.id AS stemmer_id,
             s.ip,
             sn.behandeld,
@@ -799,6 +801,7 @@ class Lijst
                 'is_vrijekeuze' => $is_vrijekeuze,
                 'titel' => $titel,
                 'artiest' => $artiest,
+                'duur' => $duur,
                 'stemmer_id' => $stemmer_id,
                 'ip' => $ip,
                 'behandeld' => $is_behandeld,
@@ -825,6 +828,7 @@ class Lijst
                 'id' => $nummer_id,
                 'titel' => $titel,
                 'artiest' => $artiest,
+                'duur' => isset($duur) ? (int)$duur : null,
                 'is_vrijekeuze' => $is_vrijekeuze,
             ];
             $nummers[$nummer_id]['stemmen'][$stemmer_id]['stemmer_id'] = $stemmer_id;

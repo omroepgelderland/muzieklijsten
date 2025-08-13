@@ -73,7 +73,7 @@ function db_update(DB $db, Log $log, DBUpdates $dbupdates): void
             // De database heeft nog geen versienummer-tabel.
             $versie = 1;
         }
-        while (\method_exists('\muzieklijsten\DBUpdates', "update_{$versie}")) {
+        while (\method_exists(\muzieklijsten\DBUpdates::class, "update_{$versie}")) {
             $functie = "update_{$versie}";
             $dbupdates->$functie();
             $db->updateMulti('versie', ['versie' => $versie], "TRUE");

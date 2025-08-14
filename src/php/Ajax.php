@@ -291,6 +291,15 @@ class Ajax
         foreach ($this->request->nummers as $nummer) {
             $artiest = trim($nummer->artiest);
             $titel = trim($nummer->titel);
+            $jaar = \filter_var($nummer->jaar ?? null, \FILTER_VALIDATE_INT, \FILTER_NULL_ON_FAILURE);
+            $jaar = isset($jaar) ? (int)$jaar : null;
+            $duur_str = \trim($nummer->duur ?? '');
+            $duur_res = \preg_match('/^([0-5]?[0-9])(?:\:|\.)([0-5][0-9])$/', $duur_str, $m);
+            if ($duur_res === 1) {
+                $duur = (int)$m[1] * 60 + (int)$m[2];
+            } else {
+                $duur = null;
+            }
             if ($titel !== '' && $artiest !== '') {
                 $zoekartiest = $this->db->escape_string(strtolower(str_replace(' ', '', $artiest)));
                 $zoektitel = $this->db->escape_string(strtolower(str_replace(' ', '', $titel)));
@@ -310,6 +319,8 @@ class Ajax
                     $nummer_id = $this->db->insertMulti('nummers', [
                         'titel' => $titel,
                         'artiest' => $artiest,
+                        'jaar' => $jaar,
+                        'duur' => $duur,
                     ]);
                 }
                 foreach ($this->request->lijsten as $lijst) {

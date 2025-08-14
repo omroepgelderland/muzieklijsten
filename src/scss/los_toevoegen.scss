@@ -1,12 +1,13 @@
 // Project
 @use "/src/scss/algemeen.scss";
 
-.inline_item {
-  display: inline-block;
-  max-width: 30%;
-  min-width: 20ch;
+.lijst-item {
+  min-width: 30ch;
 }
 
-.lijst_item {
-  min-width: 30ch;
+th.kolom-breed {
+  width: 30%;
+}
+th.kolom-smal {
+  width: 20%;
 }

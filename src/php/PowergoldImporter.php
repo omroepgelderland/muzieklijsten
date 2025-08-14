@@ -206,7 +206,8 @@ class PowergoldImporter
             categorie = ?,
             map = ?,
             opener = ?,
-            duur = ?
+            duur = ?,
+            is_vrijekeuze = 0
         WHERE
             id = ?
         EOT;

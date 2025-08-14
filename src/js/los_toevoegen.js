@@ -13,20 +13,18 @@ import "/src/scss/los_toevoegen.scss";
 class Nummer {
   artiest;
   titel;
+  jaar;
+  duur;
 
-  constructor(artiest, titel) {
-    if (artiest === undefined) {
-      artiest = "";
-    }
-    if (titel === undefined) {
-      titel = "";
-    }
-    this.artiest = artiest;
-    this.titel = titel;
+  constructor(artiest, titel, jaar, duur) {
+    this.artiest = artiest ?? "";
+    this.titel = titel ?? "";
+    this.jaar = jaar ?? "";
+    this.duur = duur ?? "";
   }
 
   isLeeg() {
-    return this.artiest === "" && this.titel === "";
+    return this.artiest === "" || this.titel === "";
   }
 }
 

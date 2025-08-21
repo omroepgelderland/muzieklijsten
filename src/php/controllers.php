@@ -332,3 +332,43 @@ function import_powergold(
 ): void {
     $factory->create_powergold_importer($filename)->import();
 }
+
+/**
+ * Regenereert alle vgl_titel en vgl_artiest velden in de nummerstabel.
+ */
+function vgl_bijwerken(\muzieklijsten\DB $db): void
+{
+    $vgl_titel =
+        $vgl_artiest =
+        $nummer_id = null;
+    $update_query = <<<EOT
+    UPDATE nummers
+    SET
+        vgl_titel = ?,
+        vgl_artiest = ?
+    WHERE
+        id = ?
+    EOT;
+    $update = $db->getDB()->prepare($update_query);
+    $update->bind_param(
+        'ssi',
+        $vgl_titel,
+        $vgl_artiest,
+        $nummer_id,
+    );
+
+    $query = <<<EOT
+    SELECT id, artiest, titel
+    FROM nummers
+    ORDER BY id
+    EOT;
+    foreach ($db->query($query) as $entry) {
+        $nummer_id = (int)$entry['id'];
+        $artiest = $entry['artiest'];
+        $titel = $entry['titel'];
+        $vgl_artiest = \muzieklijsten\get_vgl_string($artiest, true);
+        $vgl_titel = \muzieklijsten\get_vgl_string($titel, false);
+        $update->execute();
+    }
+    $update->close();
+}

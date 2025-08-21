@@ -47,6 +47,8 @@ CREATE TABLE `nummers` (
   `opener` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
   `duur` int(10) UNSIGNED DEFAULT NULL,
   `is_vrijekeuze` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
+  `vgl_titel` varchar(128) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `vgl_artiest` varchar(128) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `muziek_id` (`muziek_id`),
   UNIQUE KEY `artiest` (`artiest`,`titel`,`jaar`)
@@ -128,4 +130,4 @@ INSERT IGNORE INTO `velden` (`label`, `leeg_feedback`, `max`, `maxlength`, `min`
 ('E‑mailadres', 'Vul uw e-mailadres in a.u.b.', NULL, 100, NULL, NULL, '', 'email'),
 ('Vrije keuze', 'Vul een eigen keuze in a.u.b.', NULL, NULL, NULL, NULL, 'Vul hier je eigen favoriet in.', 'text');
 
-INSERT INTO `versie` (`versie`) VALUES (7);
+INSERT INTO `versie` (`versie`) VALUES (8);

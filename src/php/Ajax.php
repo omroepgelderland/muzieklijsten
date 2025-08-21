@@ -301,14 +301,16 @@ class Ajax
                 $duur = null;
             }
             if ($titel !== '' && $artiest !== '') {
-                $zoekartiest = $this->db->escape_string(strtolower(str_replace(' ', '', $artiest)));
-                $zoektitel = $this->db->escape_string(strtolower(str_replace(' ', '', $titel)));
+                $vgl_artiest = $this->db->escape_string(get_vgl_string($artiest, true));
+                $vgl_titel = $this->db->escape_string(get_vgl_string($titel, false));
+                $jaar_cond = isset($jaar) ? "AND (`jaar` = {$jaar} OR `jaar` IS NULL)" : '';
                 $sql = <<<EOT
-                    SELECT id
-                    FROM nummers
-                    WHERE
-                        LOWER(REPLACE(artiest, " ", "")) = "{$zoekartiest}"
-                        AND LOWER(REPLACE(titel, " ", "")) = "{$zoektitel}"
+                SELECT id
+                FROM nummers
+                WHERE
+                    `vgl_artiest` = "{$vgl_artiest}"
+                    AND `vgl_titel` = "{$vgl_titel}"
+                    {$jaar_cond}
                 EOT;
                 $res = $this->db->query($sql);
                 if ($res->num_rows > 0) {
@@ -316,12 +318,13 @@ class Ajax
                     $nummer_id = (int)$res->fetch_array()[0];
                 } else {
                     $json['toegevoegd']++;
-                    $nummer_id = $this->db->insertMulti('nummers', [
-                        'titel' => $titel,
-                        'artiest' => $artiest,
-                        'jaar' => $jaar,
-                        'duur' => $duur,
-                    ]);
+                    $nummer = $this->factory->insert_nummer(
+                        $titel,
+                        $artiest,
+                        jaar: $jaar,
+                        duur: $duur,
+                    );
+                    $nummer_id = $nummer->get_id();
                 }
                 foreach ($this->request->lijsten as $lijst) {
                     try {

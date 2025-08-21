@@ -134,4 +134,15 @@ class DBUpdates
         ADD `duur` INT UNSIGNED NULL DEFAULT NULL AFTER `opener`;
         EOT);
     }
+
+    public function update_8(): void
+    {
+        $this->db->query(<<<EOT
+        ALTER TABLE `nummers`
+        ADD `vgl_titel` VARCHAR(128) CHARACTER SET ascii
+            COLLATE ascii_general_ci NOT NULL AFTER `is_vrijekeuze`,
+        ADD `vgl_artiest` VARCHAR(128) CHARACTER SET ascii
+            COLLATE ascii_general_ci NOT NULL AFTER `vgl_titel`;
+        EOT);
+    }
 }

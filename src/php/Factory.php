@@ -5,6 +5,7 @@ namespace muzieklijsten;
 use DI\FactoryInterface;
 use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDataTooLongException;
+use gldstdlib\exception\SQLDupEntryException;
 use gldstdlib\exception\SQLException;
 use gldstdlib\exception\UndefinedPropertyException;
 
@@ -278,7 +279,7 @@ class Factory
     /**
      * Maakt een nieuw nummer aan als vrije keuze van een stemmer.
      * Als er al een nummer bestaat met deze artiest en titel dan wordt het
-     * bestaan de nummer teruggegeven.
+     * bestaande nummer teruggegeven.
      *
      * @return Nummer Het bestaande of nieuw toegevoegde nummer.
      *
@@ -286,31 +287,34 @@ class Factory
      */
     public function vrijekeuze_nummer_toevoegen(string $artiest, string $titel): Nummer
     {
-        $artiest = trim($artiest);
-        $titel = trim($titel);
-        if ($artiest === '' || $titel === '') {
+        $artiest = \trim($artiest);
+        $titel = \trim($titel);
+        $vgl_artiest = get_vgl_string($artiest, true);
+        $vgl_titel = get_vgl_string($titel, false);
+        if ($vgl_artiest === '' || $vgl_titel === '') {
             throw new LegeVrijeKeuze();
         }
-        $q_artiest = $this->db->escape_string($artiest);
-        $q_titel = $this->db->escape_string($titel);
+        $q_artiest = $this->db->escape_string($vgl_artiest);
+        $q_titel = $this->db->escape_string($vgl_titel);
         $query = <<<EOT
         SELECT id
         FROM nummers
         WHERE
-            artiest LIKE "{$q_artiest}"
-            AND titel LIKE "{$q_titel}"
+            vgl_artiest = "{$q_artiest}"
+            AND vgl_titel = "{$q_titel}"
+        ORDER BY id
+        LIMIT 1
         EOT;
         $nummers = $this->select_objecten(Nummer::class, $query);
         if (count($nummers) > 0) {
             return $nummers[0];
         }
 
-        $id = $this->db->insertMulti('nummers', [
-            'artiest' => $artiest,
-            'titel' => $titel,
-            'is_vrijekeuze' => true,
-        ]);
-        return $this->create_nummer($id);
+        return $this->insert_nummer(
+            artiest: $artiest,
+            titel: $titel,
+            is_vrijekeuze: true,
+        );
     }
 
     /**
@@ -374,5 +378,41 @@ class Factory
             PowergoldImporter::class,
             ['filename' => $filename]
         );
+    }
+
+    /**
+     * Maakt een nieuw nummer in de database.
+     *
+     * @return Nummer het nieuwe nummer
+     *
+     * @throws SQLDupEntryException Als er al een nummer bestaat met dit
+     * powergold-id of artiest-titel-jaar.
+     */
+    public function insert_nummer(
+        string $titel,
+        string $artiest,
+        ?string $powergold_id = null,
+        ?int $jaar = null,
+        ?string $categorie = null,
+        ?string $map = null,
+        bool $opener = false,
+        ?int $duur = null,
+        bool $is_vrijekeuze = false,
+    ): Nummer {
+        $db_data = [
+            'muziek_id' => $powergold_id,
+            'titel' => $titel,
+            'artiest' => $artiest,
+            'jaar' => $jaar,
+            'categorie' => $categorie,
+            'map' => $map,
+            'opener' => (int)$opener,
+            'duur' => $duur,
+            'is_vrijekeuze' => (int)$is_vrijekeuze,
+            'vgl_artiest' => get_vgl_string($artiest, true),
+            'vgl_titel' => get_vgl_string($titel, false),
+        ];
+        $db_data['id'] = $id = (int)$this->db->insertMulti('nummers', $db_data);
+        return $this->create_nummer($id, $db_data);
     }
 }

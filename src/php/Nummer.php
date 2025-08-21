@@ -17,7 +17,9 @@ namespace muzieklijsten;
  *     map: ?string,
  *     opener: positive-int,
  *     duur: ?positive-int,
- *     is_vrijekeuze: positive-int
+ *     is_vrijekeuze: positive-int,
+ *     vgl_artiest: string,
+ *     vgl_titel: string,
  * }
  */
 class Nummer
@@ -32,6 +34,8 @@ class Nummer
     private bool $is_opener;
     private ?int $duur;
     private bool $is_vrijekeuze;
+    private string $vgl_artiest;
+    private string $vgl_titel;
     /** @var list<Lijst> */
     private array $lijsten;
     private bool $db_props_set;
@@ -127,6 +131,18 @@ class Nummer
         return $this->is_vrijekeuze;
     }
 
+    public function get_vgl_artiest(): string
+    {
+        $this->set_db_properties();
+        return $this->vgl_artiest;
+    }
+
+    public function get_vgl_titel(): string
+    {
+        $this->set_db_properties();
+        return $this->vgl_titel;
+    }
+
     /**
      * Geeft alle lijsten waar dit nummer op staat.
      *
@@ -176,6 +192,8 @@ class Nummer
         $this->is_opener = (bool)$data['opener'];
         $this->duur = $data['duur'];
         $this->is_vrijekeuze = (bool)$data['is_vrijekeuze'];
+        $this->vgl_titel = $data['vgl_titel'];
+        $this->vgl_artiest = $data['vgl_artiest'];
         $this->db_props_set = true;
     }
 }

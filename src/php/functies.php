@@ -213,3 +213,36 @@ function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
     EOT);
     $db->query("DELETE FROM nummers WHERE id IN ({$i_duplicaten_ids})");
 }
+
+/**
+ * Maak een vergelijkingsstring van een invoer.
+ *
+ * Deze string is bedoeld om te vergelijken met andere strings, bijvoorbeeld
+ * om te kijken of twee nummers hetzelfde zijn.
+ *
+ * @param string $invoer De invoer die geanalyseerd moet worden.
+ * @param $is_artiest True voor een artiestveld; false voor een titel.
+ *
+ * @return string De vergelijkingsstring.
+ */
+function get_vgl_string(string $invoer, bool $is_artiest): string
+{
+    $invoer = \strtolower($invoer);
+    $invoer = \iconv('UTF-8', 'ASCII//TRANSLIT', $invoer);
+    if ($is_artiest) {
+        $invoer = \preg_replace('~^(\'t|de|die|het|la|le|the)\s+~', '', $invoer);
+    }
+    $invoer = \preg_replace('~\(.*\)~', '', $invoer);
+    $invoer = \preg_replace('~[^a-z0-9]+~', ' ', $invoer);
+    $invoer = \str_replace([
+        ' feat ',
+        ' ft ',
+        ' featuring ',
+        ' remaster ',
+        ' radio edit ',
+        ' live ',
+    ], ' ', $invoer);
+    $invoer = \preg_replace('~\s+~', '', $invoer);
+    $invoer = \trim($invoer);
+    return $invoer;
+}

@@ -193,8 +193,18 @@ class PowergoldImporter
 
         $db = $this->db->getDB();
         $insert_query = <<<EOT
-        INSERT INTO `nummers` (`muziek_id`, `titel`, `artiest`, `jaar`, `categorie`, `map`, `opener`, `duur`)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO `nummers` (
+            `muziek_id`,
+            `titel`,
+            `artiest`,
+            `jaar`,
+            `categorie`,
+            `map`,
+            `opener`,
+            `duur`,
+            `vgl_titel`,
+            `vgl_artiest`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         EOT;
         $update_query = <<<EOT
         UPDATE nummers
@@ -207,7 +217,9 @@ class PowergoldImporter
             map = ?,
             opener = ?,
             duur = ?,
-            is_vrijekeuze = 0
+            is_vrijekeuze = 0,
+            vgl_titel = ?,
+            vgl_artiest = ?
         WHERE
             id = ?
         EOT;
@@ -227,9 +239,11 @@ class PowergoldImporter
             $categorie =
             $map =
             $opener =
-            $duur = null;
+            $duur =
+            $vgl_titel =
+            $vgl_artiest = null;
         $res = $insert->bind_param(
-            'sssissii',
+            'sssissiiss',
             $powergold_id,
             $titel,
             $artiest,
@@ -238,12 +252,14 @@ class PowergoldImporter
             $map,
             $opener,
             $duur,
+            $vgl_titel,
+            $vgl_artiest,
         );
         if ($res === false) {
             throw new SQLException('Prepared statement mislukt: ' . $insert->error, $insert->errno);
         }
         $res = $update->bind_param(
-            'sssissiii',
+            'sssissiissi',
             $powergold_id,
             $titel,
             $artiest,
@@ -252,6 +268,8 @@ class PowergoldImporter
             $map,
             $opener,
             $duur,
+            $vgl_titel,
+            $vgl_artiest,
             $nummer_id,
         );
         if ($res === false) {
@@ -265,12 +283,18 @@ class PowergoldImporter
                 // Rij zonder nummer of herhaalde kolomtitels.
                 continue;
             }
+            $vgl_titel = get_vgl_string($titel, false);
             $powergold_id = self::get_cel($rij, 'muziek_id', 'string', true);
             if ($powergold_id !== null && preg_match('~[^0-9a-zA-Z\-]~', $powergold_id) === 1) {
                 // Ongeldige ID's
                 $powergold_id = null;
             }
+            if ($powergold_id === null) {
+                echo "Ongeldig of ontbrekend Powergold-ID bij {$artiest} – {$titel}";
+                continue;
+            }
             $artiest = self::get_cel($rij, 'artiest', 'string', false);
+            $vgl_artiest = get_vgl_string($artiest, true);
             $jaar = self::get_cel($rij, 'jaar', 'int', true);
             if ($jaar === 0) {
                 $jaar = null;
@@ -292,34 +316,26 @@ class PowergoldImporter
             }
 
             // Query samenstellen om te kijken of het nummer al bestaat.
-            $e_titel = $this->db->escape_string($titel);
-            $e_artiest = $this->db->escape_string($artiest);
-            $cond_jaar = $jaar === null ? 'jaar IS NULL' : "jaar = {$jaar}";
-            if ($powergold_id === null) {
-                $query = <<<EOT
-                SELECT id
-                FROM nummers
-                WHERE
-                    titel = "{$e_titel}"
-                    AND artiest = "{$e_artiest}"
-                    AND {$cond_jaar}
-                ORDER BY id
-                EOT;
-            } else {
-                $e_powergold_id = $this->db->escape_string($powergold_id);
-                $query = <<<EOT
-                SELECT id
-                FROM nummers
-                WHERE
-                    muziek_id = "{$e_powergold_id}"
-                    OR (
-                        titel = "{$e_titel}"
-                        AND artiest = "{$e_artiest}"
-                        AND {$cond_jaar}
-                    )
-                ORDER BY id
-                EOT;
-            }
+            $e_titel = $this->db->escape_string($vgl_titel);
+            $e_artiest = $this->db->escape_string($vgl_artiest);
+            // Bij geen jaar in de import zijn alle titels in de database
+            // matches
+            // Bij wel een jaar in de import zijn de titels zonder jaartal plus
+            // de titels met dat jaartal matches.
+            $cond_jaar = $jaar === null ? '' : "AND (`jaar` = {$jaar} OR `jaar` IS NULL)";
+            $e_powergold_id = $this->db->escape_string($powergold_id);
+            $query = <<<EOT
+            SELECT id
+            FROM nummers
+            WHERE
+                muziek_id = "{$e_powergold_id}"
+                OR (
+                    vgl_titel = "{$e_titel}"
+                    AND vgl_artiest = "{$e_artiest}"
+                    {$cond_jaar}
+                )
+            ORDER BY id
+            EOT;
 
             $nummer_ids = \array_map(fn($i) => (int)$i, $this->db->selectSingleColumn($query));
             $nummer_id = \array_shift($nummer_ids);

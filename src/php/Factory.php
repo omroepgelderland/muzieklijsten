@@ -8,6 +8,7 @@ use gldstdlib\exception\SQLDataTooLongException;
 use gldstdlib\exception\SQLDupEntryException;
 use gldstdlib\exception\SQLException;
 use gldstdlib\exception\UndefinedPropertyException;
+use Psr\Container\ContainerInterface;
 
 /**
  * @phpstan-import-type DBData from Lijst as LijstDBData
@@ -19,9 +20,24 @@ use gldstdlib\exception\UndefinedPropertyException;
 class Factory
 {
     public function __construct(
-        private FactoryInterface $container,
+        private ContainerInterface $container,
+        private FactoryInterface $factory,
         private DB $db,
     ) {
+    }
+
+    /**
+     * @template T of object
+     *
+     * Finds an entry of the container by its identifier and returns it.
+     *
+     * @param class-string<T> $id Identifier of the entry to look for.
+     *
+     * @return T Entry.
+     */
+    public function get_object(string $id): object
+    {
+        return $this->container->get($id);
     }
 
     /**
@@ -43,7 +59,7 @@ class Factory
      */
     public function select_object(string $class, string $query): object
     {
-        return $this->container->make(
+        return $this->factory->make(
             $class,
             $this->db->selectSingleRow($query)
         );
@@ -66,7 +82,7 @@ class Factory
     {
         $lijst = [];
         foreach ($this->db->query($query) as $item) {
-            $lijst[] = $this->container->make(
+            $lijst[] = $this->factory->make(
                 $class,
                 $item
             );
@@ -80,7 +96,7 @@ class Factory
     public function create_ajax(
         object $request,
     ): Ajax {
-        return $this->container->make(
+        return $this->factory->make(
             Ajax::class,
             ['request' => $request]
         );
@@ -94,7 +110,7 @@ class Factory
         int $id,
         ?array $data = null,
     ): Lijst {
-        return $this->container->make(
+        return $this->factory->make(
             Lijst::class,
             [
                 'id' => $id,
@@ -134,7 +150,7 @@ class Factory
         int $id,
         ?array $data = null,
     ): Nummer {
-        return $this->container->make(
+        return $this->factory->make(
             Nummer::class,
             [
                 'id' => $id,
@@ -174,7 +190,7 @@ class Factory
         int $id,
         ?array $data = null,
     ): Stemmer {
-        return $this->container->make(
+        return $this->factory->make(
             Stemmer::class,
             [
                 'id' => $id,
@@ -231,7 +247,7 @@ class Factory
         Stemmer $stemmer,
         ?array $data = null,
     ): StemmerNummer {
-        return $this->container->make(
+        return $this->factory->make(
             StemmerNummer::class,
             [
                 'nummer' => $nummer,
@@ -266,7 +282,7 @@ class Factory
         ?array $data = null,
         ?bool $verplicht = null,
     ): Veld {
-        return $this->container->make(
+        return $this->factory->make(
             Veld::class,
             [
                 'id' => $id,
@@ -313,7 +329,7 @@ class Factory
         return $this->insert_nummer(
             artiest: $artiest,
             titel: $titel,
-            is_vrijekeuze: true,
+            is_vrijekeuze: 1,
         );
     }
 
@@ -324,7 +340,7 @@ class Factory
         object $request,
         array $kolommen
     ): SSP {
-        return $this->container->make(
+        return $this->factory->make(
             SSP::class,
             [
                 'request' => $request,
@@ -374,7 +390,7 @@ class Factory
 
     public function create_powergold_importer(string $filename): PowergoldImporter
     {
-        return $this->container->make(
+        return $this->factory->make(
             PowergoldImporter::class,
             ['filename' => $filename]
         );
@@ -397,7 +413,7 @@ class Factory
         ?string $map = null,
         bool $opener = false,
         ?int $duur = null,
-        bool $is_vrijekeuze = false,
+        int $is_vrijekeuze = 0,
     ): Nummer {
         $db_data = [
             'muziek_id' => $powergold_id,
@@ -408,7 +424,7 @@ class Factory
             'map' => $map,
             'opener' => (int)$opener,
             'duur' => $duur,
-            'is_vrijekeuze' => (int)$is_vrijekeuze,
+            'is_vrijekeuze' => $is_vrijekeuze,
             'vgl_artiest' => get_vgl_string($artiest, true),
             'vgl_titel' => get_vgl_string($titel, false),
         ];

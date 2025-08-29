@@ -21,7 +21,7 @@
     "google/recaptcha": "^1.2",
     "ext-mysqli": "*",
     "ext-intl": "*",
-    "omroepgelderland/phpstdlib": "dev-master",
+    "omroepgelderland/phpstdlib": "^2.1",
     "php-di/php-di": "^7.0"
   },
   "autoload": {

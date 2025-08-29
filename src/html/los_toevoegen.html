@@ -46,6 +46,37 @@
     />
   </head>
   <body ng-app="losseNummers" ng-controller="MainCtrl">
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button
+            type="button"
+            class="navbar-toggle collapsed"
+            data-toggle="collapse"
+            data-target="#main-navbar"
+          >
+            <span class="sr-only">Navigatie aan- en uitzetten</span>
+            <i class="fa fa-bars"></i>
+          </button>
+          <div class="navbar-brand">
+            <i class="fa fa-music" aria-hidden="true"></i>
+          </div>
+        </div>
+
+        <!-- Nav links -->
+        <div class="collapse navbar-collapse" id="main-navbar">
+          <ul class="nav navbar-nav">
+            <li><a href="admin.html">Beheer</a></li>
+            <li class="active">
+              <a href="los_toevoegen.html">Losse nummers toevoegen</a>
+            </li>
+            <li>
+              <a href="mod-vrijekeuzes.html">Moderatie vrije keuzes</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
     <div class="container" ng-show="inlog_error">
       <div class="alert alert-danger">{{inlog_error_msg}}</div>
     </div>

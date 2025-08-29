@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="nl-NL">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noai, noimageai" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/assets/afbeeldingen/favicon-192p.png"
+      sizes="192x192"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/assets/afbeeldingen/favicon-16p.png"
+      sizes="16x16"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/assets/afbeeldingen/favicon-32p.png"
+      sizes="32x32"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/assets/afbeeldingen/favicon-96p.png"
+      sizes="96x96"
+    />
+    <link rel="apple-touch-icon" href="/assets/afbeeldingen/favicon-120p.png" />
+    <link rel="apple-touch-icon" href="/assets/afbeeldingen/favicon-180p.png" />
+    <link rel="apple-touch-icon" href="/assets/afbeeldingen/favicon-152p.png" />
+    <link rel="apple-touch-icon" href="/assets/afbeeldingen/favicon-167p.png" />
+    <title>Moderatie vrije keuzes</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button
+            type="button"
+            class="navbar-toggle collapsed"
+            data-toggle="collapse"
+            data-target="#main-navbar"
+          >
+            <span class="sr-only">Navigatie aan- en uitzetten</span>
+            <i class="fa fa-bars"></i>
+          </button>
+          <div class="navbar-brand">
+            <i class="fa fa-music" aria-hidden="true"></i>
+          </div>
+        </div>
+
+        <!-- Nav links -->
+        <div class="collapse navbar-collapse" id="main-navbar">
+          <ul class="nav navbar-nav">
+            <li><a href="admin.html">Beheer</a></li>
+            <li><a href="los_toevoegen.html">Losse nummers toevoegen</a></li>
+            <li class="active">
+              <a href="mod-vrijekeuzes.html">Moderatie vrije keuzes</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container-fluid">
+      <h1>Moderatie vrije keuzes</h1>
+      <p class="tekst">
+        Beoordeel hier de nummers die de stemmers als vrije keuzes hebben
+        ingevuld.
+      </p>
+      <p class="tekst">
+        Als je een nummer hebt verbeterd dan is het goed mogelijk dat er al een
+        nummer met de correcte naam bestaat in de database. De stemmen worden in
+        dat geval samengevoegd. Dit kan betekenen dat een stemmer vaker op
+        hetzelfde nummer heeft gestemd dan toegestaan. Dit wordt na de
+        goedkeuring gecheckt en extra stemmen worden verwijderd.
+      </p>
+      <p class="tekst">
+        Vink ‘toevoegen aan de database’ aan om het nummer op te slaan zodat het
+        ook aan andere stemlijsten kan worden toegevoegd.
+      </p>
+      <div class="alert alert-danger error" id="errormsg" role="alert"></div>
+      <hr />
+      <div id="lijst"></div>
+      <div class="items-laden-bezig mb-3">
+        <div class="loading-spinner">
+          <i class="fa fa-circle-o-notch fa-spin"></i>
+          <span class="loading-text">Wachten op AI-beoordelingen…</span>
+        </div>
+      </div>
+      <div class="geen-items mb-3">
+        <p>Er staan geen nummers meer klaar om beoordeeld te worden.</p>
+      </div>
+      <button type="button" id="meer-laden" class="btn btn-primary">
+        <span class="not-eerste-items-geladen">Items laden</span>
+        <span class="eerste-items-geladen">Meer items laden</span>
+      </button>
+    </div>
+    <template id="vrijekeuze-item">
+      <form class="form-inline vrijekeuze-item" role="form">
+        <div class="row d-flex align-items-center">
+          <div class="col-xs-4">
+            <label class="artiest-label">Artiest</label>
+          </div>
+          <div class="col-xs-4">
+            <label class="titel-label">Titel</label>
+          </div>
+        </div>
+        <div class="row mb-3 d-flex align-items-center">
+          <div class="col-xs-4">
+            <input
+              type="text"
+              class="artiest-input form-control w-100"
+              required
+            />
+          </div>
+          <div class="col-xs-4">
+            <input
+              type="text"
+              class="titel-input form-control w-100"
+              required
+            />
+          </div>
+          <div class="col-xs-2">
+            <div class="checkbox">
+              <label>
+                <input class="db-check" type="checkbox" />
+                Toevoegen aan database
+              </label>
+            </div>
+          </div>
+          <div class="col-xs-2">
+            <button type="submit" class="btn btn-primary">Goedkeuren</button>
+            <button type="button" class="verwijderknop btn btn-danger">
+              Verwijderen
+            </button>
+          </div>
+        </div>
+        <div
+          class="ai-suggestieblok ai-in-orde alert alert-success alert-dismissable"
+          role="alert"
+        >
+          <button
+            type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Correct volgens AI
+        </div>
+        <div
+          class="ai-suggestieblok ai-geen-suggestie alert alert-warning alert-dismissable"
+          role="alert"
+        >
+          <button
+            type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Incorrect volgens AI, maar geen suggestie voor verbetering.
+        </div>
+        <div
+          class="ai-suggestieblok ai-suggestie alert alert-warning alert-dismissable"
+          role="alert"
+        >
+          <button
+            type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <span class="me-3"
+            >AI-suggestie:
+            <strong
+              ><em
+                ><span class="artiest-suggestie"></span> –
+                <span class="titel-suggestie"></span></em></strong
+          ></span>
+          <button type="button" class="kies-suggestie btn btn-primary btn-sm">
+            Toepassen
+          </button>
+          <button
+            type="button"
+            class="kies-suggestie-opslaan btn btn-primary btn-sm"
+          >
+            Toepassen &amp; goedkeuren
+          </button>
+        </div>
+        <div class="mislukt alert alert-danger alert-dismissable" role="alert">
+          <button
+            type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <span class="mislukt-msg"></span>
+        </div>
+      </form>
+      <hr />
+    </template>
+  </body>
+</html>

@@ -25,7 +25,7 @@ class SSP
     private object $request;
     private array $kolommen;
     private Lijst $lijst;
-    private ?bool $is_vrijekeuze;
+    private ?int $is_vrijekeuze;
 
     public function __construct(
         private Factory $factory,
@@ -142,7 +142,7 @@ class SSP
         $dtColumns = self::pluck($this->kolommen, 'dt');
 
         if ($this->is_vrijekeuze() !== null) {
-            $is_vrijekeuze = (int)$this->is_vrijekeuze();
+            $is_vrijekeuze = $this->is_vrijekeuze();
             $columnSearch[] = "is_vrijekeuze = {$is_vrijekeuze}";
         }
 
@@ -300,10 +300,10 @@ class SSP
     /**
      * Geeft aan of vrije keuzenummers mogen voorkomen in het resultaat.
      *
-     * @return bool True is alleen vrije keuzes, False is geen vrije keuzes,
+     * @return int | null True is alleen vrije keuzes, False is geen vrije keuzes,
      * null is geen filter.
      */
-    private function is_vrijekeuze(): bool | null
+    private function is_vrijekeuze(): int | null
     {
         if (!isset($this->is_vrijekeuze)) {
             try {

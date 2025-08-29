@@ -1,4 +1,9 @@
-export type AjaxMap = {
+import {
+  ModVrijeKeuzeNummer,
+  ModVrijeKeuzeOpslaanData,
+} from "src/js/mod-vrijekeuzes";
+
+export interface AjaxMap {
   get_stemlijst_frontend_data: {
     request: {
       lijst: number;
@@ -225,7 +230,23 @@ export type AjaxMap = {
     request: {};
     response: void;
   };
-};
+  mod_vrijekeuze_get_nummers: {
+    request: {
+      niet_ids: number[];
+    };
+    response: ModVrijeKeuzeNummer[];
+  };
+  mod_vrijekeuze_nummer_opslaan: {
+    request: ModVrijeKeuzeOpslaanData;
+    response: undefined;
+  };
+  mod_vrijekeuze_nummer_verwijderen: {
+    request: {
+      nummer: number;
+    };
+    response: undefined;
+  };
+}
 
 /**
  * Voert een post-request uit aan de server.

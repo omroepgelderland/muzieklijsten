@@ -12,16 +12,23 @@ use gldstdlib\exception\SQLException;
 
 /**
  * Abstractielaag voor de database.
+ *
+ * @phpstan-type DBConfigType array{
+ *     hostname: string,
+ *     database: string,
+ *     user: string,
+ *     password: string
+ * }
  */
 class DB
 {
     private ?\mysqli $db;
 
     /**
-     * Maakt een nieuw object. Mag alleen vanuit deze class worden aangeroepen
+     * @param DBConfigType $db_config Logingegevens
      */
     public function __construct(
-        private Config $config,
+        private readonly array $db_config,
     ) {
         $this->db = null;
     }
@@ -45,10 +52,10 @@ class DB
     {
         if (!isset($this->db)) {
             $this->db = new \mysqli(
-                $this->config->get_instelling('sql', 'server'),
-                $this->config->get_instelling('sql', 'user'),
-                $this->config->get_instelling('sql', 'password'),
-                $this->config->get_instelling('sql', 'database'),
+                $this->db_config['hostname'],
+                $this->db_config['user'],
+                $this->db_config['password'],
+                $this->db_config['database'],
             );
             if ($this->db->connect_error) {
                 throw new SQLException(
@@ -58,6 +65,15 @@ class DB
                         $this->db->connect_error
                     ),
                     $this->db->connect_errno
+                );
+            } elseif ($this->db->errno > 0) {
+                throw new SQLException(
+                    \sprintf(
+                        'Kan geen verbinding met de database maken (fout %s). Details: %s',
+                        $this->db->error,
+                        $this->db->errno
+                    ),
+                    $this->db->errno
                 );
             }
             $this->db->set_charset('utf8mb4');
@@ -563,7 +579,7 @@ class DB
         DELETE n
         FROM nummers n
         WHERE
-            n.is_vrijekeuze = 1
+            n.is_vrijekeuze > 0
             AND n.id NOT IN (
                 SELECT nummer_id
                 FROM stemmers_nummers

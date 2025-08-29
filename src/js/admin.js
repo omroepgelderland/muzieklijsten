@@ -59,7 +59,7 @@ class Main {
       processing: true,
       serverSide: true,
       ajax: (data, callback, settings) => {
-        data.is_vrijekeuze = false;
+        data.is_vrijekeuze = 0;
         functies.vul_datatables(data, callback, settings);
       },
       columnDefs: [

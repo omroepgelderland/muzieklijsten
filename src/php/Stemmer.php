@@ -398,4 +398,110 @@ class Stemmer
             );
         }
     }
+
+    /**
+     * Verwijdert alle stemmen die niet voldoen aan de restricties van de
+     * stemlijst.
+     */
+    public function verwijder_ongeldige_stemmen(): void
+    {
+        $this->verwijder_dubbele_artiesten_stemmen();
+
+        $query = <<<EOT
+        SELECT is_vrijekeuze, COUNT(nummer_id) AS aantal
+        FROM stemmers_nummers
+        WHERE
+        stemmer_id = {$this->get_id()}
+        GROUP BY is_vrijekeuze
+        EOT;
+        $aantal_vrije_keuzes = 0;
+        $aantal_niet_vrije_keuzes = 0;
+        foreach (
+            $this->db->query($query) as [
+                'is_vrijekeuze' => $is_vrijekeuze,
+                'aantal' => $aantal,
+            ]
+        ) {
+            if ((bool)$is_vrijekeuze) {
+                $aantal_vrije_keuzes = (int)$aantal;
+            } else {
+                $aantal_niet_vrije_keuzes = (int)$aantal;
+            }
+        }
+        $overschot_vrije_keuzes = $aantal_vrije_keuzes - $this->get_lijst()->get_vrijekeuzes();
+        $overschot_niet_vrije_keuzes = $aantal_niet_vrije_keuzes - $this->get_lijst()->get_maxkeuzes();
+
+        // Verwijder overschot aan niet-vrije keuzes
+        if ($overschot_niet_vrije_keuzes > 0) {
+            $query = <<<EOT
+            DELETE
+            FROM stemmers_nummers
+            WHERE
+                stemmer_id = {$this->get_id()}
+                AND is_vrijekeuze = 0
+            ORDER BY RAND()
+            LIMIT {$overschot_niet_vrije_keuzes}
+            EOT;
+            $this->db->query($query);
+        }
+        // Verwijder overschot aan vrije keuzes
+        if ($overschot_vrije_keuzes > 0) {
+            $query = <<<EOT
+            DELETE
+            FROM stemmers_nummers
+            WHERE
+                stemmer_id = {$this->get_id()}
+                AND is_vrijekeuze = 1
+            ORDER BY RAND()
+            LIMIT {$overschot_vrije_keuzes}
+            EOT;
+            $this->db->query($query);
+        }
+    }
+
+    /**
+     * Verwijdert stemmen op verschillende nummers van dezelfde artiest.
+     *
+     * Dit gebeurt alleen wanneer er in de stemlijst is ingesteld dat er niet
+     * dubbel op dezelfde artiest mag worden gestemd.
+     *
+     * Van de dubbelingen wordt één stem behouden.
+     */
+    private function verwijder_dubbele_artiesten_stemmen(): void
+    {
+        if (!$this->get_lijst()->is_artiest_eenmalig()) {
+            return;
+        }
+
+        $query = <<<EOT
+        SELECT
+            GROUP_CONCAT(n.id)
+        FROM stemmers_nummers sn
+        INNER JOIN nummers n ON
+            n.id = sn.nummer_id
+        WHERE
+            sn.stemmer_id = {$this->get_id()}
+        GROUP BY n.artiest
+        HAVING
+            COUNT(n.id) > 1
+        EOT;
+        $verwijder_stemmen_nummer_ids = [];
+        foreach ($this->db->selectSingleColumn($query) as $idlijst) {
+            $ids = \array_map(fn($id) => (int)$id, \explode(',', (string)$idlijst));
+            \shuffle($ids);
+            \array_shift($ids); // Behoud random nummer
+            $verwijder_stemmen_nummer_ids = \array_merge($verwijder_stemmen_nummer_ids, $ids);
+        }
+        if (\count($verwijder_stemmen_nummer_ids) > 0) {
+            $i_ids = \implode(',', $verwijder_stemmen_nummer_ids);
+            $query = <<<EOT
+            DELETE
+            FROM stemmers_nummers
+            WHERE
+                stemmer_id = {$this->get_id()}
+                AND nummer_id IN ({$i_ids})
+            EOT;
+            $this->db->query($query);
+        }
+    }
 }

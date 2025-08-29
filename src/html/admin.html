@@ -46,60 +46,92 @@
     />
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container-fluid">
-        <table width="100%">
-          <tr>
-            <td>
-              <strong><span class="organisatie"></span> – Muzieklijsten</strong>
-            </td>
-            <td>
-              <select id="lijstselect" name="lijst" class="form-control">
-                <option>-- Selecteer een muzieklijst --</option>
-              </select>
-            </td>
-            <td align="right">
-              <a id="nieuwknop" href="#" class="btn btn-primary" role="button"
-                >Nieuw</a
-              >
-            </td>
-            <td align="right">
-              <a
-                id="beheerknop"
-                href="#"
-                class="btn btn-primary lijst-geselecteerd bewerk-knop"
-                role="button"
-                title="Kies eerst een lijst of maak een nieuwe lijst aan."
-                >Beheer</a
-              >
-            </td>
-            <td align="right">
-              <a
-                id="resultatenknop"
-                href="#"
-                class="btn btn-primary lijst-geselecteerd bewerk-knop"
-                role="button"
-                title="Kies eerst een lijst of maak een nieuwe lijst aan."
-                >Resultaten</a
-              >
-            </td>
-            <td align="right">
-              <a
-                href="#"
-                data-toggle="modal"
-                data-target="#modal-embed"
-                data-backdrop="static"
-                data-keyboard="false"
-                class="btn btn-primary lijst-geselecteerd"
-                role="button"
-                title="Kies eerst een lijst of maak een nieuwe lijst aan."
-                >Embedden</a
-              >
-            </td>
-          </tr>
-        </table>
-      </div>
-    </nav>
+    <div class="navbar-fixed-top">
+      <nav class="navbar navbar-default mb-0">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button
+              type="button"
+              class="navbar-toggle collapsed"
+              data-toggle="collapse"
+              data-target="#main-navbar"
+            >
+              <span class="sr-only">Navigatie aan- en uitzetten</span>
+              <i class="fa fa-bars"></i>
+            </button>
+            <div class="navbar-brand">
+              <i class="fa fa-music" aria-hidden="true"></i>
+            </div>
+          </div>
+          <!-- Nav links -->
+          <div class="collapse navbar-collapse" id="main-navbar">
+            <ul class="nav navbar-nav">
+              <li class="active"><a href="admin.html">Beheer</a></li>
+              <li><a href="los_toevoegen.html">Losse nummers toevoegen</a></li>
+              <li>
+                <a href="mod-vrijekeuzes.html">Moderatie vrije keuzes</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+      <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <table width="100%">
+            <tr>
+              <td>
+                <strong
+                  ><span class="organisatie"></span> – Muzieklijsten</strong
+                >
+              </td>
+              <td>
+                <select id="lijstselect" name="lijst" class="form-control">
+                  <option>-- Selecteer een muzieklijst --</option>
+                </select>
+              </td>
+              <td align="right">
+                <a id="nieuwknop" href="#" class="btn btn-primary" role="button"
+                  >Nieuw</a
+                >
+              </td>
+              <td align="right">
+                <a
+                  id="beheerknop"
+                  href="#"
+                  class="btn btn-primary lijst-geselecteerd bewerk-knop"
+                  role="button"
+                  title="Kies eerst een lijst of maak een nieuwe lijst aan."
+                  >Beheer</a
+                >
+              </td>
+              <td align="right">
+                <a
+                  id="resultatenknop"
+                  href="#"
+                  class="btn btn-primary lijst-geselecteerd bewerk-knop"
+                  role="button"
+                  title="Kies eerst een lijst of maak een nieuwe lijst aan."
+                  >Resultaten</a
+                >
+              </td>
+              <td align="right">
+                <a
+                  href="#"
+                  data-toggle="modal"
+                  data-target="#modal-embed"
+                  data-backdrop="static"
+                  data-keyboard="false"
+                  class="btn btn-primary lijst-geselecteerd"
+                  role="button"
+                  title="Kies eerst een lijst of maak een nieuwe lijst aan."
+                  >Embedden</a
+                >
+              </td>
+            </tr>
+          </table>
+        </div>
+      </nav>
+    </div>
 
     <form id="beheer-nummers" method="POST" class="lijst-geselecteerd">
       <div class="container-fluid beschikbaar">

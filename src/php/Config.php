@@ -13,29 +13,28 @@ use function gldstdlib\exception_error_handler_plus;
 /**
  * Hiermee kunnen instellingen worden opgehaald uit de serverconfiguratie.
  *
- * @phpstan-type ConfigData array{
+ * @phpstan-import-type DBConfigType from DB as DBConfigType
+ * @phpstan-type        ConfigData array{
  *     organisatie: string,
  *     root_url: string,
  *     privacy_url: string,
  *     nimbus_url: string,
- *     sql: array{
- *         server: string,
- *         database: string,
- *         user: string,
- *         password: string
- *     },
+ *     database: DBConfigType,
  *     recaptcha: array{
  *         sitekey: string,
- *         secret: string
+ *         secret: string,
  *     },
  *     php_auth: array{
  *         user: string,
- *         password: string
+ *         password: string,
  *     },
  *     mail: array{
  *         sendmail_path: string,
- *         afzender: string
- *     }
+ *         afzender: string,
+ *     },
+ *     openai: array{
+ *         api_key: string,
+ *     },
  * }
  */
 class Config
@@ -174,5 +173,20 @@ class Config
         $mail_obj->send($ontvangers, $headers, $body);
         error_reporting(\E_ALL);
         set_error_handler(exception_error_handler_plus(...), \E_ALL);
+    }
+
+    public function get_openai_api_key(): string
+    {
+        return $this->get_data()['openai']['api_key'];
+    }
+
+    /**
+     * Geeft de logingegevens voor de database.
+     *
+     * @return DBConfigType
+     */
+    public function get_db_config(): array
+    {
+        return $this->get_data()['database'];
     }
 }

@@ -197,7 +197,7 @@ class StemView {
       serverSide: true,
       ajax: (data, callback, settings) => {
         data.lijst = this.lijst_id;
-        data.is_vrijekeuze = false;
+        data.is_vrijekeuze = 0;
         data.random_seed = this.random_seed;
         functies.vul_datatables(data, callback, settings);
       },

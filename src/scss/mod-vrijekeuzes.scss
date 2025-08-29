@@ -1,0 +1,61 @@
+// Project
+@use "/src/scss/algemeen.scss";
+
+// Libraries
+@import "font-awesome/css/font-awesome.min.css";
+
+body:not(.error) .error,
+body:not(.eerste-items-geladen) .eerste-items-geladen,
+body.eerste-items-geladen .not-eerste-items-geladen,
+body:not(.items-laden-bezig) .items-laden-bezig,
+body:not(.geen-items) .geen-items,
+.vrijekeuze-item:not(.mislukt) .mislukt {
+  display: none;
+}
+
+/* Labels boven inputs in inline layout */
+.form-inline label {
+  display: block;
+}
+.ai-suggestieblok {
+  max-width: fit-content;
+}
+.w-100,
+.form-control.w-100 {
+  width: 100%;
+}
+
+// Spinner
+.loading-spinner {
+  display: inline-flex; // keeps icon + text aligned
+  align-items: center;
+  font-size: 16px; // adjust size here
+  color: #666; // spinner + text color
+
+  .fa-circle-o-notch {
+    margin-right: 8px;
+    font-size: 1.2em; // slightly larger than text
+    line-height: 1;
+    vertical-align: middle;
+    transform-origin: center center;
+  }
+
+  .loading-text {
+    font-size: 14px;
+  }
+
+  // Optional: centered in a container
+  &.centered {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 15px 0;
+  }
+}
+
+p.tekst {
+  max-width: 620px;
+  text-align: justify;
+  line-height: 1.6;
+  padding-left: 1em;
+}

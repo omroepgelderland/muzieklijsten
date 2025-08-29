@@ -10,6 +10,7 @@ use DI\FactoryInterface;
 use gldstdlib\exception\GLDException;
 use gldstdlib\Log;
 use gldstdlib\LogFactory;
+use gldstdlib\OpenAIClient;
 use Invoker\InvokerInterface;
 use Psr\Container\ContainerInterface;
 
@@ -166,20 +167,26 @@ function set_env(): void
 function get_di_container(): FactoryInterface & ContainerInterface & InvokerInterface
 {
     $config = [
-        'log.dir' => __DIR__ . '/../../data/log/',
-        'log.level' => fn() => is_dev() ? \Monolog\Level::Debug : \Monolog\Level::Info,
+        DB::class => \DI\create()->constructor(
+            \DI\get('config.database')
+        ),
+        'config.database' => \DI\factory([Config::class, 'get_db_config']),
         Log::class => \DI\autowire()->constructor(
-            \DI\get('log.level'),
-            \DI\get('log.dir'),
-            null,
-            \DI\get('log.mailinfo'),
+            level: \DI\get('log.level'),
+            log_dir: \DI\get('log.dir'),
+            mail_info: \DI\get('log.mailinfo'),
         ),
         LogFactory::class => \DI\autowire()->constructor(
-            \DI\get('log.level'),
-            \DI\get('log.dir'),
-            null,
-            \DI\get('log.mailinfo'),
+            level: \DI\get('log.level'),
+            log_dir: \DI\get('log.dir'),
+            mail_info: \DI\get('log.mailinfo'),
         ),
+        'log.dir' => __DIR__ . '/../../data/log/',
+        'log.level' => fn() => is_dev() ? \Monolog\Level::Debug : \Monolog\Level::Info,
+        OpenAIClient::class => \DI\autowire()->constructor(
+            api_key: \DI\get('config.openai.api_key'),
+        ),
+        'config.openai.api_key' => \DI\factory([Config::class, 'get_openai_api_key']),
     ];
     $builder = new \DI\ContainerBuilder();
     $builder->addDefinitions($config);
@@ -200,6 +207,9 @@ function get_di_container(): FactoryInterface & ContainerInterface & InvokerInte
  */
 function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
 {
+    if (\count($duplicaten_ids) === 0) {
+        return;
+    }
     $i_duplicaten_ids = \implode(',', $duplicaten_ids);
     $db->query(<<<EOT
     UPDATE IGNORE `lijsten_nummers`
@@ -212,6 +222,7 @@ function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
     WHERE `nummer_id` IN ({$i_duplicaten_ids});
     EOT);
     $db->query("DELETE FROM nummers WHERE id IN ({$i_duplicaten_ids})");
+    $db->verwijder_stemmers_zonder_stemmen();
 }
 
 /**
@@ -245,4 +256,148 @@ function get_vgl_string(string $invoer, bool $is_artiest): string
     $invoer = \preg_replace('~\s+~', '', $invoer);
     $invoer = \trim($invoer);
     return $invoer;
+}
+
+/**
+ * Checkt m.b.v. de OpenAI api voor elk nummer in een lijst met vrije keuzenummers of het nummer correct is en zo nee
+ * wat de correcte artiest en titel zouden moeten zijn.
+ *
+ * @param list<Nummer> $nummers
+ *
+ * @return array<int, array{
+ *     is_correct: true,
+ * } | array{
+ *     is_correct: false,
+ *     suggestie?: array{
+ *         artiest: string,
+ *         titel: string,
+ *     },
+ * }>
+ */
+function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
+{
+    $input = \array_map(
+        fn($nummer) => [
+            'id' => $nummer->get_id(),
+            'artiest' => $nummer->get_artiest(),
+            'titel' => $nummer->get_titel(),
+        ],
+        $nummers
+    );
+    $ai_res = json_decode($openai_client->get_struct_response(
+        'Antwoord in JSON-formaat. De invoer is een lijst met muzieknummers. Geef voor elk nummer in de invoer in het'
+        . ' veld is_correct als boolean aan of een muzieknummer een echt bestaand nummer is en of de spelling correct'
+        . ' is. Corrigeer de titel en artiest indien nodig. Laat de titel en artiest leeg als er geen correctie'
+        . ' mogelijk is. Geef voor elk nummer het oorspronkelijke ID.',
+        json_encode($input),
+        [
+            'type' => 'json_schema',
+            'name' => 'get_struct_response_test',
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'nummers' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'id' => [
+                                    'type' => 'number',
+                                ],
+                                'is_correct' => [
+                                    'type' => 'boolean',
+                                ],
+                                'artiest' => [
+                                    'type' => 'string',
+                                ],
+                                'titel' => [
+                                    'type' => 'string',
+                                ],
+                            ],
+                            'required' => ['id', 'is_correct', 'titel', 'artiest'],
+                            'additionalProperties' => false,
+                        ],
+                    ],
+                ],
+                'required' => ['nummers'],
+                'additionalProperties' => false,
+            ],
+            "strict" => true,
+        ],
+        "gpt-5-mini",
+    ), true);
+    if (
+        !\is_array($ai_res) ||
+        !isset($ai_res['nummers']) ||
+        !\is_array($ai_res['nummers'])
+    ) {
+        throw new GLDException();
+    }
+    $res = \array_fill_keys(
+        \array_map(
+            fn($nummer) => $nummer->get_id(),
+            $nummers,
+        ),
+        ['is_correct' => false],
+    );
+    foreach ($ai_res['nummers'] as $res_nummer) {
+        [$id, $suggestie] = parse_ai_suggestie_nummer($res_nummer);
+        if (\array_key_exists($id, $res)) {
+            $res[$id] = $suggestie;
+        }
+    }
+    return $res;
+}
+
+/**
+ * Verwerkt het openAI respons voor één nummer.
+ *
+ * @return array{int, array{
+ *     is_correct: true,
+ * } | array{
+ *     is_correct: false,
+ *     suggestie?: array{
+ *         artiest: string,
+ *         titel: string,
+ *     },
+ * }} Key is het nummer ID.
+ */
+function parse_ai_suggestie_nummer(mixed $input): array
+{
+    if (
+        !\is_array($input) ||
+        !isset($input['is_correct']) ||
+        !\is_bool($input['is_correct']) ||
+        !isset($input['id']) ||
+        !\is_numeric($input['id'])
+    ) {
+        throw new GLDException();
+    }
+    $id = (int)$input['id'];
+    $is_correct = $input['is_correct'];
+    if ($is_correct) {
+        $suggestie = [
+            'is_correct' => true,
+        ];
+    } elseif (
+        isset($input['artiest']) &&
+        isset($input['titel']) &&
+        \is_string($input['artiest']) &&
+        \is_string($input['titel']) &&
+        $input['artiest'] != '' &&
+        $input['titel'] != ''
+    ) {
+        $suggestie = [
+            'is_correct' => false,
+            'suggestie' => [
+                'artiest' => $input['artiest'],
+                'titel' => $input['titel'],
+            ],
+        ];
+    } else {
+        $suggestie = [
+            'is_correct' => false,
+        ];
+    }
+    return [$id, $suggestie];
 }

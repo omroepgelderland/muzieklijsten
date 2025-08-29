@@ -10,6 +10,7 @@ use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDupEntryException;
 use gldstdlib\exception\SQLException;
 use gldstdlib\exception\UndefinedPropertyException;
+use gldstdlib\OpenAIClient;
 
 /**
  * Verwerking van AJAX-requests.
@@ -18,6 +19,7 @@ use gldstdlib\exception\UndefinedPropertyException;
  *
  * @phpstan-import-type VeldenData from Lijst
  * @phpstan-import-type Resultaten from Lijst
+ * @phpstan-import-type ModVrijeKeuzeData from Nummer as ModVrijeKeuzeNummerData
  */
 class Ajax
 {
@@ -28,6 +30,7 @@ class Ajax
         private Factory $factory,
         private Config $config,
         private DB $db,
+        private readonly OpenAIClient $openai_client,
         private object $request,
     ) {
     }
@@ -526,7 +529,7 @@ class Ajax
                     $vrijekeus_invoer->artiest,
                     $vrijekeus_invoer->titel
                 );
-                if (!$nummer->is_vrijekeuze()) {
+                if ($nummer->is_vrijekeuze() === 0) {
                     foreach ($lijst->get_nummers() as $lijst_nummer) {
                         if ($nummer->equals($lijst_nummer)) {
                             throw new GebruikersException(
@@ -540,6 +543,8 @@ class Ajax
             } catch (LegeVrijeKeuze) {
             }
         }
+
+        $stemmer->verwijder_ongeldige_stemmen();
 
         // Invoer van velden
         foreach ($lijst->get_velden() as $veld) {
@@ -828,5 +833,126 @@ class Ajax
             throw new GLDException('Verkeerd wachtwoord en/of gebruikersnaam');
         }
         $_SESSION['is_ingelogd'] = true;
+    }
+
+    /**
+     * Geeft de lijst met vrije keuzes voor de moderatieinterface.
+     *
+     * Duurt lang want alle nummers worden gecheckt bij OpenAI.
+     *
+     * Geeft max 20 nummers.
+     *
+     * @return list<ModVrijeKeuzeNummerData>
+     */
+    public function mod_vrijekeuze_get_nummers(): array
+    {
+        $this->login();
+        $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
+        if (!\is_array($this->request->niet_ids)) {
+            throw new GLDException();
+        }
+        $niet_ids = \array_map(
+            fn($v) => (int)\filter_var($v, \FILTER_VALIDATE_INT),
+            $this->request->niet_ids
+        );
+        $i_niet_ids = \implode(',', $niet_ids);
+        $c_niet_ids = \count($niet_ids) === 0 ? '' : "AND id NOT IN ({$i_niet_ids})";
+        $query = <<<EOT
+        SELECT id
+        FROM nummers
+        WHERE
+            is_vrijekeuze = 1
+            {$c_niet_ids}
+        ORDER BY id
+        LIMIT 20
+        EOT;
+        $nummers = $this->factory->select_objecten(Nummer::class, $query);
+
+        $ai_suggesties = get_ai_suggesties($this->openai_client, $nummers);
+
+        return \array_map(
+            fn($nummer) => [
+                'id' => $nummer->get_id(),
+                'artiest' => $nummer->get_artiest(),
+                'titel' => $nummer->get_titel(),
+                'ai_suggestie' => $ai_suggesties[$nummer->get_id()],
+            ],
+            $nummers,
+        );
+    }
+
+    /**
+     * Goedkeuring vrije keuzenummer
+     */
+    public function mod_vrijekeuze_nummer_opslaan(): void
+    {
+        $this->login();
+        $this->db->disableAutocommit();
+
+        $nummer_id = (int)\filter_var($this->request->id, \FILTER_VALIDATE_INT);
+        $artiest = \trim((string)\filter_var($this->request->artiest));
+        $titel = \trim((string)\filter_var($this->request->titel));
+        $db = (bool)\filter_var($this->request->db, \FILTER_VALIDATE_BOOL);
+
+        // Nieuwe titel en artiest kan duplicaten opleveren.
+        // Checken en samenvoegen.
+        $vgl_artiest = get_vgl_string($artiest, true);
+        $vgl_titel = get_vgl_string($titel, false);
+
+        $e_titel = $this->db->escape_string($vgl_titel);
+        $e_artiest = $this->db->escape_string($vgl_artiest);
+        $duplicaten_query = <<<EOT
+        SELECT id
+        FROM nummers
+        WHERE
+            id != {$nummer_id}
+            AND vgl_titel = "{$e_titel}"
+            AND vgl_artiest = "{$e_artiest}"
+        ORDER BY id
+        EOT;
+        /** @var list<int> $ids */
+        $ids = [
+            $nummer_id,
+            ...$this->db->selectSingleColumn($duplicaten_query),
+        ];
+        \sort($ids);
+        /** @var int $laagste_id */
+        $laagste_id = \array_shift($ids);
+        nummers_samenvoegen($this->db, $laagste_id, $ids);
+
+        // Flags bijwerken. Houd er rekening mee dat het mogelijk is dat na het
+        // samenvoegen van duplicaten er een ander nummer dan het
+        // oorspronkelijke nummer wordt bijgewerkt.
+        $this->db->updateMulti('nummers', [
+            'artiest' => $artiest,
+            'titel' => $titel,
+            'vgl_artiest' => $vgl_artiest,
+            'vgl_titel' => $vgl_titel,
+        ], "id = {$laagste_id}");
+        $this->db->updateMulti('nummers', [
+            'is_vrijekeuze' => $db ? 0 : 2,
+        ], "id = {$laagste_id} AND is_vrijekeuze = 1");
+
+        $nummer = $this->factory->create_nummer($laagste_id);
+        $nummer->verwijder_ongeldige_stemmen();
+
+        $this->db->commit();
+    }
+
+    public function mod_vrijekeuze_nummer_verwijderen(): void
+    {
+        $this->login();
+        $this->db->disableAutocommit();
+
+        // $nummer = $this->factory->create_nummer_uit_request($this->request);
+        $nummer_id = (int)\filter_var($this->request->nummer, \FILTER_VALIDATE_INT);
+        $query = <<<EOT
+        DELETE FROM nummers
+        WHERE id = {$nummer_id}
+        EOT;
+        $this->db->query($query);
+        $this->db->verwijder_stemmers_zonder_stemmen();
+
+        $this->db->commit();
     }
 }

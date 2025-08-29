@@ -21,6 +21,21 @@ namespace muzieklijsten;
  *     vgl_artiest: string,
  *     vgl_titel: string,
  * }
+ * @phpstan-type AISuggestieType array{
+ *     is_correct: true,
+ * } | array{
+ *     is_correct: false,
+ *     suggestie?: array{
+ *         artiest: string,
+ *         titel: string,
+ *     },
+ * }
+ * @phpstan-type ModVrijeKeuzeData array{
+ *     id: int,
+ *     artiest: string,
+ *     titel: string,
+ *     ai_suggestie: AISuggestieType,
+ * }
  */
 class Nummer
 {
@@ -33,11 +48,13 @@ class Nummer
     private ?string $map;
     private bool $is_opener;
     private ?int $duur;
-    private bool $is_vrijekeuze;
+    private int $is_vrijekeuze;
     private string $vgl_artiest;
     private string $vgl_titel;
     /** @var list<Lijst> */
     private array $lijsten;
+    /** @var list<Stemmer> */
+    private array $stemmers;
     private bool $db_props_set;
 
     /**
@@ -125,7 +142,7 @@ class Nummer
         return $this->duur;
     }
 
-    public function is_vrijekeuze(): bool
+    public function is_vrijekeuze(): int
     {
         $this->set_db_properties();
         return $this->is_vrijekeuze;
@@ -162,6 +179,24 @@ class Nummer
     }
 
     /**
+     * Geeft alle stemmers op dit nummer (op verschillende lijsten)
+     *
+     * @return list<Stemmer>
+     */
+    public function get_stemmers(): array
+    {
+        if (!isset($this->stemmers)) {
+            $query = <<<EOT
+            SELECT stemmer_id AS id
+            FROM stemmers_nummers
+            WHERE nummer_id = {$this->get_id()}
+            EOT;
+            $this->stemmers = $this->factory->select_objecten(Stemmer::class, $query);
+        }
+        return $this->stemmers;
+    }
+
+    /**
      * Vul het object met velden uit de database.
      */
     private function set_db_properties(): void
@@ -191,9 +226,23 @@ class Nummer
         $this->map = $data['map'];
         $this->is_opener = (bool)$data['opener'];
         $this->duur = $data['duur'];
-        $this->is_vrijekeuze = (bool)$data['is_vrijekeuze'];
+        $this->is_vrijekeuze = (int)$data['is_vrijekeuze'];
         $this->vgl_titel = $data['vgl_titel'];
         $this->vgl_artiest = $data['vgl_artiest'];
         $this->db_props_set = true;
+    }
+
+    /**
+     * Nadat een nummer met andere nummers is samengevoegd kan het gebeuren dat
+     * er stemmen ongeldig zijn geworden volgens de restricties van de
+     * stemlijst.
+     *
+     * Deze functie checkt en werkt alle stemmen bij van stemmers op dit nummer.
+     */
+    public function verwijder_ongeldige_stemmen(): void
+    {
+        foreach ($this->get_stemmers() as $stemmer) {
+            $stemmer->verwijder_ongeldige_stemmen();
+        }
     }
 }

@@ -325,6 +325,7 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
             "strict" => true,
         ],
         "gpt-5-mini",
+        4 * 60,
     ), true);
     if (
         !\is_array($ai_res) ||

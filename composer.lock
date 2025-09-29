@@ -889,16 +889,16 @@
         },
         {
             "name": "omroepgelderland/phpstdlib",
-            "version": "2.1.1",
+            "version": "2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/omroepgelderland/phpstdlib.git",
-                "reference": "317c4550a4375e03e86e9043c3223f59f0029f42"
+                "reference": "87b62a08e5d7b5f6c8fc5787583a69d08fdd058e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/omroepgelderland/phpstdlib/zipball/317c4550a4375e03e86e9043c3223f59f0029f42",
-                "reference": "317c4550a4375e03e86e9043c3223f59f0029f42",
+                "url": "https://api.github.com/repos/omroepgelderland/phpstdlib/zipball/87b62a08e5d7b5f6c8fc5787583a69d08fdd058e",
+                "reference": "87b62a08e5d7b5f6c8fc5787583a69d08fdd058e",
                 "shasum": ""
             },
             "require": {
@@ -951,9 +951,9 @@
             "description": "Shared PHP functions",
             "support": {
                 "issues": "https://github.com/omroepgelderland/phpstdlib/issues",
-                "source": "https://github.com/omroepgelderland/phpstdlib/tree/2.1.1"
+                "source": "https://github.com/omroepgelderland/phpstdlib/tree/2.2.0"
             },
-            "time": "2025-08-28T10:38:19+00:00"
+            "time": "2025-09-29T15:08:27+00:00"
         },
         {
             "name": "pear/console_getopt",

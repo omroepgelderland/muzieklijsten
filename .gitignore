@@ -65,4 +65,5 @@ node_modules
 /*.md5
 /public/**
 !/public/*.php
+/powergold/**
 /test/

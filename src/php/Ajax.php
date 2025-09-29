@@ -864,7 +864,7 @@ class Ajax
             is_vrijekeuze = 1
             {$c_niet_ids}
         ORDER BY id
-        LIMIT 20
+        LIMIT 15
         EOT;
         $nummers = $this->factory->select_objecten(Nummer::class, $query);
 

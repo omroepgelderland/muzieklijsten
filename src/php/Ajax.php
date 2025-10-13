@@ -858,7 +858,7 @@ class Ajax
         $i_niet_ids = \implode(',', $niet_ids);
         $c_niet_ids = \count($niet_ids) === 0 ? '' : "AND n.id NOT IN ({$i_niet_ids})";
         $query = <<<EOT
-        SELECT n.id
+        SELECT DISTINCT n.id
         FROM nummers n
         INNER JOIN stemmers_nummers sn ON
         n.id = sn.nummer_id

@@ -87,14 +87,15 @@ class Main {
       this.view.disable_meer_laden();
     }
     for (const nummer of nummers) {
-      this.item_controllers.set(
-        nummer.id,
-        new ItemController(
-          this.view.lijst_container,
-          this.view.item_template,
-          nummer,
-        ),
+      const item_controller = new ItemController(
+        this.view.lijst_container,
+        this.view.item_template,
+        nummer,
       );
+      this.item_controllers.set(nummer.id, item_controller);
+      item_controller.on_verwijderd.on(() => {
+        this.item_controllers.delete(nummer.id);
+      });
     }
     this.view.set_meer_laden_bezig(false);
     this.view.set_eerste_items_geladen();
@@ -104,6 +105,7 @@ class Main {
 class ItemController {
   private readonly nummer;
   private readonly view;
+  /** View is verwijderd na goedkeuring of verwijdering nummer */
   public readonly on_verwijderd;
 
   constructor(
@@ -143,7 +145,7 @@ class ItemController {
         throw "De titel mag niet leeg zijn.";
       }
       try {
-        server.post("mod_vrijekeuze_nummer_opslaan", data);
+        await server.post("mod_vrijekeuze_nummer_opslaan", data);
       } catch {
         throw "Opslaan mislukt";
       }

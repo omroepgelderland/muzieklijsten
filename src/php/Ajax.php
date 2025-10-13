@@ -856,14 +856,19 @@ class Ajax
             $this->request->niet_ids
         );
         $i_niet_ids = \implode(',', $niet_ids);
-        $c_niet_ids = \count($niet_ids) === 0 ? '' : "AND id NOT IN ({$i_niet_ids})";
+        $c_niet_ids = \count($niet_ids) === 0 ? '' : "AND n.id NOT IN ({$i_niet_ids})";
         $query = <<<EOT
-        SELECT id
-        FROM nummers
+        SELECT n.id
+        FROM nummers n
+        INNER JOIN stemmers_nummers sn ON
+        n.id = sn.nummer_id
+        INNER JOIN stemmers s ON
+        s.id = sn.stemmer_id
+        AND s.lijst_id = 387
         WHERE
-            is_vrijekeuze = 1
+            n.is_vrijekeuze = 1
             {$c_niet_ids}
-        ORDER BY id
+        ORDER BY n.id
         LIMIT 15
         EOT;
         $nummers = $this->factory->select_objecten(Nummer::class, $query);

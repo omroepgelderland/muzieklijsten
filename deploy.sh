@@ -32,7 +32,8 @@ if [ -n "$(git status --untracked-files=no --porcelain)" ]; then
 fi
 
 # nvm environment
-. ~/.nvm/nvm.sh
+# shellcheck disable=SC1091
+. "$HOME/.nvm/nvm.sh"
 nvm install node || exit 1
 
 # versieverhoging

@@ -3,7 +3,7 @@ import "bootstrap";
 import * as gld from "gld-ts-lib/functions";
 
 // Project js
-import * as functies from "@muzieklijsten/functies";
+// import * as functies from "@muzieklijsten/functies";
 import * as server from "@muzieklijsten/server";
 
 // css

@@ -1,9 +1,9 @@
 import * as server from "@muzieklijsten/server";
 
 export async function vul_datatables(
-  data: { [key: string]: any },
+  data: Record<string, any>,
   callback: (a: server.AjaxMap["vul_datatables"]["response"]) => void,
-  settings: { [key: string]: any },
+  settings: Record<string, any>,
 ) {
   const respons = await server.post("vul_datatables", data);
   callback(respons);
@@ -46,7 +46,7 @@ export function format_telefoonnummer(telefoonnummer: string): string {
     /^(\+31)([0-9]{2})([0-9]{3})([0-9]{2})([0-9]{2})$/,
   ];
   for (const patroon of patronen) {
-    let m = telefoonnummer.match(patroon);
+    const m = telefoonnummer.match(patroon);
     if (m !== null && m.length > 0) {
       m.shift();
       return m.join(" ");

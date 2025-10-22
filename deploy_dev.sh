@@ -32,18 +32,17 @@ php8.1 vendor/bin/phpstan analyse || exit 1
 php_codesniffer
 
 # Node environment
-if [ ! -f ~/.nvm/nvm.sh ]; then
+if [ ! -f "$HOME/.nvm/nvm.sh" ]; then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 fi
 export NODE_ENV=development
-. ~/.nvm/nvm.sh
+"$HOME/.nvm/nvm.sh"
 nvm install node || exit 1
 npm install npm@latest -g || exit 1
 
 # npm packages
 npm install || exit 1
 npx update-browserslist-db@latest || exit 1
-npm update update-browserslist-db || exit 1
 npm audit fix
 
 # webpack compilen

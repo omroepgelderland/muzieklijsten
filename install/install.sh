@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 projectdir="$(dirname "$scriptdir")"
 mkdir -p "$projectdir/data/log"
@@ -9,7 +11,7 @@ setfacl -R \
     -dm "u:$USER:rwX,u:www-data:rwX" \
     data
 find "$projectdir/public/" "$projectdir/src/" "$projectdir/vendor/" -type d -exec chmod +x {} \;
-(cd "$projectdir" && php install/install.php) || exit 1
+(cd "$projectdir" && php install/install.php)
 setfacl -R \
     -m u:www-data:rX \
     "$projectdir/config"

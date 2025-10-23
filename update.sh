@@ -8,6 +8,8 @@ function rollback() {
     exit 1
 }
 
+set -euo pipefail
+
 vorige_git_hash=$(git rev-parse HEAD)
-git pull --rebase || exit 1
+git pull --rebase
 /usr/bin/php bin/update.php || rollback

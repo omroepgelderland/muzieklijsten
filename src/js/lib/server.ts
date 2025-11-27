@@ -131,7 +131,7 @@ export interface AjaxMap {
     }[];
   };
   vul_datatables: {
-    request: { [index: string]: any };
+    request: Record<string, any>;
     response: {
       draw: number;
       recordsTotal: number;

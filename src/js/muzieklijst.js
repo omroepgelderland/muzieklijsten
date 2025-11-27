@@ -195,11 +195,15 @@ class StemView {
     this.datatable = new DataTable(e_datatable, {
       processing: true,
       serverSide: true,
-      ajax: (data, callback, settings) => {
+      ajax: async (data, callback, settings) => {
         data.lijst = this.lijst_id;
         data.is_vrijekeuze = 0;
         data.random_seed = this.random_seed;
-        functies.vul_datatables(data, callback, settings);
+        const respons = await server.post("vul_datatables", data);
+        if (respons.recordsTotal === 0) {
+          this.verberg_lijst();
+        }
+        callback(respons);
       },
       bLengthChange: false,
       iDisplayLength: 50,
@@ -329,8 +333,21 @@ class StemView {
   async submit_handler(event) {
     event.preventDefault();
     event.stopPropagation();
-    if (Object.keys(this.geselecteerde_nummers).length < this.minkeuzes) {
-      alert(`U moet mimimaal ${this.minkeuzes} nummers selecteren.`);
+
+    const aantal_geselecteerd_lijst = Object.keys(
+      this.geselecteerde_nummers,
+    ).length;
+    if (aantal_geselecteerd_lijst < this.minkeuzes) {
+      alert(
+        `U moet mimimaal ${this.minkeuzes} nummers uit de keuzelijst selecteren.`,
+      );
+      return;
+    }
+    if (
+      aantal_geselecteerd_lijst === 0 &&
+      this.get_aantal_ingevulde_vrijekeuzes() === 0
+    ) {
+      alert("Kies ten minste één nummer.");
       return;
     }
     if (
@@ -548,6 +565,33 @@ class StemView {
   error(msg) {
     this.e_errormsg.innerText = msg;
     this.e_body.classList.add("error");
+  }
+
+  /**
+   * Geeft het aantal vrije keuzes waar de bezoeker zowel een titel als artiest heeft ingevuld.
+   *
+   * @returns {number}
+   */
+  get_aantal_ingevulde_vrijekeuzes() {
+    let aantal = 0;
+    for (let i = 0; ; i++) {
+      const e_artiest = document.getElementById(`vrijekeuze-artiest-${i}`);
+      const e_titel = document.getElementById(`vrijekeuze-titel-${i}`);
+      if (e_artiest == null || e_titel == null) {
+        break;
+      }
+      if (e_artiest.value.trim() !== "" && e_titel.value.trim() !== "") {
+        aantal++;
+      }
+    }
+    return aantal;
+  }
+
+  /**
+   * Verbergt de lijst als er geen nummers in staan.
+   */
+  verberg_lijst() {
+    this.e_keuzeformulier.hidden = true;
   }
 }
 

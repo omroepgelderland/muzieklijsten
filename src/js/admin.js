@@ -58,9 +58,10 @@ class Main {
     this.tabel = new DataTable(document.getElementById("beschikbare-nummers"), {
       processing: true,
       serverSide: true,
-      ajax: (data, callback, settings) => {
+      ajax: async (data, callback, settings) => {
         data.is_vrijekeuze = 0;
-        functies.vul_datatables(data, callback, settings);
+        const respons = await server.post("vul_datatables", data);
+        callback(respons);
       },
       columnDefs: [
         {
@@ -924,9 +925,9 @@ class ResultatenNummer {
     }
 
     if (this.is_zichtbaar) {
-      this.e_tr_uitklap.classList.remove("verborgen");
+      this.e_tr_uitklap.hidden = false;
     } else {
-      this.e_tr_uitklap.classList.add("verborgen");
+      this.e_tr_uitklap.hidden = true;
     }
   }
 
@@ -1328,6 +1329,20 @@ class BeheerModal {
    */
   async opslaan(e) {
     e.preventDefault();
+
+    const minkeuzes = Number.parseInt(
+      this.e_form.elements.namedItem("minkeuzes").value,
+    );
+    const min_vrijekeuzes = Number.parseInt(
+      this.e_form.elements.namedItem("vrijekeuzes").value,
+    );
+    if (minkeuzes + min_vrijekeuzes < 1) {
+      alert(
+        "Er moet minimaal 1 keuze mogelijk zijn (gewone keuzes + vrije keuzes).",
+      );
+      return;
+    }
+
     const fd = new FormData(this.e_form);
     if (this.is_nieuw()) {
       try {

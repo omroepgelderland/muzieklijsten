@@ -1,14 +1,3 @@
-import * as server from "@muzieklijsten/server";
-
-export async function vul_datatables(
-  data: Record<string, any>,
-  callback: (a: server.AjaxMap["vul_datatables"]["response"]) => void,
-  settings: Record<string, any>,
-) {
-  const respons = await server.post("vul_datatables", data);
-  callback(respons);
-}
-
 /**
  * Maakt DOM-elementen van een door html-loader geïmporteerd template.
  * @returns De root-elementen van het template.

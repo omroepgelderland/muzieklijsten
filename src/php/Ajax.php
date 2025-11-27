@@ -204,11 +204,11 @@ class Ajax
         if ($naam === '') {
             throw new GebruikersException('Geef een naam aan de lijst.');
         }
-        if ($minkeuzes < 1) {
-            throw new GebruikersException('Het minimaal aantal keuzes moet minstens één zijn.');
+        if ($minkeuzes < 0) {
+            throw new GebruikersException('Het minimum aantal keuzes moet positief zijn.');
         }
         if ($maxkeuzes < 1) {
-            throw new GebruikersException('Het maximaal aantal keuzes moet minstens één zijn.');
+            throw new GebruikersException('Het maximum aantal keuzes moet minstens één zijn.');
         }
         if ($maxkeuzes < $minkeuzes) {
             throw new GebruikersException('Het maximum aantal keuzes kan niet lager zijn dan het minimum.');
@@ -511,6 +511,7 @@ class Ajax
             $_SERVER['REMOTE_ADDR']
         );
 
+        $this->request->nummers ??= new \stdClass();
         foreach ($this->request->nummers as $input_nummer) {
             $nummer = $this->factory->create_nummer(filter_var($input_nummer->id, \FILTER_VALIDATE_INT));
             $toelichting = filter_var($input_nummer->toelichting);
@@ -542,6 +543,10 @@ class Ajax
                 $stemmer->add_stem($nummer, $vrijekeus_invoer->toelichting, true);
             } catch (LegeVrijeKeuze) {
             }
+        }
+
+        if (\count((array)$this->request->nummers) + \count($vrijekeuzes) === 0) {
+            throw new GebruikersException('Je hebt geen nummers gekozen.');
         }
 
         $stemmer->verwijder_ongeldige_stemmen();

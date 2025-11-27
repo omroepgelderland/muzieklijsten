@@ -17,17 +17,13 @@ interface IDMap {
   errormsg: HTMLElement;
 }
 
-type AISuggestieType =
-  | {
-      is_correct: true;
-    }
-  | {
-      is_correct: false;
-      suggestie?: {
-        artiest: string;
-        titel: string;
-      };
-    };
+interface AISuggestieType {
+  is_correct: boolean;
+  suggestie?: {
+    artiest: string;
+    titel: string;
+  };
+}
 
 interface Nummer {
   id: number;

@@ -265,9 +265,7 @@ function get_vgl_string(string $invoer, bool $is_artiest): string
  * @param list<Nummer> $nummers
  *
  * @return array<int, array{
- *     is_correct: true,
- * } | array{
- *     is_correct: false,
+ *     is_correct: bool,
  *     suggestie?: array{
  *         artiest: string,
  *         titel: string,
@@ -354,9 +352,7 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
  * Verwerkt het openAI respons voor één nummer.
  *
  * @return array{int, array{
- *     is_correct: true,
- * } | array{
- *     is_correct: false,
+ *     is_correct: bool,
  *     suggestie?: array{
  *         artiest: string,
  *         titel: string,

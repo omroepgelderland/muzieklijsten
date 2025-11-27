@@ -22,9 +22,7 @@ namespace muzieklijsten;
  *     vgl_titel: string,
  * }
  * @phpstan-type AISuggestieType array{
- *     is_correct: true,
- * } | array{
- *     is_correct: false,
+ *     is_correct: bool,
  *     suggestie?: array{
  *         artiest: string,
  *         titel: string,

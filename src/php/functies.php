@@ -183,9 +183,9 @@ function get_di_container(): FactoryInterface & ContainerInterface & InvokerInte
         ),
         'log.dir' => __DIR__ . '/../../data/log/',
         'log.level' => fn() => is_dev() ? \Monolog\Level::Debug : \Monolog\Level::Info,
-        OpenAIClient::class => \DI\autowire()->constructor(
-            api_key: \DI\get('config.openai.api_key'),
-        ),
+        OpenAIClient::class => \DI\factory(function (?string $key) {
+            return isset($key) ? new OpenAIClient($key) : null;
+        })->parameter('key', \DI\get('config.openai.api_key')),
         'config.openai.api_key' => \DI\factory([Config::class, 'get_openai_api_key']),
     ];
     $builder = new \DI\ContainerBuilder();

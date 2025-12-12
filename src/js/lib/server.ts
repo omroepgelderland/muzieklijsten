@@ -246,6 +246,10 @@ export interface AjaxMap {
     };
     response: undefined;
   };
+  heeft_openai_key: {
+    request: {};
+    response: boolean;
+  };
 }
 
 /**

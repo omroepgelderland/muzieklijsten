@@ -170,7 +170,7 @@ function get_fbshare_data(Factory $factory, Config $config, Log $log, DB $db): o
         }
         $nummers_meta_str = implode("\n", $nummers_meta);
 
-        $root_url = $config->get_instelling('root_url');
+        $root_url = $config->get()['root_url'];
         $og_url = "{$root_url}fbshare.php?stemmer={$stemmer->get_id()}";
         $og_image = "{$root_url}afbeeldingen/fbshare_top100.jpg";
         $jaar = (new \DateTime())->format('Y');
@@ -282,10 +282,10 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
     echo "Voorbeeld apache configuratie:\n{$apache_template}\n";
 
     // Database initialiseren.
-    $sql_server = $config->get_instelling('sql', 'server');
-    $sql_database = $config->get_instelling('sql', 'database');
-    $sql_user = $config->get_instelling('sql', 'user');
-    $sql_password = $config->get_instelling('sql', 'password');
+    $sql_server = $config->get()['database']['hostname'];
+    $sql_database = $config->get()['database']['database'];
+    $sql_user = $config->get()['database']['user'];
+    $sql_password = $config->get()['database']['password'];
     $db_root_user = readline_met_default('MySQL user met rechten voor maken van databases en gebruikers', 'root');
     $db_root_password = readline_met_default('Wachtwoord (leeglaten bij authenticatie met auth_socket)');
     $root_password_param = $db_root_password === '' ? '' : "-p '{$db_root_password}'";

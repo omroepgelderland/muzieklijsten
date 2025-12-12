@@ -191,7 +191,7 @@ class Stemmer
             $this->config->stuur_mail(
                 $lijst->get_notificatie_email_adressen(),
                 [],
-                $this->config->get_instelling('mail', 'afzender'),
+                $this->config->get()['mail']['afzender'],
                 $onderwerp,
                 $tekst_bericht
             );
@@ -279,7 +279,7 @@ class Stemmer
         $this->config->stuur_mail(
             $email,
             [],
-            $this->config->get_instelling('mail', 'afzender'),
+            $this->config->get()['mail']['afzender'],
             $onderwerp,
             $dom->textContent,
             $dom->saveHTML()

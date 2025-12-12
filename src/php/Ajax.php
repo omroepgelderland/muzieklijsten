@@ -30,7 +30,7 @@ class Ajax
         private Factory $factory,
         private Config $config,
         private DB $db,
-        private readonly OpenAIClient $openai_client,
+        private readonly ?OpenAIClient $openai_client,
         private object $request,
     ) {
     }
@@ -112,13 +112,13 @@ class Ajax
             'maxkeuzes' => $lijst->get_maxkeuzes(),
             'vrijekeuzes' => $lijst->get_vrijekeuzes(),
             'is_artiest_eenmalig' => $lijst->is_artiest_eenmalig(),
-            'organisatie' => $this->config->get_instelling('organisatie'),
+            'organisatie' => $this->config->get()['organisatie'],
             'lijst_naam' => $lijst->get_naam(),
             'heeft_gebruik_recaptcha' => $lijst->heeft_gebruik_recaptcha(),
             'is_actief' => $lijst->is_actief(),
             'velden' => $velden,
-            'recaptcha_sitekey' => $this->config->get_instelling('recaptcha', 'sitekey'),
-            'privacy_url' => $this->config->get_instelling('privacy_url'),
+            'recaptcha_sitekey' => $this->config->get()['recaptcha']['sitekey'],
+            'privacy_url' => $this->config->get()['privacy_url'],
             'random_volgorde' => $lijst->is_random_volgorde(),
         ];
     }
@@ -713,7 +713,7 @@ class Ajax
             'nummer_ids' => $nummer_ids,
             'iframe_url' => sprintf(
                 '%s?lijst=%d',
-                $this->config->get_instelling('root_url'),
+                $this->config->get()['root_url'],
                 $lijst->get_id()
             ),
         ];
@@ -741,9 +741,9 @@ class Ajax
             ];
         }
         return [
-            'organisatie' => $this->config->get_instelling('organisatie'),
+            'organisatie' => $this->config->get()['organisatie'],
             'lijsten' => $lijsten,
-            'nimbus_url' => $this->config->get_instelling('nimbus_url'),
+            'nimbus_url' => $this->config->get()['nimbus_url'],
             'totaal_aantal_nummers' => (int)$this->db->selectSingle('SELECT COUNT(*) FROM nummers'),
         ];
     }
@@ -828,8 +828,8 @@ class Ajax
             exit();
         }
         if (
-            $_SERVER['PHP_AUTH_USER'] !== $this->config->get_instelling('php_auth', 'user')
-            || $_SERVER['PHP_AUTH_PW'] !== $this->config->get_instelling('php_auth', 'password')
+            $_SERVER['PHP_AUTH_USER'] !== $this->config->get()['php_auth']['user']
+            || $_SERVER['PHP_AUTH_PW'] !== $this->config->get()['php_auth']['password']
         ) {
             // header('WWW-Authenticate: Basic realm="Inloggen"');
             header('HTTP/1.0 401 Unauthorized');
@@ -847,10 +847,16 @@ class Ajax
      *
      * Geeft max 20 nummers.
      *
+     * De lijst is leeg als de OpenAI API key niet is ingesteld.
+     *
      * @return list<ModVrijeKeuzeNummerData>
      */
     public function mod_vrijekeuze_get_nummers(): array
     {
+        if ($this->openai_client === null) {
+            return [];
+        }
+
         $this->login();
         $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
         if (!\is_array($this->request->niet_ids)) {
@@ -964,5 +970,14 @@ class Ajax
         $this->db->verwijder_stemmers_zonder_stemmen();
 
         $this->db->commit();
+    }
+
+    /**
+     * Geeft aan of er een OpenAI API key is ingesteld in config.json.
+     */
+    public function heeft_openai_key(): bool
+    {
+        $this->login();
+        return $this->openai_client !== null;
     }
 }

@@ -9,7 +9,9 @@ body:not(.veld-uitzenddatum) .veld-uitzenddatum,
 body:not(.veld-vrijekeus) .veld-vrijekeus,
 body:not(.heeft-recaptcha) .heeft-recaptcha,
 body:not(.is-actief) .is-actief,
-body.is-actief .is-niet-actief {
+body.is-actief .is-niet-actief,
+body:not(.heeft-openai-key) .heeft-openai-key,
+body.heeft-openai-key .not-heeft-openai-key {
   display: none;
 }
 

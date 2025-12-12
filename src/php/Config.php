@@ -56,7 +56,7 @@ class Config
      *
      * @throws GLDException Als het configuratiebestand niet kan worden geladen.
      */
-    public function get_data(): array
+    public function get(): array
     {
         if (!isset($this->data)) {
             try {
@@ -67,31 +67,6 @@ class Config
             }
         }
         return $this->data;
-    }
-
-    /**
-     * Haalt een instelling op die in een sectie staat.
-     * Instellingen staan onder een variabel aantal niveaus, die met de functieparameters worden aangegeven.
-     *
-     * @param $args,... Secties waaronder de instelling staat.
-     *
-     * @return mixed De waarde van de instelling
-     *
-     * @throws ConfigException Als de instelling niet kan worden gevonden.
-     */
-    public function get_instelling(string ...$args)
-    {
-        $sectie = $this->get_data();
-        foreach (func_get_args() as $param) {
-            if (!is_array($sectie) || !array_key_exists($param, $sectie)) {
-                throw new ConfigException(sprintf(
-                    'De instelling %s kan niet worden gevonden.',
-                    implode('->', func_get_args())
-                ));
-            }
-            $sectie = $sectie[$param];
-        }
-        return $sectie;
     }
 
     /**
@@ -165,7 +140,7 @@ class Config
         $headers = $mime->headers($headers);
 
         $params = [
-            'sendmail_path' => $this->get_instelling('mail', 'sendmail_path'),
+            'sendmail_path' => $this->get()['mail']['sendmail_path'],
         ];
         $mail_obj = \Mail::factory('sendmail', $params);
         set_error_handler(exception_error_handler_plus(...), \E_ALL & ~\E_DEPRECATED);
@@ -175,9 +150,9 @@ class Config
         set_error_handler(exception_error_handler_plus(...), \E_ALL);
     }
 
-    public function get_openai_api_key(): string
+    public function get_openai_api_key(): ?string
     {
-        return $this->get_data()['openai']['api_key'];
+        return isset($this->get()['openai']) ? $this->get()['openai']['api_key'] : null;
     }
 
     /**
@@ -187,6 +162,6 @@ class Config
      */
     public function get_db_config(): array
     {
-        return $this->get_data()['database'];
+        return $this->get()['database'];
     }
 }

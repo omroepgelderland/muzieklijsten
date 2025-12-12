@@ -67,37 +67,45 @@
     </nav>
     <div class="container-fluid">
       <h1>Moderatie vrije keuzes</h1>
-      <p class="tekst">
-        Beoordeel hier de nummers die de stemmers als vrije keuzes hebben
-        ingevuld.
-      </p>
-      <p class="tekst">
-        Als je een nummer hebt verbeterd dan is het goed mogelijk dat er al een
-        nummer met de correcte naam bestaat in de database. De stemmen worden in
-        dat geval samengevoegd. Dit kan betekenen dat een stemmer vaker op
-        hetzelfde nummer heeft gestemd dan toegestaan. Dit wordt na de
-        goedkeuring gecheckt en ongeldige stemmen worden verwijderd.
-      </p>
-      <p class="tekst">
-        Vink ‘toevoegen aan de database’ aan om het nummer op te slaan zodat het
-        ook aan andere stemlijsten kan worden toegevoegd.
-      </p>
-      <div class="alert alert-danger error" id="errormsg" role="alert"></div>
-      <hr />
-      <div id="lijst"></div>
-      <div class="items-laden-bezig mb-3">
-        <div class="loading-spinner">
-          <i class="fa fa-circle-o-notch fa-spin"></i>
-          <span class="loading-text">Wachten op AI-beoordelingen…</span>
+      <div class="not-config-heeft-openai-key">
+        <p>
+          Stel een OpenAI-sleutel in in config.json om AI-ondersteuning te
+          gebruiken.
+        </p>
+      </div>
+      <div class="config-heeft-openai-key">
+        <p class="tekst">
+          Beoordeel hier de nummers die de stemmers als vrije keuzes hebben
+          ingevuld.
+        </p>
+        <p class="tekst">
+          Als je een nummer hebt verbeterd dan is het goed mogelijk dat er al
+          een nummer met de correcte naam bestaat in de database. De stemmen
+          worden in dat geval samengevoegd. Dit kan betekenen dat een stemmer
+          vaker op hetzelfde nummer heeft gestemd dan toegestaan. Dit wordt na
+          de goedkeuring gecheckt en ongeldige stemmen worden verwijderd.
+        </p>
+        <p class="tekst">
+          Vink ‘toevoegen aan de database’ aan om het nummer op te slaan zodat
+          het ook aan andere stemlijsten kan worden toegevoegd.
+        </p>
+        <div class="alert alert-danger error" id="errormsg" role="alert"></div>
+        <hr />
+        <div id="lijst"></div>
+        <div class="items-laden-bezig mb-3">
+          <div class="loading-spinner">
+            <i class="fa fa-circle-o-notch fa-spin"></i>
+            <span class="loading-text">Wachten op AI-beoordelingen…</span>
+          </div>
         </div>
+        <div class="geen-items mb-3">
+          <p>Er staan geen nummers meer klaar om beoordeeld te worden.</p>
+        </div>
+        <button type="button" id="meer-laden" class="btn btn-primary">
+          <span class="not-eerste-items-geladen">Items laden</span>
+          <span class="eerste-items-geladen">Meer items laden</span>
+        </button>
       </div>
-      <div class="geen-items mb-3">
-        <p>Er staan geen nummers meer klaar om beoordeeld te worden.</p>
-      </div>
-      <button type="button" id="meer-laden" class="btn btn-primary">
-        <span class="not-eerste-items-geladen">Items laden</span>
-        <span class="eerste-items-geladen">Meer items laden</span>
-      </button>
     </div>
     <template id="vrijekeuze-item">
       <form class="form-inline vrijekeuze-item" role="form">

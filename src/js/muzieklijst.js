@@ -294,10 +294,14 @@ class StemView {
       this.vrijkeuze_toevoegen(i, serverdata.vrijekeuzes);
     }
     for (const e_captcha of document.querySelectorAll(".g-recaptcha")) {
-      e_captcha.setAttribute("data-sitekey", serverdata.recaptcha_sitekey);
-      const e_script = document.createElement("script");
-      e_script.src = "https://www.google.com/recaptcha/api.js?hl=nl";
-      e_captcha.parentElement.appendChild(e_script);
+      if (serverdata.heeft_gebruik_recaptcha) {
+        e_captcha.setAttribute("data-sitekey", serverdata.recaptcha_sitekey);
+        const e_script = document.createElement("script");
+        e_script.src = "https://www.google.com/recaptcha/api.js?hl=nl";
+        e_captcha.parentElement.appendChild(e_script);
+      } else {
+        e_captcha.parentElement.remove();
+      }
     }
     for (const e_organisatie of document.querySelectorAll(".organisatie")) {
       e_organisatie.innerText = serverdata.organisatie;

@@ -20,7 +20,7 @@ use function gldstdlib\exception_error_handler_plus;
  *     privacy_url: string,
  *     nimbus_url: string,
  *     database: DBConfigType,
- *     recaptcha: array{
+ *     recaptcha?: array{
  *         sitekey: string,
  *         secret: string,
  *     },
@@ -32,7 +32,7 @@ use function gldstdlib\exception_error_handler_plus;
  *         sendmail_path: string,
  *         afzender: string,
  *     },
- *     openai: array{
+ *     openai?: array{
  *         api_key: string,
  *     },
  * }
@@ -41,13 +41,6 @@ class Config
 {
     /** @var ?ConfigData */
     private ?array $data;
-
-    /**
-     * Maakt een nieuw object. Mag alleen vanuit deze class worden gedaan
-     */
-    public function __construct()
-    {
-    }
 
     /**
      * Haalt de JSON inhoud op.
@@ -70,15 +63,33 @@ class Config
     }
 
     /**
+     * Geeft aan of er recaptcha keys zijn ingesteld in de configuratie.
+     */
+    public function heeft_recaptcha_keys(): bool
+    {
+        return isset($this->get()['recaptcha']);
+    }
+
+    /**
      * Geeft het Google Recaptcha object
      *
-     * @return \ReCaptcha\ReCaptcha
+     * @throws ConfigException Als recaptcha niet is geconfigureerd.
      */
     public function get_recaptcha(): \ReCaptcha\ReCaptcha
     {
-        return new \ReCaptcha\ReCaptcha($this->get_instelling('recaptcha', 'secret'));
+        if (!isset($this->get()['recaptcha'])) {
+            throw new ConfigException('Recaptcha is niet geconfigureerd.');
+        }
+        return new \ReCaptcha\ReCaptcha($this->get()['recaptcha']['secret']);
     }
 
+    /**
+     * Controleert of de captcha geldig is.
+     *
+     * @param $g_recaptcha_response De g-recaptcha-response uit het formulier
+     *
+     * @throws ConfigException Als recaptcha niet is geconfigureerd.
+     */
     public function is_captcha_ok(string $g_recaptcha_response): bool
     {
         $recaptcha = $this->get_recaptcha();

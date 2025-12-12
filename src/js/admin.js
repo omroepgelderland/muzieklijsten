@@ -32,6 +32,7 @@ class Main {
   /** @type {number[]} */
   geselecteerde_nummers;
   tabel;
+  config_promise;
 
   constructor() {
     this.e_body = document.getElementsByTagName("body").item(0);
@@ -42,6 +43,7 @@ class Main {
     );
     this.lijst_naam_promise = Promise.resolve("?");
     this.geselecteerde_nummers = [];
+    this.config_promise = functies.set_config_classes();
 
     this.vul_metadata().then(() => {
       const params = new URLSearchParams(document.location.search);
@@ -339,13 +341,13 @@ class Main {
 
   nieuw_knop_handler(e) {
     e.preventDefault();
-    const modal = new BeheerModal();
+    const modal = new BeheerModal(undefined, this.config_promise);
     modal.on_lijst_gemaakt.on(this.lijst_toegevoegd.bind(this));
   }
 
   beheer_knop_handler(e) {
     e.preventDefault();
-    const modal = new BeheerModal(this.lijst_id);
+    const modal = new BeheerModal(this.lijst_id, this.config_promise);
     modal.on_lijst_veranderd.on(this.lijst_veranderd.bind(this));
     modal.on_lijst_verwijderd.on(this.lijst_verwijderd.bind(this));
   }
@@ -1183,12 +1185,16 @@ class BeheerModal {
   /** @type {TypedEvent<{id: number}>} */
   on_lijst_verwijderd;
 
-  constructor(lijst_id) {
+  /**
+   *
+   * @param {?number} lijst_id
+   * @param {Promise<{heeft_openai_key: boolean; heeft_recaptcha_key: boolean}>} config_promise
+   */
+  constructor(lijst_id, config_promise) {
     this.on_lijst_gemaakt = new TypedEvent();
     this.on_lijst_veranderd = new TypedEvent();
     this.on_lijst_verwijderd = new TypedEvent();
     this.lijst_id = lijst_id;
-
     this.e_modal = beheer_modal_template.cloneNode(true);
     this.e_form = this.e_modal.getElementsByTagName("form").item(0);
     this.e_velden_zichtbaar_kolom = this.e_modal
@@ -1197,6 +1203,12 @@ class BeheerModal {
     this.e_velden_verplicht_kolom = this.e_modal
       .getElementsByClassName("velden-verplicht-kolom")
       .item(0);
+
+    config_promise.then((config) => {
+      if (!config.heeft_recaptcha_key) {
+        this.e_form.elements.recaptcha.disabled = true;
+      }
+    });
 
     if (this.is_nieuw()) {
       this.e_modal.classList.add("is-nieuw");

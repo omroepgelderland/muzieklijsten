@@ -3,6 +3,11 @@ import {
   ModVrijeKeuzeOpslaanData,
 } from "src/js/mod-vrijekeuzes";
 
+export interface Config {
+  heeft_openai_key: boolean;
+  heeft_recaptcha_key: boolean;
+}
+
 export interface AjaxMap {
   get_stemlijst_frontend_data: {
     request: {
@@ -29,7 +34,7 @@ export interface AjaxMap {
         minlength: number;
         placeholder: string;
       }[];
-      recaptcha_sitekey: string;
+      recaptcha_sitekey: string | null;
       privacy_url: string;
       random_volgorde: boolean;
     };
@@ -246,9 +251,9 @@ export interface AjaxMap {
     };
     response: undefined;
   };
-  heeft_openai_key: {
+  get_config: {
     request: {};
-    response: boolean;
+    response: Config;
   };
 }
 

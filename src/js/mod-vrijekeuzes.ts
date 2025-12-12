@@ -3,7 +3,7 @@ import "bootstrap";
 import * as gld from "gld-ts-lib/functions";
 
 // Project js
-// import * as functies from "@muzieklijsten/functies";
+import * as functies from "@muzieklijsten/functies";
 import * as server from "@muzieklijsten/server";
 
 // css
@@ -189,6 +189,8 @@ class View {
     this.on_nummer_opslaan = new TypedEvent<number>();
     this.on_nummer_verwijderen = new TypedEvent<number>();
     this.on_meer_laden = new TypedEvent<void>();
+
+    void functies.set_config_classes();
 
     this.meer_laden.addEventListener(
       "click",

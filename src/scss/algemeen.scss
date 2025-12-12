@@ -10,8 +10,10 @@ body:not(.veld-vrijekeus) .veld-vrijekeus,
 body:not(.heeft-recaptcha) .heeft-recaptcha,
 body:not(.is-actief) .is-actief,
 body.is-actief .is-niet-actief,
-body:not(.heeft-openai-key) .heeft-openai-key,
-body.heeft-openai-key .not-heeft-openai-key {
+body:not(.config-heeft-openai-key) .config-heeft-openai-key,
+body.config-heeft-openai-key .not-config-heeft-openai-key,
+body:not(.config-heeft-recaptcha-key) .config-heeft-recaptcha-key,
+body.config-heeft-recaptcha-key .not-config-heeft-recaptcha-key {
   display: none;
 }
 

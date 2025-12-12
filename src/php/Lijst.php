@@ -84,6 +84,7 @@ class Lijst
      */
     public function __construct(
         private DB $db,
+        private Config $config,
         private Factory $factory,
         int|string $id,
         ?array $data = null
@@ -162,6 +163,9 @@ class Lijst
 
     public function heeft_gebruik_recaptcha(): bool
     {
+        if (!$this->config->heeft_recaptcha_keys()) {
+            return false;
+        }
         $this->set_db_properties();
         return $this->recaptcha;
     }

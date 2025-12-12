@@ -59,7 +59,7 @@ class Ajax
      *         minlength: int,
      *         placeholder: string
      *     }>,
-     *     recaptcha_sitekey: string,
+     *     recaptcha_sitekey: ?string,
      *     privacy_url: string,
      *     random_volgorde: bool
      * }
@@ -117,7 +117,9 @@ class Ajax
             'heeft_gebruik_recaptcha' => $lijst->heeft_gebruik_recaptcha(),
             'is_actief' => $lijst->is_actief(),
             'velden' => $velden,
-            'recaptcha_sitekey' => $this->config->get()['recaptcha']['sitekey'],
+            'recaptcha_sitekey' => $this->config->heeft_recaptcha_keys()
+                ? $this->config->get()['recaptcha']['sitekey']
+                : null,
             'privacy_url' => $this->config->get()['privacy_url'],
             'random_volgorde' => $lijst->is_random_volgorde(),
         ];
@@ -973,11 +975,18 @@ class Ajax
     }
 
     /**
-     * Geeft aan of er een OpenAI API key is ingesteld in config.json.
+     * Haalt configuratie-informatie op voor de frontend.
+     *
+     * @return array{
+     *    heeft_openai_key: bool,
+     *    heeft_recaptcha_key: bool,
+     * }
      */
-    public function heeft_openai_key(): bool
+    public function get_config(): array
     {
-        $this->login();
-        return $this->openai_client !== null;
+        return [
+            'heeft_openai_key' => $this->openai_client !== null,
+            'heeft_recaptcha_key' => $this->config->heeft_recaptcha_keys(),
+        ];
     }
 }

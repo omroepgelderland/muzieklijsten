@@ -1,3 +1,5 @@
+import * as server from "@muzieklijsten/server";
+
 /**
  * Maakt DOM-elementen van een door html-loader geïmporteerd template.
  * @returns De root-elementen van het template.
@@ -65,4 +67,21 @@ export function format_duur(duur: number | null): string {
   return uren === 0
     ? `${String(minuten)}.${String(seconden).padStart(2, "0")}`
     : `${String(uren)}.${String(minuten).padStart(2, "0")}.${String(seconden).padStart(2, "0")}`;
+}
+
+/**
+ * Haalt de configuratie van de server op en zet CSS-klassen op de body
+ * afhankelijk van de configuratie.
+ *
+ * @returns De opgehaalde configuratie.
+ */
+export async function set_config_classes(): Promise<server.Config> {
+  const config = await server.post("get_config", {});
+  if (config.heeft_openai_key) {
+    document.body.classList.add("config-heeft-openai-key");
+  }
+  if (config.heeft_recaptcha_key) {
+    document.body.classList.add("config-heeft-recaptcha-key");
+  }
+  return config;
 }

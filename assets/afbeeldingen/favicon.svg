@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="Laag_1"
+   version="1.1"
+   viewBox="0 0 1188.01 1187.99"
+   sodipodi:docname="Logo zonder rand.svg"
+   width="1188.01"
+   height="1187.99"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview14"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="0.49533333"
+     inkscape:cx="596.56797"
+     inkscape:cy="596.56797"
+     inkscape:window-width="1650"
+     inkscape:window-height="1412"
+     inkscape:window-x="70"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="Laag_1" />
+  <!-- Generator: Adobe Illustrator 29.8.2, SVG Export Plug-In . SVG Version: 2.1.1 Build 3)  -->
+  <defs
+     id="defs9">
+    <style
+       id="style2">
+      .st0 {
+        fill: url(#Naamloos_verloop);
+      }
+    </style>
+    <linearGradient
+       id="Naamloos_verloop"
+       data-name="Naamloos verloop"
+       x1="329.97"
+       y1="327.87"
+       x2="1170.02"
+       y2="1167.92"
+       gradientTransform="matrix(1,0,0,-1,-155.99,1341.89)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="lime"
+         id="stop4" />
+      <stop
+         offset="1"
+         stop-color="blue"
+         id="stop6" />
+    </linearGradient>
+  </defs>
+  <circle cx="594.005" cy="593.995" r="593.995" fill="#fff" />
+  <path
+     class="st0"
+     d="m 1188.01,594 c 0,4.83 -0.06,9.65 -0.17,14.45 -3.98,52.27 -30.77,87.32 -90.09,87.32 h -36.63 V 491.5 h 37.13 c 58.11,0 85.63,36.96 89.61,88.97 0.1,4.5 0.15,9.01 0.15,13.54 v 0 z m -95.78,184.88 c 25.36,0 48.45,-2.83 69.12,-8.42 C 1086.2,1012.35 860.61,1187.99 594,1187.99 265.94,1187.99 0,922.05 0,593.99 0,265.93 265.95,0 594.01,0 c 266.16,0 491.43,175.05 566.96,416.3 -23.17,-6.09 -48.42,-7.92 -75.75,-7.92 H 966.48 v 370.5 z M 786.34,594.1 c 0,-12.97 -1.29,-25.65 -3.73,-37.9 H 574.69 v 75.66 h 118.45 c -15.24,40.12 -54.04,68.63 -99.5,68.63 -58.76,0 -106.4,-47.64 -106.4,-106.4 0,-58.76 47.64,-106.4 106.4,-106.4 31.51,0 59.81,13.7 79.29,35.46 h 99.93 C 744.61,451.83 675.01,401.39 593.64,401.39 c -106.43,0 -192.7,86.28 -192.7,192.7 0,106.42 86.28,192.7 192.7,192.7 106.42,0 192.7,-86.28 192.7,-192.7 v 0 z M 954.49,695.77 H 889.2 V 408.38 h -94.63 v 370.5 h 159.91 v -83.11 z"
+     id="path11"
+     style="fill:url(#Naamloos_verloop)" />
+</svg>

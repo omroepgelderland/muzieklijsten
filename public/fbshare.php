@@ -44,14 +44,33 @@ $data = $container->call(get_fbshare_data(...));
         <!-- Styles prod -->
         <link rel="stylesheet" href="css/admin-fbshare-los_toevoegen-muzieklijst.css">
         <link rel="stylesheet" href="css/fbshare.css">
-        <link rel="icon" type="image/png" href="afbeeldingen/favicon-192p.png" sizes="192x192">
-        <link rel="icon" type="image/png" href="afbeeldingen/favicon-16p.png" sizes="16x16">
-        <link rel="icon" type="image/png" href="afbeeldingen/favicon-32p.png" sizes="32x32">
-        <link rel="icon" type="image/png" href="afbeeldingen/favicon-96p.png" sizes="96x96">
-        <link rel="apple-touch-icon" href="afbeeldingen/favicon-120p.png">
-        <link rel="apple-touch-icon" href="afbeeldingen/favicon-180p.png">
-        <link rel="apple-touch-icon" href="afbeeldingen/favicon-152p.png">
-        <link rel="apple-touch-icon" href="afbeeldingen/favicon-167p.png">
+        <link
+        rel="icon"
+        href="afbeeldingen/favicon.svg"
+        type="image/svg+xml"
+        />
+        <link
+        rel="icon"
+        href="afbeeldingen/favicon-32p.png"
+        sizes="32x32"
+        type="image/png"
+        />
+        <link rel="icon" href="afbeeldingen/favicon.ico" sizes="any" />
+        <link
+        rel="apple-touch-icon"
+        href="afbeeldingen/apple-touch-icon.png"
+        sizes="180x180"
+        />
+        <meta
+        name="theme-color"
+        content="#ffffff"
+        media="(prefers-color-scheme: light)"
+        />
+        <meta
+        name="theme-color"
+        content="#272727"
+        media="(prefers-color-scheme: dark)"
+        />
     </head>
     <body>
         <div class="container">

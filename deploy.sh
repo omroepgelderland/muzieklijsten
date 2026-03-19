@@ -41,9 +41,13 @@ nvm install node
 # versieverhoging
 if [[ $mode == "production" ]]; then
     oude_versie="$(git tag --list 'v*' --sort=v:refname | tail -n1)"
-    echo "De huidige versie is $oude_versie. Versieverhoging? (major|minor|patch|premajor|preminor|prepatch|prerelease) "
-    read -r versie_type
-    nieuwe_versie="$(npx semver -i "$versie_type" "$oude_versie")"
+    if [[ -z $oude_versie ]]; then
+        nieuwe_versie="0.1.0"
+    else
+        echo "De huidige versie is $oude_versie. Versieverhoging? (major|minor|patch|premajor|preminor|prepatch|prerelease) "
+        read -r versie_type
+        nieuwe_versie="$(npx semver -i "$versie_type" "$oude_versie")"
+    fi
     git_versie="v$nieuwe_versie"
 fi
 

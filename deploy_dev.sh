@@ -1,5 +1,13 @@
 #!/bin/bash
 
+function exit_handler() {
+    trap - INT TERM EXIT
+    if declare -p pids &>/dev/null && ((${#pids[@]} > 0)); then
+        kill "${pids[@]}" || :
+        wait "${pids[@]}" || :
+    fi
+}
+
 function delete_dist_bestanden() {
     find public/* -not -iname '*.php' -delete
 }
@@ -18,6 +26,20 @@ function php_codesniffer() {
 }
 
 set -euo pipefail
+
+watch_mode=false
+for arg in "$@"; do
+    case "$arg" in
+        --watch)
+            watch_mode=true
+            ;;
+        *)
+            echo "Onbekend argument: $arg"
+            echo "Gebruik: $0 [--watch]"
+            exit 1
+            ;;
+    esac
+done
 
 projectdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$projectdir"
@@ -52,5 +74,20 @@ npm audit fix || :
 delete_dist_bestanden
 # git ls-files -z | grep -zP '\.(ts|js)$' | xargs -0 npx eslint
 git ls-files -z | grep -zP '\.(ts|js|css|scss|html|json)$' | xargs -0 npx prettier --write
-npx tsc --noEmit
-npx webpack --config "webpack.dev.js"
+
+if [[ "$watch_mode" == true ]]; then
+    pids=()
+
+    trap exit_handler INT TERM EXIT
+
+    npx tsc-watch --noEmit --noClear &
+    pids+=($!)
+
+    npx webpack --watch --config "webpack.dev.js" &
+    pids+=($!)
+
+    wait -n "${pids[@]}"
+else
+    npx tsc --noEmit
+    npx webpack --config "webpack.dev.js"
+fi

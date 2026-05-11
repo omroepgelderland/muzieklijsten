@@ -73,7 +73,8 @@ npm audit fix || :
 # webpack compilen
 delete_dist_bestanden
 # git ls-files -z | grep -zP '\.(ts|js)$' | xargs -0 npx eslint
-git ls-files -z | grep -zP '\.(ts|js|css|scss|html|json)$' | xargs -0 npx prettier --write
+npx prettier --write .
+npx prettier --write --ignore-path .prettierignore config/config.json
 
 if [[ "$watch_mode" == true ]]; then
     pids=()

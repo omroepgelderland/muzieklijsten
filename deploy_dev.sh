@@ -72,7 +72,7 @@ npm audit fix || :
 
 # webpack compilen
 delete_dist_bestanden
-# git ls-files -z | grep -zP '\.(ts|js)$' | xargs -0 npx eslint
+# npx eslint
 npx prettier --write .
 npx prettier --write --ignore-path .prettierignore config/config.json
 

@@ -14,7 +14,8 @@
     "allowUnreachableCode": false,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "types": ["node"]
   },
   "include": ["src/js/"]
 }

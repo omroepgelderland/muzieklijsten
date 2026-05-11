@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
     "paths": {
-      "@muzieklijsten/*": ["src/js/lib/*"]
+      "@muzieklijsten/*": ["./src/js/lib/*"]
     },
     "noEmit": true,
     "module": "es2022",
@@ -17,5 +16,5 @@
     "noUnusedLocals": true,
     "types": ["node"]
   },
-  "include": ["src/js/"]
+  "include": ["./src/js/", "./eslint.config.js"]
 }

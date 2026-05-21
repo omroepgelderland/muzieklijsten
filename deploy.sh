@@ -61,8 +61,8 @@ cd "$tempdir"
 git checkout -b "$mode"
 
 # Composer packages
-export COMPOSER_NO_DEV=1
-composer8.1 install --optimize-autoloader
+composer8.1 install --no-dev --prefer-dist --optimize-autoloader
+find vendor -name .git -type d -prune -exec rm -rf '{}' +
 git add -f vendor/
 
 # Webpack output

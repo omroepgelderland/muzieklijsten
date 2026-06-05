@@ -73,9 +73,11 @@ git add -f public/
 
 # Dev bestanden eruit
 git rm -r \
+    .prettierignore \
     assets/ \
     deploy_dev.sh \
     deploy.sh \
+    eslint.config.js \
     package-lock.json \
     package.json \
     phpstan.dist.neon \
@@ -84,7 +86,7 @@ git rm -r \
     src/js/ \
     src/scss/ \
     test/ \
-    tsconfig.json \
+    tsconfig*.json \
     webpack.*
 if [[ $mode == "production" ]]; then
     git commit -m "[build] $git_versie"

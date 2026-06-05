@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "af9694360fbd2a0c2e2f21145e53a657",
+    "content-hash": "e1bf8ec3cf0ff54055cb277e6aa06fc4",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -2982,11 +2982,66 @@
                 }
             ],
             "time": "2025-11-10T16:43:36+00:00"
+        },
+        {
+            "name": "zorac/phpstan-php-di",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zorac/phpstan-php-di.git",
+                "reference": "9718748382f1f1817ef34c331b4f42df3092d1fa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zorac/phpstan-php-di/zipball/9718748382f1f1817ef34c331b4f42df3092d1fa",
+                "reference": "9718748382f1f1817ef34c331b4f42df3092d1fa",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.0",
+                "php-di/php-di": "^7.0",
+                "phpstan/phpstan": "^1.10|^2.0"
+            },
+            "type": "phpstan-extension",
+            "extra": {
+                "phpstan": {
+                    "includes": [
+                        "extension.neon"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Zorac\\PhpStanPhpDI\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mark Rigby-Jones",
+                    "email": "mark@rigby-jones.net",
+                    "homepage": "https://mark.rigby-jones.net/"
+                }
+            ],
+            "description": "Extansion adding support for PHP-DI to PHPStan.",
+            "homepage": "https://www.github.com/zorac/phpstan-php-di/",
+            "keywords": [
+                "PHPStan",
+                "php-di"
+            ],
+            "support": {
+                "issues": "https://github.com/zorac/phpstan-php-di/issues",
+                "source": "https://github.com/zorac/phpstan-php-di/tree/1.0.1"
+            },
+            "time": "2024-12-24T11:33:19+00:00"
         }
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -2994,6 +3049,6 @@
         "ext-mysqli": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }

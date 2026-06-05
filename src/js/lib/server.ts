@@ -1,7 +1,7 @@
 import {
   ModVrijeKeuzeNummer,
   ModVrijeKeuzeOpslaanData,
-} from "src/js/mod-vrijekeuzes";
+} from "../mod-vrijekeuzes";
 
 export interface Config {
   heeft_openai_key: boolean;

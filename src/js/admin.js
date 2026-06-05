@@ -749,7 +749,9 @@ class ResultatenNummer {
     this.stemmen = this.stemmen_gefilterd = stemmen;
     this.stemmen_filter = null;
 
-    this.e_tr_uitklap = resultaten_nummer_template.item(0).cloneNode(true);
+    this.e_tr_uitklap = resultaten_nummer_template
+      .querySelector("tr.nummer")
+      .cloneNode(true);
     this.e_aantal_stemmen = this.e_tr_uitklap
       .getElementsByClassName("aantal-stemmen")
       .item(0);
@@ -990,7 +992,9 @@ class ResultatenNummer {
   uitklappen() {
     if (this.e_tr_gegevens == null) {
       this.e_tr_uitklap.classList.remove("collapsed");
-      this.e_tr_gegevens = resultaten_nummer_template.item(1).cloneNode(true);
+      this.e_tr_gegevens = resultaten_nummer_template
+        .querySelector("tr.stemmers")
+        .cloneNode(true);
       this.e_tr_uitklap.after(this.e_tr_gegevens);
       this.e_tr_gegevens.id = `nummer-stemmers-${this.nummer_id}`;
       this.e_tr_gegevens.setAttribute("data-nummer-id", this.nummer_id);
@@ -1063,7 +1067,7 @@ class ResultatenStem {
     this.timestamp = new Date(timestamp);
     this.is_behandeld = is_behandeld;
     this.is_zichtbaar = true;
-    this.e_tr = resultaten_stem_template.cloneNode(true);
+    this.e_tr = resultaten_stem_template.querySelector("tr").cloneNode(true);
     this.e_tr.setAttribute("data-stemmer-id", this.stemmer_id);
     this.e_behandeld_input = this.e_tr.getElementsByTagName("input").item(0);
     this.e_behandeld_input.checked = this.is_behandeld;
@@ -1422,20 +1426,16 @@ class BeheerModal {
 }
 
 /** @type {HTMLElement} */
-const modal_template = functies
-  .get_html_template(html_resultaten_modal)
-  .item(0);
-/** @type {HTMLCollection} */
-const resultaten_nummer_template = functies.get_html_template(
+const modal_template = functies.get_html_template_enkel(html_resultaten_modal);
+/** @type {HTMLTableElement} */
+const resultaten_nummer_template = functies.get_html_template_enkel(
   html_resultaten_nummer,
 );
-/** @type {HTMLTableRowElement} */
-const resultaten_stem_template = functies
-  .get_html_template(html_resultaten_stem)
-  .item(0);
+/** @type {HTMLTableElement} */
+const resultaten_stem_template =
+  functies.get_html_template_enkel(html_resultaten_stem);
 /** @type {HTMLElement} */
-const beheer_modal_template = functies
-  .get_html_template(html_beheer_modal)
-  .item(0);
+const beheer_modal_template =
+  functies.get_html_template_enkel(html_beheer_modal);
 
 new Main();

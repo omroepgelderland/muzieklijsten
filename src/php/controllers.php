@@ -194,10 +194,8 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
 {
     // Configuratiebestand genereren.
     $root_url = readline_met_default('Root-URL naar deze installatie van muzieklijsten', mag_leeg: false);
-    echo "Vul de gegevens van de Google Recaptcha in. Je hebt de legacy-keys nodig. "
+    echo "Vul de gegevens van de Google Recaptcha in (optioneel). Je hebt de legacy-keys nodig. "
     . "(https://cloud.google.com/recaptcha-enterprise/docs/create-key#find-key)\n";
-    $recaptcha_sitekey = readline_met_default('Recaptcha site key', mag_leeg: false);
-    $recaptcha_secret = readline_met_default('Recaptcha secret', mag_leeg: false);
     $root_url = rtrim($root_url, '/') . '/';
     $config_json = [
         'organisatie' => readline_met_default('Naam organisatie/bedrijf'),
@@ -221,11 +219,25 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
             'sendmail_path' => '/usr/sbin/sendmail',
             'afzender' => readline_met_default('Afzender voor e-mails naar de redactie', mag_leeg: false),
         ],
-        'recaptcha' => [
+    ];
+
+    // Recaptcha keys (optioneel).
+    $recaptcha_sitekey = readline_met_default('Recaptcha site key', mag_leeg: true);
+    $recaptcha_secret = readline_met_default('Recaptcha secret', mag_leeg: true);
+    if ($recaptcha_sitekey !== '' && $recaptcha_secret !== '') {
+        $config_json['recaptcha'] = [
             'sitekey' => $recaptcha_sitekey,
             'secret' => $recaptcha_secret,
-        ],
-    ];
+        ];
+    }
+
+    // OpenAI API key (optioneel).
+    $openai_api_key = readline_met_default('OpenAI API key (optioneel)', mag_leeg: true);
+    if ($openai_api_key !== '') {
+        $config_json['openai'] = [
+            'api_key' => $openai_api_key,
+        ];
+    }
 
     $configdir = path_join(__DIR__, '..', 'config');
     if (!is_dir($configdir)) {
@@ -319,10 +331,6 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
     
     Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van resultaten:
     {$root_url}admin.html
-    
-    Losse nummers toevoegen aan de database, buiten Powergold om:
-    {$root_url}los_toevoegen.html
-    
     EOT;
 }
 

@@ -4,12 +4,10 @@ import * as server from "@muzieklijsten/server";
  * Maakt DOM-elementen van een door html-loader geïmporteerd template.
  * @returns De root-elementen van het template.
  */
-export function get_html_template(
-  geimporteerd_template: string,
-): HTMLCollection {
+export function get_html_template(geimporteerd_template: string): Element[] {
   const template = document.createElement("template");
   template.innerHTML = geimporteerd_template.trim();
-  return template.content.children;
+  return Array.from(template.content.children);
 }
 
 export function get_html_template_enkel<T extends Element>(
@@ -19,7 +17,7 @@ export function get_html_template_enkel<T extends Element>(
   if (template.length !== 1) {
     throw new Error("Template-html moet exact één root-element hebben.");
   }
-  return template.item(0) as T;
+  return template[0] as T;
 }
 
 /**

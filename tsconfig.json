@@ -4,7 +4,8 @@
       "@muzieklijsten/*": ["./src/js/lib/*"]
     },
     "noEmit": true,
-    "module": "es2022",
+    "lib": ["DOM", "DOM.Iterable", "es2022"],
+    "module": "esnext",
     "target": "es2022",
     "allowJs": true,
     "moduleResolution": "bundler",
@@ -14,7 +15,7 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "noUnusedLocals": true,
-    "types": ["node"]
+    "types": []
   },
-  "include": ["./src/js/", "./eslint.config.js"]
+  "include": ["./src/js/"]
 }

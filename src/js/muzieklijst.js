@@ -9,6 +9,9 @@ import * as functies from "@muzieklijsten/functies";
 // css
 import "/src/scss/muzieklijst.scss";
 
+// HTML
+import html_keuze_rij from "/src/html/muzieklijst-keuze-rij.html";
+
 // Afbeeldingen
 // import '/assets/afbeeldingen/fbshare_top100.jpg';
 
@@ -28,32 +31,20 @@ class Nummer {
    * @param {string} artiest
    */
   constructor(nummer_id, titel, artiest) {
-    this.e_tr = document.createElement("tr");
+    this.e_tr = keuze_rij_template.cloneNode(true);
 
-    const e_td_titel = document.createElement("td");
+    const e_td_titel = this.e_tr.querySelector(".keuze-titel");
     e_td_titel.appendChild(document.createTextNode(titel));
-    this.e_tr.appendChild(e_td_titel);
 
-    const e_td_artiest = document.createElement("td");
+    const e_td_artiest = this.e_tr.querySelector(".keuze-artiest");
     e_td_artiest.appendChild(document.createTextNode(artiest));
-    this.e_tr.appendChild(e_td_artiest);
 
-    const e_td_toelichting = document.createElement("td");
-    e_td_toelichting.classList.add("remark");
-    this.e_tr.appendChild(e_td_toelichting);
-
-    const e_toelichting = document.createElement("input");
-    e_toelichting.type = "text";
-    e_toelichting.classList.add("form-control");
-    e_toelichting.maxLength = 1024;
+    const e_toelichting = this.e_tr.querySelector(".keuze-toelichting");
     e_toelichting.name = `nummers[${nummer_id}][toelichting]`;
-    e_td_toelichting.appendChild(e_toelichting);
 
-    const e_hidden = document.createElement("input");
-    e_hidden.type = "hidden";
+    const e_hidden = this.e_tr.querySelector(".keuze-id");
     e_hidden.name = `nummers[${nummer_id}][id]`;
     e_hidden.value = nummer_id;
-    this.e_tr.appendChild(e_hidden);
 
     document.querySelector("#keuzes tbody").appendChild(this.e_tr);
   }
@@ -195,6 +186,9 @@ class StemView {
     this.datatable = new DataTable(e_datatable, {
       processing: true,
       serverSide: true,
+      createdRow: (row, row_data) => {
+        row.id = `nummer-${row_data[0]}`;
+      },
       ajax: async (data, callback, settings) => {
         data.lijst = this.lijst_id;
         data.is_vrijekeuze = 0;
@@ -245,6 +239,9 @@ class StemView {
       this.add_trim_handler(elem);
     }
 
+    // Alle kliks
+    document.addEventListener("click", this.click_handler.bind(this));
+
     // Klik op een checkbox of tabelrij met een nummer.
     this.e_datatable_body.addEventListener(
       "click",
@@ -262,6 +259,18 @@ class StemView {
       "submit",
       this.submit_handler.bind(this),
     );
+  }
+
+  click_handler(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const e_keuze_annuleren = target.closest(".keuze-annuleren");
+    if (e_keuze_annuleren instanceof HTMLElement) {
+      this.keuze_annuleren(e_keuze_annuleren);
+    }
   }
 
   /**
@@ -479,15 +488,7 @@ class StemView {
       e_rij.classList.add("selected");
     } else {
       // Nummer deselecteren
-      const nummer = this.geselecteerde_nummers[nummer_id];
-      nummer.destroy();
-      delete this.geselecteerde_nummers[nummer_id];
-      const artiest_index = this.geselecteerde_artiesten.indexOf(artiest);
-      if (artiest_index !== -1) {
-        this.geselecteerde_artiesten.splice(artiest_index, 1);
-      }
-      e_checkbox.checked = false;
-      e_rij.classList.remove("selected");
+      this.nummer_deselecteren(nummer_id, e_rij);
     }
     if (Object.keys(this.geselecteerde_nummers).length > 0) {
       this.e_body.classList.add("heeft-nummers-geselecteerd");
@@ -597,7 +598,50 @@ class StemView {
   verberg_lijst() {
     this.e_keuzeformulier.hidden = true;
   }
+
+  /**
+   *
+   * @param {HTMLElement} e_button
+   */
+  keuze_annuleren(e_button) {
+    const e_keuzerij = e_button.closest("tr");
+    const id = Number.parseInt(
+      e_keuzerij.querySelector("input.keuze-id").value,
+    );
+    this.nummer_deselecteren(id);
+  }
+
+  /**
+   *
+   * @param {number} nummer_id
+   * @param {HTMLElement | undefined} e_rij
+   */
+  nummer_deselecteren(nummer_id, e_rij) {
+    let row;
+    if (e_rij == null) {
+      row = this.datatable.row(`#nummer-${nummer_id}`);
+      e_rij = row.node();
+    } else {
+      row = this.datatable.row(e_rij);
+    }
+
+    const nummer = this.geselecteerde_nummers[nummer_id];
+    nummer.destroy();
+    delete this.geselecteerde_nummers[nummer_id];
+
+    const artiest = row.data()[2];
+    const artiest_index = this.geselecteerde_artiesten.indexOf(artiest);
+    if (artiest_index !== -1) {
+      this.geselecteerde_artiesten.splice(artiest_index, 1);
+    }
+    const e_checkbox = e_rij.querySelector("input[type='checkbox']");
+    e_checkbox.checked = false;
+    e_rij.classList.remove("selected");
+  }
 }
+
+/** @type {HTMLTableElement} */
+const keuze_rij_template = functies.get_html_template_enkel(html_keuze_rij);
 
 document.addEventListener("DOMContentLoaded", () => {
   new StemView();

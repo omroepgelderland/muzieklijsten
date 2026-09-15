@@ -208,19 +208,34 @@ class Stemmer
                 continue;
             }
             $e_tr = $dom->createElement('tr');
-            $e_tr->appendChild($dom->createElement('td', $label));
-            $e_tr->appendChild($dom->createElement('td', $waarde));
             $e_velden->appendChild($e_tr);
+
+            $e_label = $dom->createElement('td');
+            $e_tr->appendChild($e_label);
+            $e_label->appendChild($dom->createTextNode($label));
+
+            $e_waarde = $dom->createElement('td');
+            $e_tr->appendChild($e_waarde);
+            $e_waarde->appendChild($dom->createTextNode($waarde));
         }
 
         // Nummers
         $e_nummers = ns($dom->getElementById('nummers'));
         foreach ($this->get_stemmen() as $stem) {
             $e_tr = $dom->createElement('tr');
-            $e_tr->appendChild($dom->createElement('td', $stem->nummer->get_titel()));
-            $e_tr->appendChild($dom->createElement('td', $stem->nummer->get_artiest()));
-            $e_tr->appendChild($dom->createElement('td', $stem->get_toelichting() ?? ''));
             $e_nummers->appendChild($e_tr);
+
+            $e_titel = $dom->createElement('td');
+            $e_tr->appendChild($e_titel);
+            $e_titel->appendChild($dom->createTextNode($stem->nummer->get_titel()));
+
+            $e_artiest = $dom->createElement('td');
+            $e_tr->appendChild($e_artiest);
+            $e_artiest->appendChild($dom->createTextNode($stem->nummer->get_artiest()));
+
+            $e_toelichting = $dom->createElement('td');
+            $e_tr->appendChild($e_toelichting);
+            $e_toelichting->appendChild($dom->createTextNode($stem->get_toelichting() ?? ''));
         }
 
         if (count($lijst->get_notificatie_email_adressen()) > 0) {

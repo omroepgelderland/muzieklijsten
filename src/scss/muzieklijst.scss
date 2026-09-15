@@ -2,6 +2,7 @@
 @use "/src/scss/algemeen.scss";
 
 // Libraries
+@import "font-awesome/css/font-awesome.min.css";
 @import "datatables.net-dt/css/dataTables.dataTables.css";
 
 body:not(.geladen),
@@ -45,4 +46,10 @@ input[type="number"] {
 
 .privacyinfo {
   margin-bottom: 20px;
+}
+
+.keuze-annuleren {
+  i {
+    padding-top: 4px;
+  }
 }

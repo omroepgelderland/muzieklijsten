@@ -1,3 +1,5 @@
+includes:
+	- vendor/zorac/phpstan-php-di/extension.neon
 parameters:
 	level: 6
 	paths:

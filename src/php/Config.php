@@ -8,8 +8,6 @@ namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
 
-use function gldstdlib\exception_error_handler_plus;
-
 /**
  * Hiermee kunnen instellingen worden opgehaald uit de serverconfiguratie.
  *
@@ -29,7 +27,6 @@ use function gldstdlib\exception_error_handler_plus;
  *         password: string,
  *     },
  *     mail: array{
- *         sendmail_path: string,
  *         afzender: string,
  *     },
  *     openai?: array{
@@ -95,70 +92,6 @@ class Config
         $recaptcha = $this->get_recaptcha();
         $resp = $recaptcha->verify($g_recaptcha_response, $_SERVER['REMOTE_ADDR']);
         return $resp->isSuccess();
-    }
-
-    /**
-     * Verstuur een mail
-     *
-     * @param list<string>|string $aan Lijst met ontvangers
-     * @param list<string>|string $cc Lijst met ontvangers
-     * @param $van Adres van afzender
-     * @param $onderwerp Onderwerp
-     * @param $tekst_bericht Het bericht in plaintext
-     * @param $html_bericht Het bericht in HTML (optioneel)
-     * @param $bijlage Pad naar mee te sturen bijlage (optioneel, alleen pdf)
-     */
-    public function stuur_mail(
-        $aan,
-        $cc,
-        string $van,
-        string $onderwerp,
-        string $tekst_bericht,
-        ?string $html_bericht = null,
-        ?string $bijlage = null
-    ): void {
-        if (!is_array($aan)) {
-            $aan = [$aan];
-        }
-        if (!is_array($cc)) {
-            $cc = [$cc];
-        }
-        $ontvangers = array_merge($aan, $cc);
-        $crlf = "\n";
-        $headers = [
-            'From' => $van,
-            'To' => implode(',', $aan),
-            'Cc' => implode(',', $cc),
-            'Subject' => $onderwerp,
-        ];
-        $mime = new \Mail_mime($crlf);
-        $mime->setTXTBody($tekst_bericht);
-        if (isset($html_bericht)) {
-            $mime->setHTMLBody($html_bericht);
-        }
-
-        if (isset($bijlage)) {
-            $mime->addAttachment($bijlage, 'application/pdf');
-        }
-
-        $mime_params = [
-            'text_encoding' => '7bit',
-            'text_charset' => 'UTF-8',
-            'html_charset' => 'UTF-8',
-            'head_charset' => 'UTF-8',
-        ];
-        $body = $mime->get($mime_params);
-        $headers = $mime->headers($headers);
-
-        $params = [
-            'sendmail_path' => $this->get()['mail']['sendmail_path'],
-        ];
-        $mail_obj = \Mail::factory('sendmail', $params);
-        set_error_handler(exception_error_handler_plus(...), \E_ALL & ~\E_DEPRECATED);
-        error_reporting(\E_ALL & ~\E_DEPRECATED);
-        $mail_obj->send($ontvangers, $headers, $body);
-        error_reporting(\E_ALL);
-        set_error_handler(exception_error_handler_plus(...), \E_ALL);
     }
 
     public function get_openai_api_key(): ?string

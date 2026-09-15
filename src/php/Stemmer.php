@@ -10,6 +10,8 @@ use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDataTooLongException;
 use gldstdlib\exception\SQLDupEntryException;
 
+use function gldstdlib\send_mail;
+
 /**
  * @phpstan-type DBData array{
  *     id: positive-int,
@@ -188,12 +190,11 @@ class Stemmer
         $onderwerp = "Er is gestemd - {$lijst->get_naam()}";
 
         if (count($lijst->get_notificatie_email_adressen()) > 0) {
-            $this->config->stuur_mail(
-                $lijst->get_notificatie_email_adressen(),
-                [],
-                $this->config->get()['mail']['afzender'],
-                $onderwerp,
-                $tekst_bericht
+            send_mail(
+                to: $lijst->get_notificatie_email_adressen(),
+                from: $this->config->get()['mail']['afzender'],
+                subject: $onderwerp,
+                text_message: $tekst_bericht
             );
         }
     }
@@ -276,13 +277,11 @@ class Stemmer
             $e_keuzes->appendChild($dom->createElement('br'));
         }
 
-        $this->config->stuur_mail(
-            $email,
-            [],
-            $this->config->get()['mail']['afzender'],
-            $onderwerp,
-            $dom->textContent,
-            $dom->saveHTML()
+        send_mail(
+            to: $email,
+            from: $this->config->get()['mail']['afzender'],
+            subject: $onderwerp,
+            html_message: $dom,
         );
     }
 

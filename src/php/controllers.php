@@ -216,7 +216,6 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
             'password' => readline_met_default('Wachtwoord voor de beheerdersinterface', mag_leeg: false),
         ],
         'mail' => [
-            'sendmail_path' => '/usr/sbin/sendmail',
             'afzender' => readline_met_default('Afzender voor e-mails naar de redactie', mag_leeg: false),
         ],
     ];

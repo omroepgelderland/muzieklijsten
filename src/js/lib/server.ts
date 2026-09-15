@@ -1,4 +1,4 @@
-import {
+import type {
   ModVrijeKeuzeNummer,
   ModVrijeKeuzeOpslaanData,
 } from "../mod-vrijekeuzes";

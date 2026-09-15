@@ -406,7 +406,7 @@ function getElementById<I extends keyof IDMap>(elementId: I): IDMap[I] {
 
 new Main();
 
-export {
+export type {
   Nummer as ModVrijeKeuzeNummer,
   OpslaanData as ModVrijeKeuzeOpslaanData,
 };

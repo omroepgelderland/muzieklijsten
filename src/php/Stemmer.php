@@ -10,6 +10,7 @@ use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDataTooLongException;
 use gldstdlib\exception\SQLDupEntryException;
 
+use function gldstdlib\ns;
 use function gldstdlib\send_mail;
 
 /**
@@ -161,40 +162,73 @@ class Stemmer
     public function mail_redactie(): void
     {
         $lijst = $this->get_lijst();
-        // Velden
-        $velden = [];
-        foreach ($lijst->get_velden() as $veld) {
-            try {
-                $velden[] = "{$veld->get_label()}: {$veld->get_stemmer_waarde($this)}";
-            } catch (GLDException $e) {
-            }
-        }
-        $velden_str = implode("\n", $velden);
-
-        $nummers_lijst = [];
-        foreach ($this->get_stemmen() as $stem) {
-            $nummers_lijst[] = "{$stem->nummer->get_titel()} - {$stem->nummer->get_artiest()}";
-            $nummers_lijst[] = "\tToelichting: {$stem->get_toelichting()}";
-            $nummers_lijst[] = '';
-        }
-        $nummers_str = implode("\n", $nummers_lijst);
-
-        $tekst_bericht = <<<EOT
-        Ontvangen van:
-
-        {$velden_str}
-
-        {$nummers_str}
-        EOT;
 
         $onderwerp = "Er is gestemd - {$lijst->get_naam()}";
+
+        $template = <<<'HTML'
+        <html lang="nl-NL">
+        <head>
+            <meta charset="utf-8">
+            <meta http-equiv="content-type" content="text/html; charset=utf-8">
+            <title></title>
+        </head>
+        <body>
+            <h2>Ontvangen van:</h2>
+            <table>
+                <tbody id="velden"></tbody>
+            </table>
+            <h2>Nummers:</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Titel</th>
+                        <th>Artiest</th>
+                        <th>Toelichting</th>
+                    </tr>
+                </thead>
+                <tbody id="nummers"></tbody>
+            </table>
+        </body>
+        </html>
+        HTML;
+
+        $dom = new \DOMDocument();
+        $dom->loadHTML($template);
+
+        $e_title = ns($dom->getElementsByTagName('title')->item(0));
+        $e_title->nodeValue = $onderwerp;
+
+        // Velden
+        $e_velden = ns($dom->getElementById('velden'));
+        foreach ($lijst->get_velden() as $veld) {
+            try {
+                $label = $veld->get_label();
+                $waarde = $veld->get_stemmer_waarde($this);
+            } catch (GLDException) {
+                continue;
+            }
+            $e_tr = $dom->createElement('tr');
+            $e_tr->appendChild($dom->createElement('td', $label));
+            $e_tr->appendChild($dom->createElement('td', $waarde));
+            $e_velden->appendChild($e_tr);
+        }
+
+        // Nummers
+        $e_nummers = ns($dom->getElementById('nummers'));
+        foreach ($this->get_stemmen() as $stem) {
+            $e_tr = $dom->createElement('tr');
+            $e_tr->appendChild($dom->createElement('td', $stem->nummer->get_titel()));
+            $e_tr->appendChild($dom->createElement('td', $stem->nummer->get_artiest()));
+            $e_tr->appendChild($dom->createElement('td', $stem->get_toelichting() ?? ''));
+            $e_nummers->appendChild($e_tr);
+        }
 
         if (count($lijst->get_notificatie_email_adressen()) > 0) {
             send_mail(
                 to: $lijst->get_notificatie_email_adressen(),
-                from: $this->config->get()['mail']['afzender'],
+                from: $this->config->get_afzender_mail_adres(),
                 subject: $onderwerp,
-                text_message: $tekst_bericht
+                html_message: $dom
             );
         }
     }
@@ -230,7 +264,7 @@ class Stemmer
             return;
         }
 
-        $html_body = <<<EOT
+        $html_body = <<<'HTML'
         <!doctype html>
         <html lang="nl-NL">
         <head>
@@ -245,7 +279,7 @@ class Stemmer
             <p id="keuzes"></p>
         </body>
         </html>
-        EOT;
+        HTML;
         $dom = new \DOMDocument();
         $dom->loadHTML($html_body);
 
@@ -279,7 +313,7 @@ class Stemmer
 
         send_mail(
             to: $email,
-            from: $this->config->get()['mail']['afzender'],
+            from: $this->config->get_afzender_mail_adres(),
             subject: $onderwerp,
             html_message: $dom,
         );

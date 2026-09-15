@@ -6,6 +6,7 @@
 
 namespace muzieklijsten;
 
+use gldstdlib\EmailAddress;
 use gldstdlib\exception\GLDException;
 
 /**
@@ -27,7 +28,10 @@ use gldstdlib\exception\GLDException;
  *         password: string,
  *     },
  *     mail: array{
- *         afzender: string,
+ *         afzender: array{
+ *             naam: string,
+ *             email: string,
+ *         },
  *     },
  *     openai?: array{
  *         api_key: string,
@@ -107,5 +111,14 @@ class Config
     public function get_db_config(): array
     {
         return $this->get()['database'];
+    }
+
+    /**
+     * Geeft het e-mailadres van de afzender zoals ingesteld in de configuratie.
+     */
+    public function get_afzender_mail_adres(): EmailAddress
+    {
+        $afzender = $this->get()['mail']['afzender'];
+        return new EmailAddress($afzender['naam'], $afzender['email']);
     }
 }

@@ -65,10 +65,7 @@ nvm install node
 npm install npm@latest -g
 
 # npm packages
-npm install
-npm update update-browserslist-db
-npx update-browserslist-db@latest
-npm audit fix || :
+npm ci
 
 # webpack compilen
 delete_dist_bestanden

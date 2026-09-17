@@ -18,6 +18,11 @@ body:not(.heeft-nummers-geselecteerd) .heeft-nummers-geselecteerd {
   cursor: pointer;
 }
 
+#nummers.dataTable tbody > tr.selected > * {
+  box-shadow: inset 0 0 0 9999px rgba(var(--bs-primary-rgb), 0.9);
+  color: #fff;
+}
+
 .remark {
   padding-right: 0px !important;
 }

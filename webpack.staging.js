@@ -2,6 +2,7 @@ const { merge } = require("webpack-merge");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const common = require("./webpack.common.js");
+const sass = require("sass");
 
 module.exports = merge(common, {
   mode: "production",
@@ -44,6 +45,7 @@ module.exports = merge(common, {
             loader: "sass-loader",
             options: {
               sassOptions: {
+                importers: [new sass.NodePackageImporter()],
                 quietDeps: true,
               },
             },

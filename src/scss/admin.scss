@@ -2,8 +2,8 @@
 @use "/src/scss/algemeen.scss";
 
 // Libraries
-@import "font-awesome/css/font-awesome.min.css";
-@import "datatables.net-dt/css/dataTables.dataTables.css";
+@import url("datatables.net-bs5");
+@import url("datatables.net-select-bs5");
 
 body:not(.lijst-geselecteerd) .lijst-geselecteerd {
   display: none;
@@ -111,8 +111,8 @@ table.dataTable thead th:first-child {
     display: none;
   }
 
-  tr:not(.collapsed) i.fa-plus-square,
-  tr.collapsed i.fa-minus-square {
+  tr:not(.collapsed) i.bi-plus-square,
+  tr.collapsed i.bi-dash-square {
     display: none;
   }
 

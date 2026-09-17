@@ -1,6 +1,8 @@
 // Libraries js
 import "bootstrap";
-import DataTable, * as datatables from "datatables.net-dt";
+import { Modal } from "bootstrap";
+import DataTable, * as datatables from "datatables.net-bs5";
+import "datatables.net-select-bs5";
 
 // Project js
 import * as functies from "@muzieklijsten/functies";
@@ -401,8 +403,8 @@ class ResultatenModal {
   lijst_id;
   /** @type {HTMLDivElement} */
   e_modal;
-  /** @type {jQuery} */
-  $modal;
+  /** @type {Modal} */
+  modal;
   /** @type {HTMLSpanElement} */
   e_totaal_aantal_stemmen;
   /** @type {HTMLSpanElement} */
@@ -447,29 +449,19 @@ class ResultatenModal {
     }
 
     document.getElementsByTagName("body").item(0).appendChild(this.e_modal);
-    //// Voor bootstrap 5
-    // this.modal = new Modal(this.e_modal, {
-    //   backdrop: true,
-    //   focus: true,
-    //   keyboard: true
-    // });
-    // this.e_modal.addEventListener('hidden.bs.modal', e => {
-    //   this.e_modal.remove();
-    // });
-    this.$modal = $(this.e_modal);
-    this.$modal.modal({
+    this.modal = new Modal(this.e_modal, {
       backdrop: true,
       focus: true,
       keyboard: true,
     });
-    this.$modal.on("hidden.bs.modal", (e) => {
+    this.e_modal.addEventListener("hidden.bs.modal", () => {
       this.e_modal.remove();
     });
 
     this.e_modal.addEventListener("click", this.click_handler.bind(this));
     this.e_modal.addEventListener("change", this.change_handler.bind(this));
 
-    this.$modal.modal("show");
+    this.modal.show();
   }
 
   async maak_resultaten_tabel() {
@@ -855,9 +847,9 @@ class ResultatenNummer {
    */
   update_behandeld() {
     if (this.stemmen.every((stem) => stem.is_behandeld)) {
-      this.e_tr_uitklap.classList.add("success");
+      this.e_tr_uitklap.classList.add("table-success");
     } else {
-      this.e_tr_uitklap.classList.remove("success");
+      this.e_tr_uitklap.classList.remove("table-success");
     }
   }
 
@@ -1152,9 +1144,9 @@ class ResultatenStem {
 
   update_behandeld() {
     if (this.is_behandeld) {
-      this.e_tr.classList.add("success");
+      this.e_tr.classList.add("table-success");
     } else {
-      this.e_tr.classList.remove("success");
+      this.e_tr.classList.remove("table-success");
     }
   }
 
@@ -1174,8 +1166,8 @@ class BeheerModal {
   lijst_id;
   /** @type {HTMLDivElement} */
   e_modal;
-  /** @type {jQuery} */
-  $modal;
+  /** @type {Modal} */
+  modal;
   /** @type {HTMLFormElement} */
   e_form;
   /** @type {HTMLDivElement} */
@@ -1231,24 +1223,14 @@ class BeheerModal {
       this.verwijder_lijst.bind(this),
     );
 
-    //// Voor bootstrap 5
-    // this.modal = new Modal(this.e_modal, {
-    //   backdrop: true,
-    //   focus: true,
-    //   keyboard: true
-    // });
-    // this.e_modal.addEventListener('hidden.bs.modal', e => {
-    //   this.e_modal.remove();
-    // });
-    this.$modal = $(this.e_modal);
-    this.$modal.modal({
+    this.modal = new Modal(this.e_modal, {
       backdrop: true,
       focus: true,
       keyboard: true,
     });
-    this.$modal.on("hidden.bs.modal", this.destroy.bind(this));
+    this.e_modal.addEventListener("hidden.bs.modal", this.destroy.bind(this));
 
-    this.$modal.modal("show");
+    this.modal.show();
   }
 
   /**
@@ -1367,7 +1349,7 @@ class BeheerModal {
           id: lijst_id,
           naam: fd.get("naam"),
         });
-        this.$modal.modal("hide");
+        this.modal.hide();
       } catch (msg) {
         alert(msg);
       }
@@ -1378,7 +1360,7 @@ class BeheerModal {
           id: this.lijst_id,
           naam: fd.get("naam"),
         });
-        this.$modal.modal("hide");
+        this.modal.hide();
       } catch (msg) {
         alert(msg);
       }
@@ -1394,7 +1376,7 @@ class BeheerModal {
         this.on_lijst_verwijderd.emit({
           id: this.lijst_id,
         });
-        this.$modal.modal("hide");
+        this.modal.hide();
       } catch (msg) {
         alert(msg);
       }

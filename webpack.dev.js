@@ -1,5 +1,6 @@
 const { merge } = require("webpack-merge");
 const common = require("./webpack.common.js");
+const sass = require("sass");
 
 module.exports = merge(common, {
   mode: "development",
@@ -38,6 +39,7 @@ module.exports = merge(common, {
             loader: "sass-loader",
             options: {
               sassOptions: {
+                importers: [new sass.NodePackageImporter()],
                 quietDeps: true,
               },
             },

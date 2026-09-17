@@ -33,32 +33,41 @@
     />
   </head>
   <body ng-app="losseNummers" ng-controller="MainCtrl">
-    <nav class="navbar navbar-default">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
-        <div class="navbar-header">
-          <button
-            type="button"
-            class="navbar-toggle collapsed"
-            data-toggle="collapse"
-            data-target="#main-navbar"
-          >
-            <span class="sr-only">Navigatie aan- en uitzetten</span>
-            <i class="fa fa-bars"></i>
-          </button>
-          <div class="navbar-brand">
-            <i class="fa fa-music" aria-hidden="true"></i>
-          </div>
-        </div>
+        <a class="navbar-brand" href="#">
+          <i class="bi bi-music-note-beamed" aria-hidden="true"></i>
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#main-navbar"
+          aria-controls="main-navbar"
+          aria-expanded="false"
+          aria-label="Navigatie aan- en uitzetten"
+        >
+          <i class="bi bi-list"></i>
+        </button>
 
         <!-- Nav links -->
         <div class="collapse navbar-collapse" id="main-navbar">
-          <ul class="nav navbar-nav">
-            <li><a href="admin.html">Beheer</a></li>
-            <li class="active">
-              <a href="los_toevoegen.html">Losse nummers toevoegen</a>
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="admin.html">Beheer</a>
             </li>
-            <li>
-              <a href="mod-vrijekeuzes.html">Moderatie vrije keuzes</a>
+            <li class="nav-item">
+              <a
+                class="nav-link active"
+                aria-current="page"
+                href="los_toevoegen.html"
+                >Losse nummers toevoegen</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="mod-vrijekeuzes.html"
+                >Moderatie vrije keuzes</a
+              >
             </li>
           </ul>
         </div>
@@ -70,11 +79,14 @@
     <div class="container" ng-show="inlog_ok">
       <h1>Losse nummers toevoegen</h1>
       <div class="alert alert-danger" ng-show="error">{{error_msg}}</div>
-      <form class="form-horizontal" ng-submit="toevoegen()">
-        <div class="form-group row">
+      <form ng-submit="toevoegen()">
+        <div class="mb-3 row">
           <hr />
           <h2>Toevoegen aan lijsten</h2>
-          <div class="col-xs-1 lijst-item" ng-repeat="lijst in lijsten">
+          <div
+            class="col-12 col-sm-6 col-lg-4 lijst-item"
+            ng-repeat="lijst in lijsten"
+          >
             <label
               ><input
                 type="checkbox"

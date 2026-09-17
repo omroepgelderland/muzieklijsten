@@ -33,36 +33,46 @@
     />
   </head>
   <body>
-    <div class="navbar-fixed-top">
-      <nav class="navbar navbar-default mb-0">
+    <div class="fixed-top">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0">
         <div class="container-fluid">
-          <div class="navbar-header">
-            <button
-              type="button"
-              class="navbar-toggle collapsed"
-              data-toggle="collapse"
-              data-target="#main-navbar"
-            >
-              <span class="sr-only">Navigatie aan- en uitzetten</span>
-              <i class="fa fa-bars"></i>
-            </button>
-            <div class="navbar-brand">
-              <i class="fa fa-music" aria-hidden="true"></i>
-            </div>
-          </div>
+          <a class="navbar-brand" href="#">
+            <i class="bi bi-music-note-beamed" aria-hidden="true"></i>
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#main-navbar"
+            aria-controls="main-navbar"
+            aria-expanded="false"
+            aria-label="Navigatie aan- en uitzetten"
+          >
+            <i class="bi bi-list"></i>
+          </button>
           <!-- Nav links -->
           <div class="collapse navbar-collapse" id="main-navbar">
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="admin.html">Beheer</a></li>
-              <li><a href="los_toevoegen.html">Losse nummers toevoegen</a></li>
-              <li>
-                <a href="mod-vrijekeuzes.html">Moderatie vrije keuzes</a>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="admin.html"
+                  >Beheer</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="los_toevoegen.html"
+                  >Losse nummers toevoegen</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="mod-vrijekeuzes.html"
+                  >Moderatie vrije keuzes</a
+                >
               </li>
             </ul>
           </div>
         </div>
       </nav>
-      <nav class="navbar navbar-default">
+      <nav class="navbar navbar-light bg-light">
         <div class="container-fluid">
           <table width="100%">
             <tr>
@@ -104,10 +114,10 @@
               <td align="right">
                 <a
                   href="#"
-                  data-toggle="modal"
-                  data-target="#modal-embed"
-                  data-backdrop="static"
-                  data-keyboard="false"
+                  data-bs-toggle="modal"
+                  data-bs-target="#modal-embed"
+                  data-bs-backdrop="static"
+                  data-bs-keyboard="false"
                   class="btn btn-primary lijst-geselecteerd"
                   role="button"
                   title="Kies eerst een lijst of maak een nieuwe lijst aan."
@@ -128,7 +138,7 @@
             <hr />
             <table
               id="beschikbare-nummers"
-              class="display select"
+              class="table table-striped"
               cellspacing="0"
               width="100%"
             >
@@ -164,21 +174,19 @@
 
     <div class="modal fade" id="modal-embed" role="dialog">
       <div class="modal-dialog">
-        <div class="modal-header modal-top">
-          <button
-            type="button"
-            class="close"
-            data-dismiss="modal"
-            aria-hidden="true"
-          >
-            ×
-          </button>
-          <h4 class="modal-title">
-            Embed de lijst ‘<span class="lijst-naam"></span>’
-          </h4>
-        </div>
         <div class="modal-content">
-          <div class="container-fluid">
+          <div class="modal-header modal-top">
+            <h4 class="modal-title">
+              Embed de lijst ‘<span class="lijst-naam"></span>’
+            </h4>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body container-fluid">
             <h5>In <a target="_blank" class="nimbus-url">Nimbus</a></h5>
             <p>Voeg een iframe toe en vul in:</p>
             <input type="text" class="iframe-url" readonly />
@@ -199,11 +207,15 @@
             <h5>Op een externe website</h5>
             <input type="text" class="iframe-code" readonly />
           </div>
-        </div>
-        <div class="modal-footer modal-end">
-          <button type="button" class="btn btn-default" data-dismiss="modal">
-            Sluiten
-          </button>
+          <div class="modal-footer modal-end">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Sluiten
+            </button>
+          </div>
         </div>
       </div>
     </div>

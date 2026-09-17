@@ -1,6 +1,7 @@
 // Libraries js
 import "bootstrap";
-import DataTable, * as datatables from "datatables.net-dt";
+import DataTable, * as datatables from "datatables.net-bs5";
+import "datatables.net-select-bs5";
 
 // Project js
 import * as server from "@muzieklijsten/server";
@@ -80,11 +81,11 @@ class Invoerveld {
     const naam = `velden[${id}]`;
 
     this.e_form_group = document.createElement("div");
-    this.e_form_group.classList.add("form-group", "row");
+    this.e_form_group.classList.add("mb-3", "row");
 
     const e_label = document.createElement("label");
     this.e_form_group.appendChild(e_label);
-    e_label.classList.add("control-label", "col-sm-2");
+    e_label.classList.add("col-form-label", "col-sm-2");
     e_label.setAttribute("for", id_str);
     e_label.appendChild(document.createTextNode(label));
 
@@ -204,12 +205,9 @@ class StemView {
       columnDefs: [
         {
           targets: 0,
+          visible: false,
           searchable: false,
           orderable: false,
-          className: "dt-body-center",
-          render: (data, type, full, meta) => {
-            return '<input type="checkbox">';
-          },
         },
       ],
       order: [
@@ -217,7 +215,6 @@ class StemView {
         [2, "asc"],
       ],
       ordering: !(await this.is_random_volgorde()),
-      // rowCallback: this.row_callback.bind(this),
       language: {
         lengthMenu: "_MENU_ nummers per pagina",
         zeroRecords: "Geen nummers gevonden",
@@ -231,8 +228,18 @@ class StemView {
           next: "Volgende",
           previous: "Vorige",
         },
+        select: {
+          rows: "%d nummers geselecteerd",
+        },
+      },
+      select: {
+        style: "multi",
+        selectable: this.mag_nummer_geselecteerd_worden.bind(this),
       },
     });
+    this.datatable.on("select", this.select_handler.bind(this));
+    this.datatable.on("deselect", this.deselect_handler.bind(this));
+
     this.e_datatable_body = e_datatable.getElementsByTagName("tbody").item(0);
 
     for (const elem of this.e_stemmerformulier.elements) {
@@ -241,12 +248,6 @@ class StemView {
 
     // Alle kliks
     document.addEventListener("click", this.click_handler.bind(this));
-
-    // Klik op een checkbox of tabelrij met een nummer.
-    this.e_datatable_body.addEventListener(
-      "click",
-      this.tabel_klik_handler.bind(this),
-    );
 
     // Insturen keuzeformulier. Gebeurt in principe niet want er is geen knop.
     this.e_keuzeformulier.addEventListener(
@@ -443,57 +444,56 @@ class StemView {
   }
 
   /**
-   * Regelt het selecteren of deselecteren van een nummer in de lijst.
-   * @param {Event} e
-   * @returns
+   *
+   * @param {unknown} data
+   * @param {HTMLTableRowElement | null} tr
+   * @param {number} index
+   *
+   * @returns {boolean} Geeft aan of het nummer geselecteerd mag worden.
    */
-  tabel_klik_handler(e) {
-    const e_rij = e.target.closest("tr");
-    const e_checkbox = e_rij.querySelector('input[type="checkbox"]');
-    const checkbox_klik = e.target instanceof HTMLInputElement;
-    // Bij het klikken op de checkbox zelf is deze al geselecteerd,
-    // bij het klikken op een andere plek in de tabel niet.
-    const selecteren =
-      (checkbox_klik && e_checkbox.checked) ||
-      (!checkbox_klik && !e_checkbox.checked);
+  mag_nummer_geselecteerd_worden(data, tr, index) {
+    const nummer_id = Number.parseInt(data[0]);
+    const artiest = data[2];
 
-    // Get row data
-    let [nummer_id, titel, artiest] = this.datatable.row(e_rij).data();
-    nummer_id = Number.parseInt(nummer_id);
-
-    if (selecteren) {
-      // Nummer selecteren
-      if (Object.keys(this.geselecteerde_nummers).length >= this.maxkeuzes) {
-        e_checkbox.checked = false;
-        alert(`U kunt maximaal ${this.maxkeuzes} nummers selecteren.`);
-        return;
-      }
-      if (
-        this.is_artiest_eenmalig &&
-        this.geselecteerde_artiesten.includes(artiest)
-      ) {
-        e_checkbox.checked = false;
-        alert("Deze artiest is al gekozen");
-        return;
-      }
-      this.geselecteerde_nummers[nummer_id] = new Nummer(
-        nummer_id,
-        titel,
-        artiest,
-      );
-      if (!this.geselecteerde_artiesten.includes(artiest)) {
-        this.geselecteerde_artiesten.push(artiest);
-      }
-      e_checkbox.checked = true;
-      e_rij.classList.add("selected");
-    } else {
-      // Nummer deselecteren
-      this.nummer_deselecteren(nummer_id, e_rij);
+    if (Object.keys(this.geselecteerde_nummers).length >= this.maxkeuzes) {
+      alert(`U kunt maximaal ${this.maxkeuzes} nummers selecteren.`);
+      return false;
     }
-    if (Object.keys(this.geselecteerde_nummers).length > 0) {
-      this.e_body.classList.add("heeft-nummers-geselecteerd");
-    } else {
-      this.e_body.classList.remove("heeft-nummers-geselecteerd");
+    if (
+      this.is_artiest_eenmalig &&
+      this.geselecteerde_artiesten.includes(artiest)
+    ) {
+      alert("Deze artiest is al gekozen");
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   *
+   * @param {Event} e
+   * @param {ApiRow} dt
+   * @param {string} type
+   * @param {unknown} indexes
+   */
+  select_handler(e, dt, type, indexes) {
+    const rows = this.datatable.rows(indexes).data().toArray();
+    for (const [id_str, titel, artiest] of rows) {
+      this.nummer_selecteren(Number.parseInt(id_str), titel, artiest);
+    }
+  }
+
+  /**
+   *
+   * @param {Event} e
+   * @param {DataTable} dt
+   * @param {string} type
+   * @param {unknown} indexes
+   */
+  deselect_handler(e, dt, type, indexes) {
+    const rows = this.datatable.rows(indexes).data().toArray();
+    for (const [id_str, titel, artiest] of rows) {
+      this.nummer_deselecteren(Number.parseInt(id_str), artiest);
     }
   }
 
@@ -521,11 +521,11 @@ class StemView {
     );
 
     const e_form_group = document.createElement("div");
-    e_form_group.classList.add("form-group", "row");
+    e_form_group.classList.add("mb-3", "row");
 
     const e_label = document.createElement("label");
     e_form_group.appendChild(e_label);
-    e_label.classList.add("control-label", "col-sm-2");
+    e_label.classList.add("col-form-label", "col-sm-2");
     e_label.setAttribute("for", e_artiest_col.querySelector("input").id);
     e_label.appendChild(document.createTextNode(label));
 
@@ -605,38 +605,53 @@ class StemView {
    */
   keuze_annuleren(e_button) {
     const e_keuzerij = e_button.closest("tr");
-    const id = Number.parseInt(
+    const nummer_id = Number.parseInt(
       e_keuzerij.querySelector("input.keuze-id").value,
     );
-    this.nummer_deselecteren(id);
+    const row = this.datatable.row(`#nummer-${nummer_id}`);
+    // const e_rij = row.node();
+    row.deselect();
   }
 
   /**
    *
    * @param {number} nummer_id
-   * @param {HTMLElement | undefined} e_rij
+   * @param {string} titel
+   * @param {string} artiest
    */
-  nummer_deselecteren(nummer_id, e_rij) {
-    let row;
-    if (e_rij == null) {
-      row = this.datatable.row(`#nummer-${nummer_id}`);
-      e_rij = row.node();
-    } else {
-      row = this.datatable.row(e_rij);
+  nummer_selecteren(nummer_id, titel, artiest) {
+    this.geselecteerde_nummers[nummer_id] = new Nummer(
+      nummer_id,
+      titel,
+      artiest,
+    );
+    if (!this.geselecteerde_artiesten.includes(artiest)) {
+      this.geselecteerde_artiesten.push(artiest);
     }
 
+    if (Object.keys(this.geselecteerde_nummers).length > 0) {
+      this.e_body.classList.add("heeft-nummers-geselecteerd");
+    }
+  }
+
+  /**
+   *
+   * @param {number} nummer_id
+   * @param {string} artiest
+   */
+  nummer_deselecteren(nummer_id, artiest) {
     const nummer = this.geselecteerde_nummers[nummer_id];
     nummer.destroy();
     delete this.geselecteerde_nummers[nummer_id];
 
-    const artiest = row.data()[2];
     const artiest_index = this.geselecteerde_artiesten.indexOf(artiest);
     if (artiest_index !== -1) {
       this.geselecteerde_artiesten.splice(artiest_index, 1);
     }
-    const e_checkbox = e_rij.querySelector("input[type='checkbox']");
-    e_checkbox.checked = false;
-    e_rij.classList.remove("selected");
+
+    if (Object.keys(this.geselecteerde_nummers).length == 0) {
+      this.e_body.classList.remove("heeft-nummers-geselecteerd");
+    }
   }
 }
 

@@ -35,30 +35,41 @@
     <title>Moderatie vrije keuzes</title>
   </head>
   <body>
-    <nav class="navbar navbar-default">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
-        <div class="navbar-header">
-          <button
-            type="button"
-            class="navbar-toggle collapsed"
-            data-toggle="collapse"
-            data-target="#main-navbar"
-          >
-            <span class="sr-only">Navigatie aan- en uitzetten</span>
-            <i class="fa fa-bars"></i>
-          </button>
-          <div class="navbar-brand">
-            <i class="fa fa-music" aria-hidden="true"></i>
-          </div>
-        </div>
+        <a class="navbar-brand" href="#">
+          <i class="bi bi-music-note-beamed" aria-hidden="true"></i>
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#main-navbar"
+          aria-controls="main-navbar"
+          aria-expanded="false"
+          aria-label="Navigatie aan- en uitzetten"
+        >
+          <i class="bi bi-list"></i>
+        </button>
 
         <!-- Nav links -->
         <div class="collapse navbar-collapse" id="main-navbar">
-          <ul class="nav navbar-nav">
-            <li><a href="admin.html">Beheer</a></li>
-            <li><a href="los_toevoegen.html">Losse nummers toevoegen</a></li>
-            <li class="active">
-              <a href="mod-vrijekeuzes.html">Moderatie vrije keuzes</a>
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="admin.html">Beheer</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="los_toevoegen.html"
+                >Losse nummers toevoegen</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link active"
+                aria-current="page"
+                href="mod-vrijekeuzes.html"
+                >Moderatie vrije keuzes</a
+              >
             </li>
           </ul>
         </div>
@@ -93,7 +104,7 @@
         <div id="lijst"></div>
         <div class="items-laden-bezig mb-3">
           <div class="loading-spinner">
-            <i class="fa fa-circle-o-notch fa-spin"></i>
+            <i class="bi bi-arrow-repeat loading-spinner-icon"></i>
             <span class="loading-text">Wachten op AI-beoordelingen…</span>
           </div>
         </div>
@@ -107,39 +118,39 @@
       </div>
     </div>
     <template id="vrijekeuze-item">
-      <form class="form-inline vrijekeuze-item" role="form">
+      <form class="vrijekeuze-item" role="form">
         <div class="row d-flex align-items-center">
-          <div class="col-xs-4">
+          <div class="col-12 col-md-4">
             <label class="artiest-label">Artiest</label>
           </div>
-          <div class="col-xs-4">
+          <div class="col-12 col-md-4">
             <label class="titel-label">Titel</label>
           </div>
         </div>
         <div class="row mb-3 d-flex align-items-center">
-          <div class="col-xs-4">
+          <div class="col-12 col-md-4">
             <input
               type="text"
               class="artiest-input form-control w-100"
               required
             />
           </div>
-          <div class="col-xs-4">
+          <div class="col-12 col-md-4">
             <input
               type="text"
               class="titel-input form-control w-100"
               required
             />
           </div>
-          <div class="col-xs-2">
-            <div class="checkbox">
-              <label>
-                <input class="db-check" type="checkbox" />
+          <div class="col-12 col-md-2">
+            <div class="form-check">
+              <label class="form-check-label">
+                <input class="db-check form-check-input" type="checkbox" />
                 Toevoegen aan database
               </label>
             </div>
           </div>
-          <div class="col-xs-2">
+          <div class="col-12 col-md-2">
             <button type="submit" class="btn btn-primary">Goedkeuren</button>
             <button type="button" class="verwijderknop btn btn-danger">
               Verwijderen
@@ -147,45 +158,39 @@
           </div>
         </div>
         <div
-          class="ai-suggestieblok ai-in-orde alert alert-success alert-dismissable"
+          class="ai-suggestieblok ai-in-orde alert alert-success alert-dismissible fade show"
           role="alert"
         >
           <button
             type="button"
-            class="close"
-            data-dismiss="alert"
+            class="btn-close"
+            data-bs-dismiss="alert"
             aria-label="Close"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
+          ></button>
           Correct volgens AI
         </div>
         <div
-          class="ai-suggestieblok ai-geen-suggestie alert alert-warning alert-dismissable"
+          class="ai-suggestieblok ai-geen-suggestie alert alert-warning alert-dismissible fade show"
           role="alert"
         >
           <button
             type="button"
-            class="close"
-            data-dismiss="alert"
+            class="btn-close"
+            data-bs-dismiss="alert"
             aria-label="Close"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
+          ></button>
           Incorrect volgens AI, maar geen suggestie voor verbetering.
         </div>
         <div
-          class="ai-suggestieblok ai-suggestie alert alert-warning alert-dismissable"
+          class="ai-suggestieblok ai-suggestie alert alert-warning alert-dismissible fade show"
           role="alert"
         >
           <button
             type="button"
-            class="close"
-            data-dismiss="alert"
+            class="btn-close"
+            data-bs-dismiss="alert"
             aria-label="Close"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
+          ></button>
           <span class="me-3"
             >AI-suggestie:
             <strong
@@ -203,15 +208,16 @@
             Toepassen &amp; goedkeuren
           </button>
         </div>
-        <div class="mislukt alert alert-danger alert-dismissable" role="alert">
+        <div
+          class="mislukt alert alert-danger alert-dismissible fade show"
+          role="alert"
+        >
           <button
             type="button"
-            class="close"
-            data-dismiss="alert"
+            class="btn-close"
+            data-bs-dismiss="alert"
             aria-label="Close"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
+          ></button>
           <span class="mislukt-msg"></span>
         </div>
       </form>

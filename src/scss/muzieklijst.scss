@@ -5,6 +5,22 @@
 @import url("datatables.net-bs5");
 @import url("datatables.net-select-bs5");
 
+.dt-search label {
+  font-size: 0;
+}
+
+.dt-search input[type="search"] {
+  // vergrootglas icoon
+  background-image: url("/assets/afbeeldingen/icon-search.svg");
+  background-position: left 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+
+  // even groot maken als bootstrap input
+  padding: 6px 12px 6px 2.25rem;
+  font-size: 1rem;
+}
+
 body:not(.geladen),
 body:not(.gestemd) .gestemd,
 body.gestemd .not-gestemd,

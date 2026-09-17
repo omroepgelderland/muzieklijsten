@@ -221,7 +221,7 @@ class StemView {
         info: "Pagina _PAGE_ van _PAGES_",
         infoEmpty: "Geen nummers gevonden",
         infoFiltered: "(gefilterd van _MAX_ totaal)",
-        search: "Zoeken:",
+        search: "",
         paginate: {
           first: "Eerste",
           last: "Laatste",
@@ -235,6 +235,14 @@ class StemView {
       select: {
         style: "multi",
         selectable: this.mag_nummer_geselecteerd_worden.bind(this),
+      },
+      layout: {
+        topStart: {
+          search: {
+            placeholder: "Zoeken…",
+          },
+        },
+        topEnd: null,
       },
     });
     this.datatable.on("select", this.select_handler.bind(this));

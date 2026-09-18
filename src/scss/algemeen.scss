@@ -24,6 +24,20 @@ body.config-heeft-recaptcha-key .not-config-heeft-recaptcha-key {
   cursor: pointer;
 }
 
-table.table-selectable tbody tr {
-  cursor: pointer;
+table.dataTable.table-selectable tbody {
+  tr {
+    cursor: pointer;
+  }
+  > tr.selected > * {
+    box-shadow: inset 0 0 0 9999px rgba(var(--bs-primary-rgb), 0.9);
+    color: #fff;
+  }
+}
+
+table.table.dataTable.table-striped
+  > tbody
+  > tr:nth-of-type(2n + 1).selected
+  > * {
+  // Geen stripe kleur voor geselecteerde rijen
+  box-shadow: inset 0 0 0 9999px rgba(var(--bs-primary-rgb), 0.95);
 }

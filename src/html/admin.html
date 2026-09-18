@@ -175,7 +175,7 @@
     </form>
 
     <div class="modal fade" id="modal-embed" role="dialog">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg modal-fullscreen-md-down">
         <div class="modal-content">
           <div class="modal-header modal-top">
             <h4 class="modal-title">
@@ -189,25 +189,31 @@
             ></button>
           </div>
           <div class="modal-body container-fluid">
-            <h5>In <a target="_blank" class="nimbus-url">Nimbus</a></h5>
-            <p>Voeg een iframe toe en vul in:</p>
-            <input type="text" class="iframe-url" readonly />
-            <h5>
-              In het
-              <a href="https://cms.regiogroei.cloud/" target="_blank"
-                >Regiogroei CMS</a
-              >
-            </h5>
-            <p>
-              Voeg een iframe-blok toe.<br />
-              Hoogte op mobiele devices: 3300<br />
-              Hoogte op tablet: 2900<br />
-              Hoogte op desktop: 2900<br />
-              Link:
-            </p>
-            <input type="text" class="iframe-url" readonly />
-            <h5>Op een externe website</h5>
-            <input type="text" class="iframe-code" readonly />
+            <div class="mb-5">
+              <h5>In <a target="_blank" class="nimbus-url">Nimbus</a></h5>
+              <p>Voeg een iframe toe en vul in:</p>
+              <input type="text" class="form-control iframe-url" readonly />
+            </div>
+            <div class="mb-5">
+              <h5>
+                In het
+                <a href="https://cms.regiogroei.cloud/" target="_blank"
+                  >Regiogroei CMS</a
+                >
+              </h5>
+              <p>Voeg een iframe-blok toe.</p>
+              <ul>
+                <li>Hoogte op mobiele devices: 3300</li>
+                <li>Hoogte op tablet: 2900</li>
+                <li>Hoogte op desktop: 2900</li>
+                <li>Link:</li>
+              </ul>
+              <input type="text" class="form-control iframe-url" readonly />
+            </div>
+            <div class="mb-5">
+              <h5>Op een externe website</h5>
+              <input type="text" class="form-control iframe-code" readonly />
+            </div>
           </div>
           <div class="modal-footer modal-end">
             <button

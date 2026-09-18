@@ -1247,10 +1247,9 @@ class BeheerModal {
     this.e_form.addEventListener("submit", this.opslaan.bind(this));
 
     // Lijst verwijderen
-    this.e_form.elements["verwijder-lijst"].addEventListener(
-      "click",
-      this.verwijder_lijst.bind(this),
-    );
+    document
+      .getElementById("verwijder-lijst")
+      .addEventListener("click", this.verwijder_lijst.bind(this));
 
     this.modal = new Modal(this.e_modal, {
       backdrop: true,
@@ -1318,17 +1317,18 @@ class BeheerModal {
     const e_verplicht_label_tekst = document.createTextNode("Verplicht");
 
     this.e_velden_zichtbaar_kolom.appendChild(e_zichtbaar_container);
+    e_zichtbaar_container.appendChild(e_zichtbaar_check);
     e_zichtbaar_container.appendChild(e_zichtbaar_label);
-    e_zichtbaar_label.appendChild(e_zichtbaar_check);
     e_zichtbaar_label.appendChild(e_zichtbaar_label_tekst);
     this.e_velden_verplicht_kolom.appendChild(e_verplicht_container);
+    e_verplicht_container.appendChild(e_verplicht_check);
     e_verplicht_container.appendChild(e_verplicht_label);
-    e_verplicht_label.appendChild(e_verplicht_check);
     e_verplicht_label.appendChild(e_verplicht_label_tekst);
 
-    e_zichtbaar_container.classList.add("checkbox");
-    e_verplicht_container.classList.add("checkbox");
+    e_zichtbaar_container.classList.add("form-check");
+    e_verplicht_container.classList.add("form-check");
 
+    e_zichtbaar_check.classList.add("form-check-input");
     e_zichtbaar_check.type = "checkbox";
     e_zichtbaar_check.id = zichtbaar_id;
     e_zichtbaar_check.name = `velden[${veld.id}][tonen]`;
@@ -1340,14 +1340,17 @@ class BeheerModal {
       this.check_verplicht.bind(this),
     );
 
+    e_zichtbaar_label.classList.add("form-check-label");
     e_zichtbaar_label.for = zichtbaar_id;
 
+    e_verplicht_check.classList.add("form-check-input");
     e_verplicht_check.type = "checkbox";
     e_verplicht_check.id = verplicht_id;
     e_verplicht_check.name = `velden[${veld.id}][verplicht]`;
     e_verplicht_check.checked = veld.verplicht;
     e_verplicht_check.disabled = !veld.tonen;
 
+    e_verplicht_label.classList.add("form-check-label");
     e_verplicht_label.for = verplicht_id;
   }
 

@@ -5,7 +5,8 @@
 @import url("datatables.net-bs5");
 @import url("datatables.net-select-bs5");
 
-body:not(.lijst-geselecteerd) .lijst-geselecteerd {
+body:not(.lijst-geselecteerd) .lijst-geselecteerd,
+#nieuw .beheer-bestaand {
   display: none;
 }
 
@@ -33,60 +34,22 @@ table.dataTable thead th:first-child {
   }
 }
 
-.beschikbaar hr {
+.beschikbaar hr,
+#result hr {
   border: 1px solid #333;
-}
-
-.modal-dialog {
-  width: 90%;
-}
-
-.modal-top {
-  border-radius: 6px 6px 0px 0px;
-  -moz-border-radius: 6px 6px 0px 0px;
-  -webkit-border-radius: 6px 6px 0px 0px;
-  background-clip: padding-box;
-  background-color: #fff;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-}
-
-.modal-end {
-  border-radius: 0px 0px 6px 6px;
-  -moz-border-radius: 0px 0px 6px 6px;
-  -webkit-border-radius: 0px 0px 6px 6px;
-  background-clip: padding-box;
-  background-color: #fff;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-  box-shadow: none;
-  border: none;
-  border-radius: 0px;
-}
-
-.separator {
-  height: 10px;
-  clear: both;
 }
 
 .pointer {
   cursor: pointer;
 }
 
-#result hr {
-  border: 1px solid #333;
-}
-
-#nieuw .beheer-bestaand {
-  display: none;
-}
-
-#modal-embed input {
-  min-width: 75%;
-}
-#modal-embed h5 {
-  font-weight: bold;
+#modal-embed {
+  input {
+    min-width: 75%;
+  }
+  h5 {
+    font-weight: bold;
+  }
 }
 
 .hidden-row .bs-callout {

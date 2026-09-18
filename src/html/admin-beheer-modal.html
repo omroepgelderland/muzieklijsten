@@ -3,7 +3,7 @@
   id="beheer"
   role="dialog"
 >
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-xl modal-fullscreen-lg-down">
     <div class="modal-content">
       <div class="modal-header modal-top">
         <h4 class="modal-title">
@@ -20,147 +20,172 @@
         ></button>
       </div>
       <div class="modal-body container-fluid beheercontainer">
-        <form class="row" role="form" method="post" id="beheer-lijst">
+        <form role="form" method="post" id="beheer-lijst">
           <input type="hidden" name="lijst" />
-          <div class="separator"></div>
-          <div class="mb-3 row">
-            <label class="col-form-label col-sm-2" for="naam"
-              >Naam lijst:</label
-            >
-            <div class="col-sm-10">
-              <input
-                type="text"
-                class="form-control"
-                id="naam"
-                name="naam"
-                required
-              />
-            </div>
+          <div class="mb-3 mt-2">
+            <label class="form-label" for="naam">Naam lijst:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="naam"
+              name="naam"
+              required
+            />
           </div>
-          <div class="separator"></div>
-          <div class="mb-3 row">
-            <label class="col-form-label col-sm-2" for="email"
+          <div class="mb-3">
+            <label class="form-label" for="email"
               >E-mailadressen voor reacties:
               <span
                 class="bi bi-info-circle pointer"
                 title="Meerdere e-mailadressen scheiden door een komma ( , )"
               ></span
             ></label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" id="email" name="email" />
-            </div>
+            <input type="text" class="form-control" id="email" name="email" />
           </div>
-          <div class="separator"></div>
-          <div class="mb-3 row">
-            <label class="col-form-label col-sm-2" for="bedankt-tekst"
-              >Tekst voor bezoekers na het stemmen:
+          <div class="mb-5">
+            <label class="form-label" for="bedankt-tekst">
+              Tekst voor bezoekers na het stemmen:
               <span
                 class="bi bi-info-circle pointer"
                 title="De tekst die de stemmers te zien krijgen nadat ze hun stem hebben ingediend."
               ></span
             ></label>
-            <div class="col-sm-10">
-              <input
-                type="text"
-                class="form-control"
-                id="bedankt-tekst"
-                name="bedankt-tekst"
-                value="Bedankt voor je keuze."
-                required
-              />
-            </div>
+            <input
+              type="text"
+              class="form-control"
+              id="bedankt-tekst"
+              name="bedankt-tekst"
+              value="Bedankt voor je keuze."
+              required
+            />
           </div>
-          <div class="separator"></div>
-          <div class="mb-3 row">
-            <label class="col-form-label col-sm-2" for="velden"
-              >Velden tonen:</label
+          <h5>Velden tonen</h5>
+          <div class="mb-5 row">
+            <div class="col-5 col-md-3 col-xl-2 velden-zichtbaar-kolom"></div>
+            <div class="col-5 col-md-9 col-xl-8 velden-verplicht-kolom"></div>
+          </div>
+          <h5>Opties</h5>
+          <div class="mb-3">
+            <label for="minkeuzes" class="form-label"
+              >Minimum aantal keuzes</label
             >
-            <div class="col-sm-2 velden-zichtbaar-kolom"></div>
-            <div class="col-sm-8 velden-verplicht-kolom"></div>
+            <input
+              type="number"
+              class="form-control"
+              id="minkeuzes"
+              name="minkeuzes"
+              min="0"
+              required
+            />
           </div>
-          <div class="separator"></div>
-          <div class="mb-3 row">
-            <label class="col-form-label col-sm-2" for="velden">Opties:</label>
-            <div class="col-sm-10">
-              Minimum aantal keuzes
-              <input
-                type="number"
-                class="form-control"
-                id="minkeuzes"
-                name="minkeuzes"
-                min="0"
-                required
-              /><br />
-              Maximum aantal keuzes
-              <input
-                type="number"
-                class="form-control"
-                id="maxkeuzes"
-                name="maxkeuzes"
-                min="1"
-                required
-              /><br />
-              Aantal vrije keuzes
-              <input
-                type="number"
-                class="form-control"
-                id="vrijekeuzes"
-                name="vrijekeuzes"
-                min="0"
-                required
-              /><br />
-              Aantal stemmen per IP (leeglaten voor onbeperkt)
-              <input
-                type="number"
-                class="form-control"
-                id="stemmen-per-ip"
-                name="stemmen-per-ip"
-                min="1"
-              /><br />
-              <input type="checkbox" id="is-actief" name="is-actief" /> Lijst is
-              actief (stemmen staat aan)<br />
-              <input
-                type="checkbox"
-                id="artiest-eenmalig"
-                name="artiest-eenmalig"
-              />
-              Artiesten eenmalig te selecteren <br />
-              <input type="checkbox" id="recaptcha" name="recaptcha" />
-              Re-Captcha<br />
-              <input type="checkbox" id="mail-stemmers" name="mail-stemmers" />
-              Stuur stemmers een e-mail nadat zij hebben gestemd<br />
-              <input
-                type="checkbox"
-                id="random-volgorde"
-                name="random-volgorde"
-              />
-              Toon nummers in willekeurige volgorde<br />
-            </div>
+          <div class="mb-3">
+            <label for="maxkeuzes" class="form-label"
+              >Maximum aantal keuzes</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="maxkeuzes"
+              name="maxkeuzes"
+              min="1"
+              required
+            />
           </div>
-          <div class="separator"></div>
-          <div class="mb-3 row">
-            <div class="col-sm-2"></div>
-            <div class="col-sm-10">
-              <input type="submit" class="btn btn-primary" value="Opslaan" />
-            </div>
+          <div class="mb-3">
+            <label for="vrijekeuzes" class="form-label"
+              >Aantal vrije keuzes</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="vrijekeuzes"
+              name="vrijekeuzes"
+              min="0"
+              required
+            />
           </div>
-          <div class="mb-3 row beheer-bestaand">
-            <div class="col-sm-2"></div>
-            <div class="col-sm-10">
-              <input
-                type="button"
-                name="verwijder-lijst"
-                class="btn btn-danger not-is-nieuw"
-                value="Lijst verwijderen"
-              />
-            </div>
+          <div class="mb-3">
+            <label for="stemmen-per-ip" class="form-label"
+              >Aantal stemmen per IP (leeglaten voor onbeperkt)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="stemmen-per-ip"
+              name="stemmen-per-ip"
+              min="1"
+            />
           </div>
-          <div class="separator beheer-bestaand"></div>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="is-actief"
+              name="is-actief"
+            />
+            <label class="form-check-label" for="is-actief"
+              >Lijst is actief (stemmen staat aan)</label
+            >
+          </div>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="artiest-eenmalig"
+              name="artiest-eenmalig"
+            />
+            <label class="form-check-label" for="artiest-eenmalig"
+              >Artiesten eenmalig te selecteren</label
+            >
+          </div>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="recaptcha"
+              name="recaptcha"
+            />
+            <label class="form-check-label" for="recaptcha">Re-Captcha</label>
+          </div>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="mail-stemmers"
+              name="mail-stemmers"
+            />
+            <label class="form-check-label" for="mail-stemmers"
+              >Stuur stemmers een e-mail nadat zij hebben gestemd</label
+            >
+          </div>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="random-volgorde"
+              name="random-volgorde"
+            />
+            <label class="form-check-label" for="random-volgorde"
+              >Toon nummers in willekeurige volgorde</label
+            >
+          </div>
         </form>
       </div>
       <div class="modal-footer modal-end">
+        <button type="submit" class="btn btn-primary" form="beheer-lijst">
+          <span class="bi bi-floppy me-1" aria-hidden="true"></span>
+          Opslaan
+        </button>
+        <button
+          id="verwijder-lijst"
+          type="button"
+          class="btn btn-danger not-is-nieuw"
+        >
+          <span class="bi bi-trash me-1" aria-hidden="true"></span>
+          Lijst verwijderen
+        </button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Sluiten
+          Annuleren
         </button>
       </div>
     </div>

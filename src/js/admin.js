@@ -70,23 +70,13 @@ class Main {
       columnDefs: [
         {
           targets: 0,
+          visible: false,
           searchable: false,
           orderable: false,
-          className: "dt-body-center",
-          render: (
-            nummer_id,
-            type,
-            [nummer_id2, titel, artiest, jaar],
-            meta,
-          ) => {
-            const input = document.createElement("input");
-            input.setAttribute("type", "checkbox");
-            return input.outerHTML;
-          },
         },
       ],
       order: [1, "asc"],
-      rowCallback: this.toon_geselecteerd.bind(this),
+      createdRow: this.toon_geselecteerd.bind(this),
       language: {
         lengthMenu: "_MENU_ nummers per pagina",
         zeroRecords: "Geen nummers gevonden",
@@ -100,10 +90,16 @@ class Main {
           next: "Volgende",
           previous: "Vorige",
         },
+        select: {
+          rows: "%d nummers geselecteerd",
+        },
+      },
+      select: {
+        style: "multi",
       },
     });
-
-    document.addEventListener("click", this.click_handler.bind(this));
+    this.tabel.on("select", this.select_handler.bind(this));
+    this.tabel.on("deselect", this.deselect_handler.bind(this));
 
     document
       .getElementById("lijstselect")
@@ -123,22 +119,6 @@ class Main {
     document
       .getElementById("resultatenknop")
       .addEventListener("click", this.resultaten_knop_handler.bind(this));
-  }
-
-  /**
-   *
-   * @param {Event} event
-   */
-  click_handler(event) {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) {
-      return;
-    }
-
-    // Gebruiker klikt op een rij van de beschikbare nummers.
-    if (target.closest("#beschikbare-nummers tbody>tr")) {
-      this.checkbox_handler(target.closest("tr"));
-    }
   }
 
   /**
@@ -219,42 +199,86 @@ class Main {
   }
 
   /**
+   * Datatables event handler voor wanneer er een rij is geselecteerd.
+   * Wordt aangeroepen nadat de rij al visueel geselecteerd is.
    *
-   * @param {HTMLTableRowElement} e_rij
+   * @param {Event} e
+   * @param {ApiRow} dt
+   * @param {string} type
+   * @param {unknown} indexes
    */
-  async checkbox_handler(e_rij) {
-    const e_checkbox = e_rij.matches('input[type="checkbox"]')
-      ? e_rij
-      : e_rij.querySelector('input[type="checkbox"]');
-    let [nummer_id, titel, artiest, jaar] = this.tabel.row(e_rij).data();
-    nummer_id = Number.parseInt(nummer_id);
-
-    // Determine whether row ID is in the list of selected row IDs
-    const index = this.geselecteerde_nummers.indexOf(nummer_id);
-
-    if (index === -1) {
-      try {
-        await this.nummer_toevoegen(nummer_id);
-        this.geselecteerde_nummers.push(nummer_id);
-        e_checkbox.checked = true;
-        e_rij.classList.add("selected");
-        await this.vul_lijst_geselecteerde_nummers();
-      } catch (msg) {
-        e_checkbox.prop.checked = false;
-        alert(msg);
-      }
-    } else {
-      try {
-        await this.nummer_verwijderen(nummer_id);
-        this.geselecteerde_nummers.splice(index, 1);
-        e_checkbox.checked = false;
-        e_rij.classList.remove("selected");
-        await this.vul_lijst_geselecteerde_nummers();
-      } catch (msg) {
-        e_checkbox.checked = true;
-        alert(msg);
-      }
+  select_handler(e, dt, type, indexes) {
+    for (const i of indexes) {
+      const row = this.tabel.row(i);
+      this.nummer_selecteren(row);
     }
+  }
+
+  /**
+   * Datatables event handler voor wanneer er een rij is gedeselecteerd.
+   * Wordt aangeroepen nadat de rij al visueel gedeselecteerd is.
+   *
+   * @param {Event} e
+   * @param {DataTable} dt
+   * @param {string} type
+   * @param {unknown} indexes
+   */
+  deselect_handler(e, dt, type, indexes) {
+    for (const i of indexes) {
+      const row = this.tabel.row(i);
+      this.nummer_deselecteren(row);
+    }
+  }
+
+  /**
+   * Selecteert een nummer en sla dit op op de server.
+   *
+   * @param {DataTable} row
+   */
+  async nummer_selecteren(row) {
+    const [id_str, titel, artiest] = row.data();
+    const nummer_id = Number.parseInt(id_str);
+
+    if (this.geselecteerde_nummers.includes(nummer_id)) {
+      // Nummer is al geselecteerd.
+      // Functie is aangeroepen bij initialisatie van de tabel of als annulering van een deselect.
+      return;
+    }
+
+    try {
+      await this.nummer_toevoegen(nummer_id);
+      this.geselecteerde_nummers.push(nummer_id);
+    } catch (msg) {
+      row.deselect();
+      alert(msg);
+    }
+    await this.vul_lijst_geselecteerde_nummers();
+  }
+
+  /**
+   * Deseleceert een nummer en verwijdert de koppeling van de server.
+   *
+   * @param {DataTable} row
+   */
+  async nummer_deselecteren(row) {
+    const [id_str, titel, artiest] = row.data();
+    const nummer_id = Number.parseInt(id_str);
+
+    if (!this.geselecteerde_nummers.includes(nummer_id)) {
+      // Nummer is niet geselecteerd.
+      // Functie is aangeroepen als annulering van een select.
+      return;
+    }
+
+    try {
+      await this.nummer_verwijderen(nummer_id);
+      const index = this.geselecteerde_nummers.indexOf(nummer_id);
+      this.geselecteerde_nummers.splice(index, 1);
+    } catch (msg) {
+      row.select();
+      alert(msg);
+    }
+    await this.vul_lijst_geselecteerde_nummers();
   }
 
   /**
@@ -269,15 +293,20 @@ class Main {
   }
 
   /**
+   * Selecteert de nummers in de tabel bij initialisatie.
    * Callback bij het renderen van elke rij.
-   * Zet het vinkje geselecteerd aan of niet.
+   *
+   * @param {HTMLTableRowElement} tr
+   * @param {Array} row
+   * @param {number} dataIndex
+   * @param {Node[]} cells
    */
-  toon_geselecteerd(row, [nummer_id, titel, artiest, jaar], dataIndex) {
+  toon_geselecteerd(tr, [nummer_id, titel, artiest, jaar], dataIndex, cells) {
     nummer_id = Number.parseInt(nummer_id);
     // If row ID is in the list of selected row IDs
     if (this.geselecteerde_nummers.includes(nummer_id)) {
-      row.querySelector('input[type="checkbox"]').checked = true;
-      row.classList.add("selected");
+      const row = this.tabel.row(dataIndex);
+      row.select();
     }
   }
 

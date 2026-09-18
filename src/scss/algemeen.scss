@@ -19,3 +19,7 @@ body:not(.config-heeft-recaptcha-key) .config-heeft-recaptcha-key,
 body.config-heeft-recaptcha-key .not-config-heeft-recaptcha-key {
   display: none;
 }
+
+table.table-selectable tbody tr {
+  cursor: pointer;
+}

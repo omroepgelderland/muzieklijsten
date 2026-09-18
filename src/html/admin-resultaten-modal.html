@@ -1,5 +1,5 @@
 <div class="modal fade resultaten-modal" role="dialog">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-fullscreen">
     <div class="modal-content">
       <div class="modal-header modal-top">
         <h4 class="modal-title">
@@ -14,43 +14,67 @@
       </div>
       <div class="modal-body">
         <form class="filters" autocomplete="off">
-          <div class="input-group">
-            <input
-              type="text"
-              name="filter-nummers"
-              class="form-control"
-              placeholder="Filter nummers"
-            />
-          </div>
-          <div class="input-group">
-            <input
-              type="text"
-              name="filter-stemmers"
-              class="form-control"
-              placeholder="Filter stemmers"
-            />
-          </div>
-          <div class="input-group date">
-            <label>van:</label>
-            <input type="date" name="van" class="form-control" />
-          </div>
-          <div class="input-group date">
-            <label>tot:</label>
-            <input type="date" name="tot" class="form-control" />
-          </div>
-          <div>
-            <input
-              type="submit"
-              value="Filters toepassen"
-              class="btn btn-secondary"
-            />
-          </div>
-          <div>
-            <input
-              type="reset"
-              value="Filters wissen"
-              class="btn btn-secondary"
-            />
+          <div class="row g-2 justify-content-xxl-between">
+            <div class="col-6 col-lg-3 col-xxl-2">
+              <input
+                type="text"
+                name="filter-nummers"
+                class="form-control"
+                placeholder="Filter nummers"
+              />
+            </div>
+            <div class="col-6 col-lg-3 col-xxl-2">
+              <input
+                type="text"
+                name="filter-stemmers"
+                class="form-control"
+                placeholder="Filter stemmers"
+              />
+            </div>
+            <div
+              class="col-6 col-lg-3 col-xxl-auto d-flex align-items-center flex-nowrap"
+            >
+              <label for="filter-van" class="col-form-label mb-0 me-2"
+                >van:</label
+              >
+              <div class="flex-grow-1">
+                <input
+                  type="date"
+                  id="filter-van"
+                  name="van"
+                  class="form-control w-auto"
+                />
+              </div>
+            </div>
+            <div
+              class="col-6 col-lg-3 col-xxl-auto d-flex align-items-center flex-nowrap"
+            >
+              <label for="filter-tot" class="col-form-label mb-0 me-2"
+                >tot:</label
+              >
+              <div class="flex-grow-1">
+                <input
+                  type="date"
+                  id="filter-tot"
+                  name="tot"
+                  class="form-control w-auto"
+                />
+              </div>
+            </div>
+            <div class="col-auto">
+              <input
+                type="submit"
+                value="Filters toepassen"
+                class="btn btn-primary"
+              />
+            </div>
+            <div class="col-auto">
+              <input
+                type="reset"
+                value="Filters wissen"
+                class="btn btn-primary"
+              />
+            </div>
           </div>
         </form>
         <div class="table-responsive">

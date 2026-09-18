@@ -18,12 +18,7 @@ nav .container-fluid {
   padding-top: 10px;
 }
 
-table.dataTable.select tbody tr,
-table.dataTable thead th:first-child {
-  cursor: pointer;
-}
-
-#beschikbare-nummers_length {
+#beschikbare-nummers-length {
   select {
     width: 80px;
     display: inline;
@@ -37,10 +32,6 @@ table.dataTable thead th:first-child {
 .beschikbaar hr,
 #result hr {
   border: 1px solid #333;
-}
-
-.pointer {
-  cursor: pointer;
 }
 
 #modal-embed {
@@ -61,15 +52,6 @@ table.dataTable thead th:first-child {
 }
 
 .resultaten-modal {
-  margin-top: 20px;
-  margin-left: 20px;
-  margin-right: 20px;
-
-  // &.admin {
-  //     overflow: hidden;
-  // }
-
-  // &:not(.admin) .admin,
   tr:not(.heeft-stemmen) .heeft-stemmen {
     display: none;
   }
@@ -79,29 +61,8 @@ table.dataTable thead th:first-child {
     display: none;
   }
 
-  form.filters {
-    display: flex;
-    justify-content: center;
-    padding: 20px 0 15px 0;
-    & > div {
-      margin-right: 30px;
-    }
-    .input-group {
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: center;
-      label {
-        margin: 0 5px 0 0;
-      }
-    }
-  }
-
   .hidden-row {
     padding: 0 !important;
-  }
-
-  .hand {
-    cursor: pointer;
   }
 
   .behandeld {

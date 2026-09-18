@@ -190,7 +190,7 @@ class Main {
     // Vult de tabel met geselecteerde nummers.
     this.vul_lijst_geselecteerde_nummers();
     const e_form_controls = document.querySelectorAll(
-      "#beschikbare-nummers_length select, #beschikbare-nummers_filter input",
+      "#beschikbare-nummers-length select, #beschikbare-nummers_filter input",
     );
     for (const elem of e_form_controls) {
       elem.classList.add("form-control");

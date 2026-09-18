@@ -13,7 +13,9 @@ fi
 
 projectdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 projectnaam="$(basename "$projectdir")"
-build_dir="/tmp/${USER}_build_$projectnaam/"
+build_dir="$(mktemp -d)"
+pack_dir="$(mktemp -d)"
+trap 'rm -rf "$build_dir" "$pack_dir"' EXIT
 cd "$projectdir"
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -57,7 +59,7 @@ if [[ $mode == "production" ]]; then
         nieuwe_versie="$(npx semver -i "$versie_type" "$oude_versie")"
     fi
     git_versie="v$nieuwe_versie"
-    archive="build/${projectnaam}-${git_versie}.tar.gz"
+    archive="${pack_dir}/${projectnaam}-${git_versie}.tar.gz"
     releases_dir="/home/git/releases/${projectnaam}/production"
     releases_archive="${releases_dir}/${git_versie}"
     git tag "$git_versie"
@@ -67,14 +69,13 @@ if [[ $mode == "production" ]]; then
     git push github "$git_versie"
 else
     commit="$(git rev-parse --short=12 HEAD)"
-    archive="build/${projectnaam}-staging-${commit}.tar.gz"
+    archive="${pack_dir}/${projectnaam}-staging-${commit}.tar.gz"
     releases_dir="/home/git/releases/${projectnaam}/staging"
     releases_archive="${releases_dir}/${commit}"
 fi
 
 # build
 
-rm -rf "$build_dir"
 git clone . "$build_dir"
 cd "$build_dir"
 
@@ -99,12 +100,12 @@ export NODE_ENV=development
 npm ci
 npx webpack --config "webpack.$mode.js"
 
-mkdir "build"
 tar -czf "$archive" \
     --exclude-from=.release-exclude \
-    --exclude="build" \
     .
 sha256sum "$archive" > "${archive}.sha256"
+
+cd "$projectdir"
 
 ssh git@git.gld.nl "
     set -e
@@ -120,14 +121,10 @@ rsync -av \
     "${archive}" \
     "${archive}.sha256" \
     "git@git.gld.nl:${releases_archive}/"
+ssh git@git.gld.nl \
+    "ln -sfn '${releases_archive}' '${releases_dir}/latest'"
 if [[ $mode == "production" ]]; then
     gh release create "$git_versie" \
         "$archive" \
-        --verify-tag \
         --generate-notes
 fi
-ssh git@git.gld.nl \
-    "ln -sfn '${releases_archive}' '${releases_dir}/latest'"
-
-cd "$projectdir"
-rm -rf "$build_dir"

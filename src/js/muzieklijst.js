@@ -85,13 +85,13 @@ class Invoerveld {
 
     const e_label = document.createElement("label");
     this.e_form_group.appendChild(e_label);
-    e_label.classList.add("col-form-label", "col-sm-2");
+    e_label.classList.add("col-form-label", "col-md-3", "col-lg-2");
     e_label.setAttribute("for", id_str);
     e_label.appendChild(document.createTextNode(label));
 
     const e_col = document.createElement("div");
     this.e_form_group.appendChild(e_col);
-    e_col.classList.add("col-sm-10");
+    e_col.classList.add("col-md-9", "col-lg-10");
 
     let e_input;
     if (type === "textarea") {
@@ -533,7 +533,7 @@ class StemView {
 
     const e_label = document.createElement("label");
     e_form_group.appendChild(e_label);
-    e_label.classList.add("col-form-label", "col-sm-2");
+    e_label.classList.add("col-form-label", "col-md-2");
     e_label.setAttribute("for", e_artiest_col.querySelector("input").id);
     e_label.appendChild(document.createTextNode(label));
 
@@ -558,7 +558,7 @@ class StemView {
     const naam = `vrijekeuzes[${nummer}][${veld_intern}]`;
 
     const e_col = document.createElement("div");
-    e_col.classList.add(`col-sm-${breedte}`);
+    e_col.classList.add(`col-md-${breedte}`);
 
     const e_input = document.createElement("input");
     e_input.type = "text";

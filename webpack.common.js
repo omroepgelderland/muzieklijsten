@@ -41,11 +41,6 @@ module.exports = {
     ],
   },
   plugins: [
-    new webpack.ProvidePlugin({
-      $: "jquery",
-      jQuery: "jquery",
-      moment: "moment",
-    }),
     new HtmlWebpackPlugin({
       ...html_plugin_conf,
       filename: "admin.html",

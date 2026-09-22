@@ -247,6 +247,9 @@ class StemView {
     });
     this.datatable.on("select", this.select_handler.bind(this));
     this.datatable.on("deselect", this.deselect_handler.bind(this));
+    this.datatable.on("draw", () => {
+      this.sync_datatable_selectie();
+    });
 
     this.e_datatable_body = e_datatable.getElementsByTagName("tbody").item(0);
 
@@ -616,9 +619,39 @@ class StemView {
     const nummer_id = Number.parseInt(
       e_keuzerij.querySelector("input.keuze-id").value,
     );
-    const row = this.datatable.row(`#nummer-${nummer_id}`);
-    // const e_rij = row.node();
-    row.deselect();
+    // Direct verwijderen, ook als de row niet op de huidige pagina staat.
+    this.nummer_deselecteren(nummer_id, "");
+    this.sync_datatable_selectie();
+  }
+
+  /**
+   * Synchroniseer de DataTable visuele selectie met geselecteerde_nummers.
+   * Wordt aangeroepen bij elke redraw van de DataTable (bijv. bij paginawissel).
+   */
+  sync_datatable_selectie() {
+    const tbody = document.querySelector("#nummers tbody");
+    if (!tbody) return;
+
+    // Zet events tijdelijk uit om recursie te voorkomen.
+    this.datatable.off("select deselect");
+
+    // Verwijder alle visuele selecties.
+    tbody.querySelectorAll("tr.selected").forEach((tr) => {
+      this.datatable.row(tr).deselect();
+    });
+
+    // Herselecteer rijen die in geselecteerde_nummers staan.
+    for (const nummer_id_str of Object.keys(this.geselecteerde_nummers)) {
+      const nummer_id = Number(nummer_id_str);
+      const tr = tbody.querySelector(`#nummer-${nummer_id}`);
+      if (tr) {
+        this.datatable.row(tr).select();
+      }
+    }
+
+    // Zet events weer aan.
+    this.datatable.on("select", this.select_handler.bind(this));
+    this.datatable.on("deselect", this.deselect_handler.bind(this));
   }
 
   /**
@@ -628,6 +661,10 @@ class StemView {
    * @param {string} artiest
    */
   nummer_selecteren(nummer_id, titel, artiest) {
+    // Reeds geselecteerd? Hergebruik bestaande DOM element.
+    if (this.geselecteerde_nummers[nummer_id]) {
+      return;
+    }
     this.geselecteerde_nummers[nummer_id] = new Nummer(
       nummer_id,
       titel,

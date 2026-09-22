@@ -5,6 +5,7 @@
 assets
 build-dev.sh
 build.sh
+deploy-dev.sh
 eslint.config.js
 node_modules
 package-lock.json
@@ -17,5 +18,5 @@ src/scss
 tar_exclude.txt
 test
 tsconfig*.json
-webpack.*
 update-node-deps.sh
+webpack.*

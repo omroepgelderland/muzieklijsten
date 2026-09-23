@@ -4,10 +4,12 @@
 // Libraries
 
 body:not(.error) .error,
+body:not(.lijst-geselecteerd) .lijst-geselecteerd,
 body:not(.eerste-items-geladen) .eerste-items-geladen,
 body.eerste-items-geladen .not-eerste-items-geladen,
 body:not(.items-laden-bezig) .items-laden-bezig,
 body:not(.geen-items) .geen-items,
+body.geen-items .wel-items,
 .vrijekeuze-item:not(.mislukt) .mislukt {
   display: none;
 }
@@ -62,8 +64,11 @@ body:not(.geen-items) .geen-items,
   }
 }
 
-p.tekst {
+.intro-container {
   max-width: 620px;
+}
+
+p.tekst {
   text-align: justify;
   line-height: 1.6;
   padding-left: 1em;

@@ -3,6 +3,7 @@ import "bootstrap";
 import { Modal } from "bootstrap";
 import DataTable, * as datatables from "datatables.net-bs5";
 import "datatables.net-select-bs5";
+import * as gld from "gld-ts-lib/functions";
 
 // Project js
 import * as functies from "@muzieklijsten/functies";
@@ -101,9 +102,10 @@ class Main {
     this.tabel.on("select", this.select_handler.bind(this));
     this.tabel.on("deselect", this.deselect_handler.bind(this));
 
-    document
-      .getElementById("lijstselect")
-      .addEventListener("change", this.lijst_select_handler.bind(this));
+    this.e_lijst_select.addEventListener(
+      "change",
+      this.lijst_select_handler.bind(this),
+    );
 
     // Bestaande lijst wijzigen
     document
@@ -128,11 +130,8 @@ class Main {
    */
   async set_lijst(lijst_id) {
     this.lijst_id = lijst_id;
-    const url = new URL(location.href);
-    const params = url.searchParams;
-    params.set("lijst", this.lijst_id);
-    url.params = params;
-    window.history.replaceState(null, null, url);
+
+    this.set_lijst_query_param(this.lijst_id);
 
     this.e_body.classList.add("lijst-geselecteerd");
     for (const bewerkknop of document.getElementsByClassName("bewerk-knop")) {
@@ -283,12 +282,17 @@ class Main {
 
   /**
    * Gebruiker kiest een lijst in de dropdown.
+   *
+   * @param {Event} e
    */
   lijst_select_handler(e) {
-    if (e.target.value > 0) {
-      this.set_lijst(e.target.value);
-    } else {
-      this.unset_lijst();
+    const target = e.target;
+    if (!(target instanceof HTMLSelectElement)) {
+      return;
+    }
+    const lijst_id = Number.parseInt(target.value);
+    if (!Number.isNaN(lijst_id) && lijst_id > 0) {
+      this.set_lijst(lijst_id).catch(window.alert);
     }
   }
 
@@ -408,14 +412,12 @@ class Main {
     this.unset_lijst();
   }
 
-  unset_lijst(event) {
+  unset_lijst() {
     this.lijst_id = undefined;
 
-    const url = new URL(location.href);
-    const params = url.searchParams;
-    params.delete("lijst");
-    url.params = params;
-    window.history.replaceState(null, null, url);
+    this.e_lijst_select.value = "";
+
+    this.set_lijst_query_param(null);
 
     this.e_body.classList.remove("lijst-geselecteerd");
 
@@ -424,6 +426,30 @@ class Main {
     this.geselecteerde_nummers = [];
     // Vult de tabel met geselecteerde nummers.
     this.vul_lijst_geselecteerde_nummers();
+  }
+
+  /**
+   *
+   * @param {number|null} lijst_id
+   */
+  set_lijst_query_param(lijst_id) {
+    const url = new URL(window.location.href);
+    if (lijst_id !== null) {
+      url.searchParams.set("lijst", String(lijst_id));
+    } else {
+      url.searchParams.delete("lijst");
+    }
+    window.history.replaceState({}, "", url);
+
+    for (const nav_link of gld.querySelectorAllTagName("a", ".nav-link")) {
+      const url = new URL(nav_link.href);
+      if (lijst_id !== null) {
+        url.searchParams.set("lijst", String(lijst_id));
+      } else {
+        url.searchParams.delete("lijst");
+      }
+      nav_link.href = url.toString();
+    }
   }
 }
 

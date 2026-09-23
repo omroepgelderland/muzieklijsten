@@ -84,37 +84,57 @@
         </p>
       </div>
       <div class="config-heeft-openai-key">
-        <p class="tekst">
-          Beoordeel hier de nummers die de stemmers als vrije keuzes hebben
-          ingevuld.
-        </p>
-        <p class="tekst">
-          Als je een nummer hebt verbeterd dan is het goed mogelijk dat er al
-          een nummer met de correcte naam bestaat in de database. De stemmen
-          worden in dat geval samengevoegd. Dit kan betekenen dat een stemmer
-          vaker op hetzelfde nummer heeft gestemd dan toegestaan. Dit wordt na
-          de goedkeuring gecheckt en ongeldige stemmen worden verwijderd.
-        </p>
-        <p class="tekst">
-          Vink ‘toevoegen aan de database’ aan om het nummer op te slaan zodat
-          het ook aan andere stemlijsten kan worden toegevoegd.
-        </p>
-        <div class="alert alert-danger error" id="errormsg" role="alert"></div>
+        <div class="intro-container">
+          <p class="tekst">
+            Beoordeel hier de nummers die de stemmers als vrije keuzes hebben
+            ingevuld.
+          </p>
+          <p class="tekst">
+            Als je een nummer hebt verbeterd dan is het goed mogelijk dat er al
+            een nummer met de correcte naam bestaat in de database. De stemmen
+            worden in dat geval samengevoegd. Dit kan betekenen dat een stemmer
+            vaker op hetzelfde nummer heeft gestemd dan toegestaan. Dit wordt na
+            de goedkeuring gecheckt en ongeldige stemmen worden verwijderd.
+          </p>
+          <p class="tekst">
+            Vink ‘toevoegen aan de database’ aan om het nummer op te slaan zodat
+            het ook aan andere stemlijsten kan worden toegevoegd. Het nummer
+            wordt dan ook toegevoegd als stemoptie in de geselecteerde lijst.
+          </p>
+          <form id="lijstselect-form" role="form">
+            <select id="lijstselect" name="lijst" class="form-control">
+              <option value="" selected disabled hidden>
+                -- Selecteer een muzieklijst --
+              </option>
+            </select>
+          </form>
+          <div
+            class="alert alert-danger error"
+            id="errormsg"
+            role="alert"
+          ></div>
+        </div>
         <hr />
-        <div id="lijst"></div>
-        <div class="items-laden-bezig mb-3">
-          <div class="loading-spinner">
-            <i class="bi bi-arrow-repeat loading-spinner-icon"></i>
-            <span class="loading-text">Wachten op AI-beoordelingen…</span>
+        <div class="lijst-geselecteerd">
+          <div id="lijst"></div>
+          <div class="items-laden-bezig mb-3">
+            <div class="loading-spinner">
+              <i class="bi bi-arrow-repeat loading-spinner-icon"></i>
+              <span class="loading-text">Wachten op AI-beoordelingen…</span>
+            </div>
           </div>
+          <div class="geen-items mb-3">
+            <p>Er staan geen nummers meer klaar om beoordeeld te worden.</p>
+          </div>
+          <button
+            type="button"
+            id="meer-laden"
+            class="btn btn-primary wel-items"
+          >
+            <span class="not-eerste-items-geladen">Items laden</span>
+            <span class="eerste-items-geladen">Meer items laden</span>
+          </button>
         </div>
-        <div class="geen-items mb-3">
-          <p>Er staan geen nummers meer klaar om beoordeeld te worden.</p>
-        </div>
-        <button type="button" id="meer-laden" class="btn btn-primary">
-          <span class="not-eerste-items-geladen">Items laden</span>
-          <span class="eerste-items-geladen">Meer items laden</span>
-        </button>
       </div>
     </div>
     <template id="vrijekeuze-item">

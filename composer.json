@@ -19,7 +19,7 @@
     "google/recaptcha": "^1.2",
     "ext-mysqli": "*",
     "ext-intl": "*",
-    "omroepgelderland/phpstdlib": "^2.1",
+    "omroepgelderland/phpstdlib": "^3.0",
     "php-di/php-di": "^7.0"
   },
   "autoload": {

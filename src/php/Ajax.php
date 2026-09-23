@@ -861,8 +861,12 @@ class Ajax
 
         $this->login();
         $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
+        $lijst_id = (int)\filter_var($this->request->lijst_id ?? null, \FILTER_VALIDATE_INT);
+        if ($lijst_id === 0) {
+            throw new GLDException('Ongeldige lijst_id');
+        }
         if (!\is_array($this->request->niet_ids)) {
-            throw new GLDException();
+            throw new GLDException('Ongeldige parameter: niet_ids');
         }
         $niet_ids = \array_map(
             fn($v) => (int)\filter_var($v, \FILTER_VALIDATE_INT),
@@ -874,10 +878,10 @@ class Ajax
         SELECT DISTINCT n.id
         FROM nummers n
         INNER JOIN stemmers_nummers sn ON
-        n.id = sn.nummer_id
+            n.id = sn.nummer_id
         INNER JOIN stemmers s ON
-        s.id = sn.stemmer_id
-        AND s.lijst_id = 387
+            s.id = sn.stemmer_id
+        AND s.lijst_id = {$lijst_id}
         WHERE
             n.is_vrijekeuze = 1
             {$c_niet_ids}
@@ -885,6 +889,9 @@ class Ajax
         LIMIT 15
         EOT;
         $nummers = $this->factory->select_objecten(Nummer::class, $query);
+        if (\count($nummers) === 0) {
+            return [];
+        }
 
         $ai_suggesties = get_ai_suggesties($this->openai_client, $nummers);
 
@@ -911,6 +918,7 @@ class Ajax
         $artiest = \trim((string)\filter_var($this->request->artiest));
         $titel = \trim((string)\filter_var($this->request->titel));
         $db = (bool)\filter_var($this->request->db, \FILTER_VALIDATE_BOOL);
+        $lijst_id = (int)\filter_var($this->request->lijst_id, \FILTER_VALIDATE_INT);
 
         // Nieuwe titel en artiest kan duplicaten opleveren.
         // Checken en samenvoegen.
@@ -950,6 +958,15 @@ class Ajax
         $this->db->updateMulti('nummers', [
             'is_vrijekeuze' => $db ? 0 : 2,
         ], "id = {$laagste_id} AND is_vrijekeuze = 1");
+        if ($db) {
+            try {
+                $this->db->insertMulti('lijsten_nummers', [
+                    'nummer_id' => $laagste_id,
+                    'lijst_id' => $lijst_id,
+                ]);
+            } catch (SQLDupEntryException) {
+            }
+        }
 
         $nummer = $this->factory->create_nummer($laagste_id);
         $nummer->verwijder_ongeldige_stemmen();

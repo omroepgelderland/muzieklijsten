@@ -15,6 +15,8 @@ interface IDMap {
   lijst: HTMLElement;
   "meer-laden": HTMLButtonElement;
   errormsg: HTMLElement;
+  "lijstselect-form": HTMLFormElement;
+  lijstselect: HTMLSelectElement;
 }
 
 interface AISuggestieType {
@@ -40,16 +42,24 @@ interface VrijeKeuzeItemWaardes {
 
 interface OpslaanData extends VrijeKeuzeItemWaardes {
   id: number;
+  lijst_id: number;
 }
 
 class Main {
   private readonly item_controllers: Map<number, ItemController>;
   private readonly view;
+  private geselecteerde_lijst_id: number | null = null;
 
   constructor() {
     this.view = new View();
     this.item_controllers = new Map();
 
+    this.vul_lijsten().catch((error) => {
+      this.view.set_error(error);
+    });
+
+    // Events
+    this.view.on_lijstselect.on(this.lijstselect_handler.bind(this));
     this.view.on_meer_laden.on(this.meer_laden.bind(this));
     this.view.on_nummer_kies_suggestie.on((id) => {
       this.item_controllers.get(id)?.kies_suggestie();
@@ -57,21 +67,52 @@ class Main {
     this.view.on_nummer_kies_opslaan_suggestie.on(async (id) => {
       const item_controller = this.item_controllers.get(id);
       item_controller?.kies_suggestie();
-      await item_controller?.opslaan();
+      if (this.geselecteerde_lijst_id != null) {
+        await item_controller?.opslaan(this.geselecteerde_lijst_id);
+      }
     });
     this.view.on_nummer_opslaan.on(async (id) => {
-      await this.item_controllers.get(id)?.opslaan();
+      if (this.geselecteerde_lijst_id != null) {
+        await this.item_controllers
+          .get(id)
+          ?.opslaan(this.geselecteerde_lijst_id);
+      }
     });
     this.view.on_nummer_verwijderen.on(async (id) => {
       await this.item_controllers.get(id)?.verwijderen();
     });
   }
 
+  /**
+   * Vult de selector met alle muzieklijsten
+   */
+  private async vul_lijsten(): Promise<void> {
+    const { lijsten } = await server.post("get_metadata", {});
+
+    const url = new URL(window.location.href);
+    const url_lijst_id = Number.parseInt(url.searchParams.get("lijst") ?? "0");
+    let init_lijst_id;
+    if (lijsten.some((lijst) => lijst.id === url_lijst_id)) {
+      init_lijst_id = url_lijst_id;
+    }
+
+    this.view.vul_lijsten(lijsten, init_lijst_id);
+
+    if (init_lijst_id !== undefined) {
+      this.lijstselect_handler(init_lijst_id);
+    }
+  }
+
   private async meer_laden() {
+    if (this.geselecteerde_lijst_id == null) {
+      return;
+    }
+
     this.view.set_meer_laden_bezig(true);
     let nummers;
     try {
       nummers = await server.post("mod_vrijekeuze_get_nummers", {
+        lijst_id: this.geselecteerde_lijst_id,
         niet_ids: Array.from(this.item_controllers.keys()),
       });
     } catch (error) {
@@ -95,6 +136,38 @@ class Main {
     }
     this.view.set_meer_laden_bezig(false);
     this.view.set_eerste_items_geladen();
+  }
+
+  /**
+   * Stelt de geselecteerde lijst in.
+   * De lijst met items wordt gereset.
+   *
+   * @param lijst_id ID van de stemlijst.
+   */
+  private lijstselect_handler(lijst_id: number): void {
+    if (this.geselecteerde_lijst_id === lijst_id) {
+      return;
+    }
+
+    // Wis de items van de nu geselecteerde lijst
+    for (const item_controller of this.item_controllers.values()) {
+      item_controller.verwijder_view();
+    }
+    this.item_controllers.clear();
+
+    // Stel nieuwe lijst in
+    this.geselecteerde_lijst_id = lijst_id;
+
+    // Queryparameters
+    const url = new URL(window.location.href);
+    url.searchParams.set("lijst", String(lijst_id));
+    window.history.replaceState({}, "", url);
+    this.view.set_lijst_geselecteerd();
+    for (const nav_link of gld.querySelectorAllTagName("a", ".nav-link")) {
+      const url = new URL(nav_link.href);
+      url.searchParams.set("lijst", String(lijst_id));
+      nav_link.href = url.toString();
+    }
   }
 }
 
@@ -127,52 +200,66 @@ class ItemController {
     }
   }
 
-  public async opslaan() {
+  public async opslaan(lijst_id: number) {
     this.view.set_bezig(true);
     try {
       const data = {
         id: this.nummer.id,
+        lijst_id: lijst_id,
         ...this.view.get_waardes(),
       };
       if (data.artiest === "") {
-        throw "De artiest mag niet leeg zijn.";
+        throw new Error("De artiest mag niet leeg zijn.");
       }
       if (data.titel === "") {
-        throw "De titel mag niet leeg zijn.";
+        throw new Error("De titel mag niet leeg zijn.");
       }
       try {
         await server.post("mod_vrijekeuze_nummer_opslaan", data);
       } catch {
-        throw "Opslaan mislukt";
+        throw new Error("Opslaan mislukt");
       }
-      this.view.verwijder();
+      this.verwijder_view();
       this.on_verwijderd.emit();
     } catch (error) {
       this.view.set_bezig(false);
-      this.view.set_mislukt(String(error));
+      this.view.set_mislukt(error);
     }
   }
 
+  /**
+   * Verwijdert het vrije keuze nummer op de server.
+   */
   public async verwijderen() {
     this.view.set_bezig(true);
     try {
       await server.post("mod_vrijekeuze_nummer_verwijderen", {
         nummer: this.nummer.id,
       });
-      this.view.verwijder();
+      this.verwijder_view();
       this.on_verwijderd.emit();
     } catch {
       this.view.set_bezig(false);
       this.view.set_mislukt("Verwijderen mislukt");
     }
   }
+
+  /**
+   * Verwijdert alleen de view.
+   * Het nummer wordt niet verwijderd op de server.
+   */
+  public verwijder_view(): void {
+    this.view.verwijder();
+  }
 }
 
 class View {
   private readonly body;
+  private readonly lijstselect;
   private readonly meer_laden;
   public readonly lijst_container;
   public readonly item_template;
+  public readonly on_lijstselect;
   public readonly on_nummer_kies_suggestie;
   public readonly on_nummer_kies_opslaan_suggestie;
   public readonly on_nummer_opslaan;
@@ -183,7 +270,9 @@ class View {
     this.body = gld.querySelectorTagName("body");
     this.meer_laden = getElementById("meer-laden");
     this.lijst_container = getElementById("lijst");
+    this.lijstselect = getElementById("lijstselect");
     this.item_template = getElementById("vrijekeuze-item").content;
+    this.on_lijstselect = new TypedEvent<number>();
     this.on_nummer_kies_suggestie = new TypedEvent<number>();
     this.on_nummer_kies_opslaan_suggestie = new TypedEvent<number>();
     this.on_nummer_opslaan = new TypedEvent<number>();
@@ -198,6 +287,10 @@ class View {
     );
     document.addEventListener("click", this.click_handler.bind(this));
     document.addEventListener("submit", this.submit_handler.bind(this));
+    this.lijstselect.addEventListener(
+      "change",
+      this.lijstselect_handler.bind(this),
+    );
   }
 
   private meer_laden_handler() {
@@ -238,6 +331,10 @@ class View {
     if (!(target instanceof HTMLElement)) {
       return;
     }
+    if (target.id === "lijstselect-form") {
+      this.lijstselect_handler();
+      return;
+    }
     const id = View.get_event_nummer_id(target);
     if (id != null) {
       this.on_nummer_opslaan.emit(id);
@@ -245,7 +342,7 @@ class View {
   }
 
   public disable_meer_laden(): void {
-    this.meer_laden.remove();
+    this.meer_laden.disabled = true;
     this.body.classList.add("geen-items");
   }
 
@@ -261,6 +358,7 @@ class View {
 
   public set_meer_laden_bezig(is_bezig: boolean): void {
     this.meer_laden.disabled = is_bezig;
+    this.lijstselect.disabled = is_bezig;
     if (is_bezig) {
       this.body.classList.add("items-laden-bezig");
     } else {
@@ -275,6 +373,41 @@ class View {
 
   public set_eerste_items_geladen(): void {
     this.body.classList.add("eerste-items-geladen");
+  }
+
+  /**
+   * Handelt het selecteren van een lijst in de selector af.
+   */
+  private lijstselect_handler(): void {
+    const lijst_id = Number.parseInt(this.lijstselect.value);
+    if (!isNaN(lijst_id)) {
+      this.on_lijstselect.emit(lijst_id);
+    }
+  }
+
+  /**
+   * Vul de selector met de gegeven lijsten.
+   *
+   * @param lijsten De lijsten die in de selector moeten worden weergegeven.
+   * @param init_lijst_id Optioneel. Het ID van de lijst die standaard geselecteerd moet zijn.
+   */
+  public vul_lijsten(
+    lijsten: { id: number; naam: string }[],
+    init_lijst_id?: number,
+  ): void {
+    for (const { id, naam } of lijsten) {
+      const selected = id === init_lijst_id;
+      this.lijstselect.add(new Option(naam, String(id), selected, selected));
+    }
+  }
+
+  /**
+   * Reset de lijst met items en geeft aan dat er een lijst is gekozen.
+   */
+  public set_lijst_geselecteerd(): void {
+    this.meer_laden.disabled = false;
+    this.body.classList.remove("geen-items", "eerste-items-geladen");
+    this.body.classList.add("lijst-geselecteerd");
   }
 }
 
@@ -390,8 +523,9 @@ class ItemView {
     }
   }
 
-  public set_mislukt(msg: string): void {
-    this.mislukt_msg.textContent = msg;
+  public set_mislukt(msg: unknown): void {
+    this.mislukt_msg.textContent =
+      msg instanceof Error ? msg.message : String(msg);
     this.form.classList.add("mislukt");
   }
 

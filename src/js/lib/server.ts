@@ -237,6 +237,7 @@ export interface AjaxMap {
   };
   mod_vrijekeuze_get_nummers: {
     request: {
+      lijst_id: number;
       niet_ids: number[];
     };
     response: ModVrijeKeuzeNummer[];

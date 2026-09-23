@@ -282,55 +282,63 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
         ],
         $nummers
     );
-    $ai_res = json_decode($openai_client->get_struct_response(
-        'Antwoord in JSON-formaat. De invoer is een lijst met muzieknummers. Geef voor elk nummer in de invoer in het'
-        . ' veld is_correct als boolean aan of een muzieknummer een echt bestaand nummer is en of de spelling correct'
-        . ' is. Corrigeer de titel en artiest indien nodig. Laat de titel en artiest leeg als er geen correctie'
-        . ' mogelijk is. Geef voor elk nummer het oorspronkelijke ID.',
-        json_encode($input),
-        [
-            'type' => 'json_schema',
-            'name' => 'get_struct_response_test',
-            'schema' => [
-                'type' => 'object',
-                'properties' => [
-                    'nummers' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'id' => [
-                                    'type' => 'number',
+    $ai_res = json_decode($openai_client->get_struct_response([
+        'input' => json_encode($input),
+        'instructions' =>
+            'Controleer elk muzieknummer uit de invoer. Bepaal of het een echt'
+            . ' bestaand muzieknummer is en of zowel de titel als artiest'
+            . ' correct gespeld zijn. Zet is_correct alleen op true als het'
+            . ' nummer bestaat en titel en artiest correct zijn. Corrigeer de'
+            . ' titel en artiest indien mogelijk. Gebruik een lege string voor'
+            . ' een correctie als geen betrouwbare correctie mogelijk is. Neem'
+            . ' altijd het oorspronkelijke ID ongewijzigd over.',
+        'model' => 'gpt-6-luna',
+        'reasoning' => [
+            'effort' => 'low',
+        ],
+        'text' => [
+            'format' => [
+                'type' => 'json_schema',
+                'name' => 'muzieknummer_check',
+                'schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'nummers' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'id' => [
+                                        'type' => 'number',
+                                    ],
+                                    'is_correct' => [
+                                        'type' => 'boolean',
+                                    ],
+                                    'artiest' => [
+                                        'type' => 'string',
+                                    ],
+                                    'titel' => [
+                                        'type' => 'string',
+                                    ],
                                 ],
-                                'is_correct' => [
-                                    'type' => 'boolean',
-                                ],
-                                'artiest' => [
-                                    'type' => 'string',
-                                ],
-                                'titel' => [
-                                    'type' => 'string',
-                                ],
+                                'required' => ['id', 'is_correct', 'titel', 'artiest'],
+                                'additionalProperties' => false,
                             ],
-                            'required' => ['id', 'is_correct', 'titel', 'artiest'],
-                            'additionalProperties' => false,
                         ],
                     ],
+                    'required' => ['nummers'],
+                    'additionalProperties' => false,
                 ],
-                'required' => ['nummers'],
-                'additionalProperties' => false,
+                "strict" => true,
             ],
-            "strict" => true,
         ],
-        "gpt-5-mini",
-        4 * 60,
-    ), true);
+    ], 4 * 60), true);
     if (
         !\is_array($ai_res) ||
         !isset($ai_res['nummers']) ||
         !\is_array($ai_res['nummers'])
     ) {
-        throw new GLDException();
+        throw new \RuntimeException();
     }
     $res = \array_fill_keys(
         \array_map(

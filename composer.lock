@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4b301517970307505d100a567df7b89b",
+    "content-hash": "9a8b0e59821e47148583f08a54052659",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1150,16 +1150,16 @@
         },
         {
             "name": "omroepgelderland/phpstdlib",
-            "version": "2.5.0",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/omroepgelderland/phpstdlib.git",
-                "reference": "c30c11106593be94d5ca7357b37be152991d3fea"
+                "reference": "04cfd1eb106b61c8dd97a1992476b1cd59c3bc1f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/omroepgelderland/phpstdlib/zipball/c30c11106593be94d5ca7357b37be152991d3fea",
-                "reference": "c30c11106593be94d5ca7357b37be152991d3fea",
+                "url": "https://api.github.com/repos/omroepgelderland/phpstdlib/zipball/04cfd1eb106b61c8dd97a1992476b1cd59c3bc1f",
+                "reference": "04cfd1eb106b61c8dd97a1992476b1cd59c3bc1f",
                 "shasum": ""
             },
             "require": {
@@ -1222,9 +1222,9 @@
             "description": "Shared PHP functions",
             "support": {
                 "issues": "https://github.com/omroepgelderland/phpstdlib/issues",
-                "source": "https://github.com/omroepgelderland/phpstdlib/tree/2.5.0"
+                "source": "https://github.com/omroepgelderland/phpstdlib/tree/3.0.0"
             },
-            "time": "2026-08-13T09:40:58+00:00"
+            "time": "2026-09-23T08:26:28+00:00"
         },
         {
             "name": "php-di/invoker",

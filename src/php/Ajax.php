@@ -847,7 +847,7 @@ class Ajax
      *
      * Duurt lang want alle nummers worden gecheckt bij OpenAI.
      *
-     * Geeft max 20 nummers.
+     * Geeft max 15 nummers.
      *
      * De lijst is leeg als de OpenAI API key niet is ingesteld.
      *

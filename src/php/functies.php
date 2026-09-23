@@ -289,9 +289,10 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
             . ' bestaand muzieknummer is en of zowel de titel als artiest'
             . ' correct gespeld zijn. Zet is_correct alleen op true als het'
             . ' nummer bestaat en titel en artiest correct zijn. Corrigeer de'
-            . ' titel en artiest indien mogelijk. Gebruik een lege string voor'
-            . ' een correctie als geen betrouwbare correctie mogelijk is. Neem'
-            . ' altijd het oorspronkelijke ID ongewijzigd over.',
+            . ' titel en artiest indien mogelijk. Let ook op'
+            . ' hoofdlettergebruik. Gebruik een lege string voor een correctie'
+            . ' als geen betrouwbare correctie mogelijk is. Neem altijd het'
+            . ' oorspronkelijke ID ongewijzigd over.',
         'model' => 'gpt-6-luna',
         'reasoning' => [
             'effort' => 'low',

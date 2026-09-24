@@ -10,7 +10,9 @@ body.eerste-items-geladen .not-eerste-items-geladen,
 body:not(.items-laden-bezig) .items-laden-bezig,
 body:not(.geen-items) .geen-items,
 body.geen-items .wel-items,
-.vrijekeuze-item:not(.mislukt) .mislukt {
+.vrijekeuze-item:not(.mislukt) .mislukt,
+.vrijekeuze-item:not(.status-bewerken) .status-bewerken,
+.vrijekeuze-item.status-bewerken .not-status-bewerken {
   display: none;
 }
 
@@ -20,10 +22,25 @@ body.geen-items .wel-items,
 }
 .ai-suggestieblok {
   max-width: fit-content;
-}
-.w-100,
-.form-control.w-100 {
-  width: 100%;
+
+  &:not(.ai-in-orde) .ai-in-orde,
+  &:not(.ai-geen-suggestie) .ai-geen-suggestie,
+  &:not(.ai-suggestie) .ai-suggestie,
+  &.ai-in-orde .not-ai-in-orde,
+  &.ai-geen-suggestie .not-ai-geen-suggestie,
+  &.ai-suggestie .not-ai-suggestie {
+    display: none;
+  }
+
+  &.ai-in-orde {
+    @extend .alert-success;
+  }
+  &.ai-geen-suggestie {
+    @extend .alert-warning;
+  }
+  &.ai-suggestie {
+    @extend .alert-warning;
+  }
 }
 
 // Spinner
@@ -71,5 +88,4 @@ body.geen-items .wel-items,
 p.tekst {
   text-align: justify;
   line-height: 1.6;
-  padding-left: 1em;
 }

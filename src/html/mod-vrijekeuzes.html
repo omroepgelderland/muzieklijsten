@@ -75,169 +75,149 @@
         </div>
       </div>
     </nav>
-    <div class="container-fluid">
+    <div class="container intro-container">
       <h1>Moderatie vrije keuzes</h1>
-      <div class="not-config-heeft-openai-key">
-        <p>
-          Stel een OpenAI-sleutel in in config.json om AI-ondersteuning te
-          gebruiken.
+    </div>
+    <div class="not-config-heeft-openai-key">
+      <p>
+        Stel een OpenAI-sleutel in in config.json om AI-ondersteuning te
+        gebruiken.
+      </p>
+    </div>
+    <div class="config-heeft-openai-key">
+      <div class="container intro-container">
+        <p class="tekst">
+          Beoordeel hier de nummers die de stemmers als vrije keuzes hebben
+          ingevuld.
         </p>
+        <p class="tekst">
+          Klik <strong>goedkeuren</strong> om een vrije keuze goed te keuren,
+          inclusief de eventuele verbetersuggestie.
+        </p>
+        <p class="tekst">
+          Klik <strong>toevoegen aan de database</strong> om het nummer op te
+          slaan in de stemlijst zodat andere stemmers het ook kunnen kiezen. Het
+          nummer komt ook beschikbaar voor andere stemlijsten.
+        </p>
+        <p class="tekst">
+          Klik <strong>bewerken</strong> om de inzending handmatig aan te
+          passen.
+        </p>
+        <p class="tekst">
+          Klik <strong>verwijderen</strong> om een vrije keuze te verwijderen.
+        </p>
+        <p class="tekst">
+          Als je een nummer hebt verbeterd dan is het goed mogelijk dat er al
+          een nummer met de correcte naam bestaat in de database. De stemmen
+          worden in dat geval samengevoegd. Dit kan betekenen dat een stemmer
+          vaker op hetzelfde nummer heeft gestemd dan toegestaan. Dit wordt na
+          de goedkeuring gecheckt en ongeldige stemmen worden verwijderd.
+        </p>
+        <form id="lijstselect-form" role="form">
+          <select id="lijstselect" name="lijst" class="form-control">
+            <option value="" selected disabled hidden>
+              -- Selecteer een muzieklijst --
+            </option>
+          </select>
+        </form>
+        <div class="alert alert-danger error" id="errormsg" role="alert"></div>
       </div>
-      <div class="config-heeft-openai-key">
-        <div class="intro-container">
-          <p class="tekst">
-            Beoordeel hier de nummers die de stemmers als vrije keuzes hebben
-            ingevuld.
-          </p>
-          <p class="tekst">
-            Als je een nummer hebt verbeterd dan is het goed mogelijk dat er al
-            een nummer met de correcte naam bestaat in de database. De stemmen
-            worden in dat geval samengevoegd. Dit kan betekenen dat een stemmer
-            vaker op hetzelfde nummer heeft gestemd dan toegestaan. Dit wordt na
-            de goedkeuring gecheckt en ongeldige stemmen worden verwijderd.
-          </p>
-          <p class="tekst">
-            Vink ‘toevoegen aan de database’ aan om het nummer op te slaan zodat
-            het ook aan andere stemlijsten kan worden toegevoegd. Het nummer
-            wordt dan ook toegevoegd als stemoptie in de geselecteerde lijst.
-          </p>
-          <form id="lijstselect-form" role="form">
-            <select id="lijstselect" name="lijst" class="form-control">
-              <option value="" selected disabled hidden>
-                -- Selecteer een muzieklijst --
-              </option>
-            </select>
-          </form>
-          <div
-            class="alert alert-danger error"
-            id="errormsg"
-            role="alert"
-          ></div>
-        </div>
-        <hr />
-        <div class="lijst-geselecteerd">
-          <div id="lijst"></div>
-          <div class="items-laden-bezig mb-3">
-            <div class="loading-spinner">
-              <i class="bi bi-arrow-repeat loading-spinner-icon"></i>
-              <span class="loading-text">Wachten op AI-beoordelingen…</span>
-            </div>
+      <hr />
+      <div class="container-fluid lijst-geselecteerd">
+        <div id="lijst"></div>
+        <div class="items-laden-bezig mb-3">
+          <div class="loading-spinner">
+            <i class="bi bi-arrow-repeat loading-spinner-icon"></i>
+            <span class="loading-text">Wachten op AI-beoordelingen…</span>
           </div>
-          <div class="geen-items mb-3">
-            <p>Er staan geen nummers meer klaar om beoordeeld te worden.</p>
-          </div>
-          <button
-            type="button"
-            id="meer-laden"
-            class="btn btn-primary wel-items"
-          >
-            <span class="not-eerste-items-geladen">Items laden</span>
-            <span class="eerste-items-geladen">Meer items laden</span>
-          </button>
         </div>
+        <div class="geen-items mb-3">
+          <p>Er staan geen nummers meer klaar om beoordeeld te worden.</p>
+        </div>
+        <button type="button" id="meer-laden" class="btn btn-primary wel-items">
+          <span class="not-eerste-items-geladen">Items laden</span>
+          <span class="eerste-items-geladen">Meer items laden</span>
+        </button>
       </div>
     </div>
     <template id="vrijekeuze-item">
       <form class="vrijekeuze-item" role="form">
-        <div class="row d-flex align-items-center">
-          <div class="col-12 col-md-4">
-            <label class="artiest-label">Artiest</label>
-          </div>
-          <div class="col-12 col-md-4">
-            <label class="titel-label">Titel</label>
-          </div>
-        </div>
-        <div class="row mb-3 d-flex align-items-center">
-          <div class="col-12 col-md-4">
-            <input
-              type="text"
-              class="artiest-input form-control w-100"
-              required
-            />
-          </div>
-          <div class="col-12 col-md-4">
-            <input
-              type="text"
-              class="titel-input form-control w-100"
-              required
-            />
-          </div>
-          <div class="col-12 col-md-2">
-            <div class="form-check">
-              <label class="form-check-label">
-                <input class="db-check form-check-input" type="checkbox" />
-                Toevoegen aan database
-              </label>
+        <div class="status-bewerken">
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label class="artiest-label">Artiest</label>
+              <input
+                type="text"
+                class="artiest-input form-control w-100"
+                required
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="titel-label">Titel</label>
+              <input
+                type="text"
+                class="titel-input form-control w-100"
+                required
+              />
+            </div>
+            <div class="col-12">
+              <button type="button" class="goedkeuren btn btn-sm btn-primary">
+                Opslaan
+              </button>
+              <button
+                type="button"
+                class="goedkeuren-db btn btn-sm btn-primary"
+              >
+                <span class="ai-in-orde ai-geen-suggestie"
+                  >Opslaan &amp; toevoegen aan db</span
+                >
+              </button>
+              <button type="button" class="verwijderen btn btn-sm btn-danger">
+                Verwijderen
+              </button>
             </div>
           </div>
-          <div class="col-12 col-md-2">
-            <button type="submit" class="btn btn-primary">Goedkeuren</button>
-            <button type="button" class="verwijderknop btn btn-danger">
-              Verwijderen
-            </button>
-          </div>
         </div>
-        <div
-          class="ai-suggestieblok ai-in-orde alert alert-success alert-dismissible fade show"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="alert"
-            aria-label="Close"
-          ></button>
-          Correct volgens AI
-        </div>
-        <div
-          class="ai-suggestieblok ai-geen-suggestie alert alert-warning alert-dismissible fade show"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="alert"
-            aria-label="Close"
-          ></button>
-          Incorrect volgens AI, maar geen suggestie voor verbetering.
-        </div>
-        <div
-          class="ai-suggestieblok ai-suggestie alert alert-warning alert-dismissible fade show"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="alert"
-            aria-label="Close"
-          ></button>
-          <span class="me-3"
-            >AI-suggestie:
+        <div class="not-status-bewerken ai-suggestieblok alert" role="alert">
+          <p>
+            Inzending:
+            <strong>
+              <span class="artiest"></span> –
+              <span class="titel"></span>
+            </strong>
+          </p>
+          <p class="ai-in-orde">Correct volgens AI</p>
+          <p class="ai-geen-suggestie">
+            Incorrect volgens AI, maar geen suggestie voor verbetering.
+          </p>
+          <p class="ai-suggestie">
+            Suggestie voor verbetering:
             <strong
               ><em
                 ><span class="artiest-suggestie"></span> –
-                <span class="titel-suggestie"></span></em></strong
-          ></span>
-          <button type="button" class="kies-suggestie btn btn-primary btn-sm">
-            Toepassen
+                <span class="titel-suggestie"></span></em
+            ></strong>
+          </p>
+          <button type="button" class="goedkeuren btn btn-primary btn-sm">
+            <span class="not-ai-suggestie">Goedkeuren</span>
+            <span class="ai-suggestie">Suggestie goedkeuren</span>
           </button>
-          <button
-            type="button"
-            class="kies-suggestie-opslaan btn btn-primary btn-sm"
-          >
-            Toepassen &amp; goedkeuren
+          <button type="button" class="goedkeuren-db btn btn-primary btn-sm">
+            <span class="not-ai-suggestie"
+              >Goedkeuren &amp; toevoegen aan db</span
+            >
+            <span class="ai-suggestie"
+              >Suggestie goedkeuren &amp; toevoegen aan db</span
+            >
+          </button>
+          <button type="button" class="bewerkenknop btn btn-primary btn-sm">
+            Bewerken
+          </button>
+          <button type="button" class="verwijderen btn btn-danger btn-sm">
+            Verwijderen
           </button>
         </div>
-        <div
-          class="mislukt alert alert-danger alert-dismissible fade show"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="alert"
-            aria-label="Close"
-          ></button>
+        <div class="mislukt alert alert-danger" role="alert">
           <span class="mislukt-msg"></span>
         </div>
       </form>

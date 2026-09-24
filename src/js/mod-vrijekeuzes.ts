@@ -54,32 +54,29 @@ class Main {
     this.view = new View();
     this.item_controllers = new Map();
 
-    this.vul_lijsten().catch((error) => {
-      this.view.set_error(error);
-    });
+    this.vul_lijsten().catch(this.set_error.bind(this));
 
     // Events
     this.view.on_lijstselect.on(this.lijstselect_handler.bind(this));
     this.view.on_meer_laden.on(this.meer_laden.bind(this));
-    this.view.on_nummer_kies_suggestie.on((id) => {
-      this.item_controllers.get(id)?.kies_suggestie();
+
+    // Events binnen items
+    this.view.on_nummer_bewerken.on((id) => {
+      this.item_controllers.get(id)?.set_bewerken();
     });
-    this.view.on_nummer_kies_opslaan_suggestie.on(async (id) => {
+    this.view.on_nummer_opslaan.on(({ id, db }) => {
       const item_controller = this.item_controllers.get(id);
-      item_controller?.kies_suggestie();
-      if (this.geselecteerde_lijst_id != null) {
-        await item_controller?.opslaan(this.geselecteerde_lijst_id);
+      if (item_controller != null && this.geselecteerde_lijst_id != null) {
+        item_controller
+          .opslaan(this.geselecteerde_lijst_id, db)
+          .catch(this.set_error.bind(this));
       }
     });
-    this.view.on_nummer_opslaan.on(async (id) => {
-      if (this.geselecteerde_lijst_id != null) {
-        await this.item_controllers
-          .get(id)
-          ?.opslaan(this.geselecteerde_lijst_id);
-      }
-    });
-    this.view.on_nummer_verwijderen.on(async (id) => {
-      await this.item_controllers.get(id)?.verwijderen();
+    this.view.on_nummer_verwijderen.on((id) => {
+      this.item_controllers
+        .get(id)
+        ?.verwijderen()
+        .catch(this.set_error.bind(this));
     });
   }
 
@@ -116,7 +113,7 @@ class Main {
         niet_ids: Array.from(this.item_controllers.keys()),
       });
     } catch (error) {
-      this.view.set_error(error);
+      this.set_error(error);
       this.view.set_meer_laden_bezig(false);
       throw error;
     }
@@ -169,6 +166,10 @@ class Main {
       nav_link.href = url.toString();
     }
   }
+
+  private set_error(error: unknown): void {
+    this.view.set_error(error);
+  }
 }
 
 class ItemController {
@@ -187,26 +188,21 @@ class ItemController {
     this.on_verwijderd = new TypedEvent<void>();
   }
 
-  public kies_suggestie() {
-    if (
-      !this.nummer.ai_suggestie.is_correct &&
-      this.nummer.ai_suggestie.suggestie != null
-    ) {
-      this.view.kies_suggestie(
-        this.nummer.ai_suggestie.suggestie.artiest,
-        this.nummer.ai_suggestie.suggestie.titel,
-      );
-      this.view.wis_suggestie();
-    }
-  }
-
-  public async opslaan(lijst_id: number) {
+  private async server_opslaan(
+    lijst_id: number,
+    db: boolean,
+    artiest?: string,
+    titel?: string,
+  ): Promise<void> {
     this.view.set_bezig(true);
+
     try {
       const data = {
         id: this.nummer.id,
         lijst_id: lijst_id,
-        ...this.view.get_waardes(),
+        artiest: artiest ?? this.nummer.artiest,
+        titel: titel ?? this.nummer.titel,
+        db: db,
       };
       if (data.artiest === "") {
         throw new Error("De artiest mag niet leeg zijn.");
@@ -230,7 +226,7 @@ class ItemController {
   /**
    * Verwijdert het vrije keuze nummer op de server.
    */
-  public async verwijderen() {
+  public async verwijderen(): Promise<void> {
     this.view.set_bezig(true);
     try {
       await server.post("mod_vrijekeuze_nummer_verwijderen", {
@@ -251,6 +247,42 @@ class ItemController {
   public verwijder_view(): void {
     this.view.verwijder();
   }
+
+  /**
+   * Verandert de interface naar handmatig bewerken.
+   *
+   * Dit is één richting. Na het instellen van bewerken kan er niet meer teruggegaan worden naar de oorspronkelijke
+   * staat zonder opnieuw te laden.
+   */
+  public set_bewerken(): void {
+    this.view.set_bewerken();
+  }
+
+  /**
+   * Slaat een nummer op. Dit kan een ongewijzigd nummer zijn, een AI-suggestie of handmatig bewerkte data.
+   *
+   * @param lijst_id Het ID van de muzieklijst die nu geselecteerd is.
+   * @param db Geeft aan of het nummer ook aan de database moet worden toegevoegd.
+   */
+  public async opslaan(lijst_id: number, db: boolean): Promise<void> {
+    const data = this.view.get_data();
+    const ai_suggestie = this.nummer.ai_suggestie?.suggestie;
+    if (data !== null) {
+      // Handmatig ingevoerde data
+      await this.server_opslaan(lijst_id, db, data.artiest, data.titel);
+    } else if (ai_suggestie != null) {
+      // Goedgekeurde AI-suggestie
+      await this.server_opslaan(
+        lijst_id,
+        db,
+        ai_suggestie.artiest,
+        ai_suggestie.titel,
+      );
+    } else {
+      // Data ongewijzigd goedkeuren
+      await this.server_opslaan(lijst_id, db);
+    }
+  }
 }
 
 class View {
@@ -260,8 +292,7 @@ class View {
   public readonly lijst_container;
   public readonly item_template;
   public readonly on_lijstselect;
-  public readonly on_nummer_kies_suggestie;
-  public readonly on_nummer_kies_opslaan_suggestie;
+  public readonly on_nummer_bewerken;
   public readonly on_nummer_opslaan;
   public readonly on_nummer_verwijderen;
   public readonly on_meer_laden;
@@ -273,9 +304,8 @@ class View {
     this.lijstselect = getElementById("lijstselect");
     this.item_template = getElementById("vrijekeuze-item").content;
     this.on_lijstselect = new TypedEvent<number>();
-    this.on_nummer_kies_suggestie = new TypedEvent<number>();
-    this.on_nummer_kies_opslaan_suggestie = new TypedEvent<number>();
-    this.on_nummer_opslaan = new TypedEvent<number>();
+    this.on_nummer_bewerken = new TypedEvent<number>();
+    this.on_nummer_opslaan = new TypedEvent<{ id: number; db: boolean }>();
     this.on_nummer_verwijderen = new TypedEvent<number>();
     this.on_meer_laden = new TypedEvent<void>();
 
@@ -304,41 +334,41 @@ class View {
     }
     const id = View.get_event_nummer_id(target);
 
-    // Nummer opslaan
-    const verwijderknop = target.closest("button.verwijderknop");
+    // Goedkeuren
+    const goedkeuren_knop = target.closest("button.goedkeuren");
+    if (goedkeuren_knop instanceof HTMLButtonElement && id != null) {
+      this.on_nummer_opslaan.emit({ id: id, db: false });
+      return;
+    }
+
+    // Goedkeuren en opslaan in database
+    const goedkeuren_db_knop = target.closest("button.goedkeuren-db");
+    if (goedkeuren_db_knop instanceof HTMLButtonElement && id != null) {
+      this.on_nummer_opslaan.emit({ id: id, db: true });
+      return;
+    }
+
+    // Bewerken
+    const bewerken_knop = target.closest("button.bewerkenknop");
+    if (bewerken_knop instanceof HTMLButtonElement && id != null) {
+      this.on_nummer_bewerken.emit(id);
+      return;
+    }
+
+    // Verwijderen
+    const verwijderknop = target.closest("button.verwijderen");
     if (verwijderknop instanceof HTMLButtonElement && id != null) {
       this.on_nummer_verwijderen.emit(id);
       return;
     }
-
-    // Kies suggestie
-    const kiesknop = target.closest("button.kies-suggestie");
-    if (kiesknop instanceof HTMLButtonElement && id != null) {
-      this.on_nummer_kies_suggestie.emit(id);
-    }
-
-    // Kiezen & goedkeuren
-    const kies_opslaan_knop = target.closest("button.kies-suggestie-opslaan");
-    if (kies_opslaan_knop instanceof HTMLButtonElement && id != null) {
-      this.on_nummer_kies_opslaan_suggestie.emit(id);
-    }
   }
 
+  /**
+   * Alles gaat via knoppen, form submit staat uit.
+   */
   private submit_handler(event: SubmitEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) {
-      return;
-    }
-    if (target.id === "lijstselect-form") {
-      this.lijstselect_handler();
-      return;
-    }
-    const id = View.get_event_nummer_id(target);
-    if (id != null) {
-      this.on_nummer_opslaan.emit(id);
-    }
   }
 
   public disable_meer_laden(): void {
@@ -416,9 +446,8 @@ class ItemView {
   private readonly form;
   private readonly artiest_input;
   private readonly titel_input;
-  private readonly db_check;
   private readonly mislukt_msg;
-  private readonly suggestie: Element;
+  private status_bewerken = false;
 
   constructor(
     container: HTMLElement,
@@ -449,15 +478,9 @@ class ItemView {
       ".titel-input",
       fragment,
     );
-    this.db_check = gld.querySelectorTagName("input", ".db-check", fragment);
-    const ai_suggestie = gld.querySelector(".ai-suggestie", fragment);
-    const ai_in_orde = gld.querySelector(".ai-in-orde", fragment);
-    const ai_geen_suggestie = gld.querySelector(".ai-geen-suggestie", fragment);
-    const artiest_suggestie = gld.querySelector(
-      ".artiest-suggestie",
-      ai_suggestie,
-    );
-    const titel_suggestie = gld.querySelector(".titel-suggestie", ai_suggestie);
+
+    const artiest_suggestie = gld.querySelector(".artiest-suggestie", fragment);
+    const titel_suggestie = gld.querySelector(".titel-suggestie", fragment);
     this.mislukt_msg = gld.querySelector(".mislukt-msg", fragment);
 
     this.artiest_input.id = gld.get_random_string(8);
@@ -465,33 +488,44 @@ class ItemView {
     this.titel_input.id = gld.get_random_string(8);
     titel_label.setAttribute("for", this.titel_input.id);
 
+    for (const elem of fragment.querySelectorAll(".artiest")) {
+      elem.textContent = nummer.artiest;
+    }
+    for (const elem of fragment.querySelectorAll(".titel")) {
+      elem.textContent = nummer.titel;
+    }
     this.artiest_input.value = nummer.artiest;
     this.titel_input.value = nummer.titel;
+    artiest_suggestie.textContent =
+      nummer.ai_suggestie?.suggestie?.artiest ?? "";
+    titel_suggestie.textContent = nummer.ai_suggestie?.suggestie?.titel ?? "";
+
+    const ai_suggestieblok = gld.querySelector(".ai-suggestieblok", fragment);
     if (nummer.ai_suggestie.is_correct) {
-      ai_geen_suggestie.remove();
-      ai_suggestie.remove();
-      this.suggestie = ai_in_orde;
+      ai_suggestieblok.classList.add("ai-in-orde");
     } else if (nummer.ai_suggestie.suggestie == null) {
-      ai_in_orde.remove();
-      ai_suggestie.remove();
-      this.suggestie = ai_geen_suggestie;
+      ai_suggestieblok.classList.add("ai-geen-suggestie");
     } else {
-      ai_in_orde.remove();
-      ai_geen_suggestie.remove();
-      this.suggestie = ai_suggestie;
-      artiest_suggestie.textContent = nummer.ai_suggestie.suggestie.artiest;
-      titel_suggestie.textContent = nummer.ai_suggestie.suggestie.titel;
+      ai_suggestieblok.classList.add("ai-suggestie");
     }
 
     container.appendChild(fragment);
   }
 
-  public get_waardes(): VrijeKeuzeItemWaardes {
-    return {
-      artiest: this.artiest_input.value.trim(),
-      titel: this.titel_input.value.trim(),
-      db: this.db_check.checked,
-    };
+  /**
+   * Geeft de titel en artiest terug zoals door de gebruiker bewerkt is.
+   *
+   * Geeft null terug als het nummer niet in de bewerkmodus staat.
+   */
+  public get_data(): { artiest: string; titel: string } | null {
+    if (this.status_bewerken) {
+      return {
+        artiest: this.artiest_input.value.trim(),
+        titel: this.titel_input.value.trim(),
+      };
+    } else {
+      return null;
+    }
   }
 
   public set_bezig(is_bezig: boolean): void {
@@ -512,11 +546,6 @@ class ItemView {
     }
   }
 
-  public kies_suggestie(artiest: string, titel: string): void {
-    this.artiest_input.value = artiest;
-    this.titel_input.value = titel;
-  }
-
   public verwijder(): void {
     for (const elem of this.elems) {
       elem.remove();
@@ -529,8 +558,15 @@ class ItemView {
     this.form.classList.add("mislukt");
   }
 
-  public wis_suggestie(): void {
-    this.suggestie.remove();
+  /**
+   * Zet het nummer in de bewerkmodus.
+   *
+   * Dit is één richting. Na het instellen van bewerken kan er niet meer teruggegaan worden naar de oorspronkelijke
+   * staat zonder opnieuw te laden.
+   */
+  public set_bewerken(): void {
+    this.form.classList.add("status-bewerken");
+    this.status_bewerken = true;
   }
 }
 

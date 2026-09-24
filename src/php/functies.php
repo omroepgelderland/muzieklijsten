@@ -284,15 +284,23 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
     );
     $ai_res = json_decode($openai_client->get_struct_response([
         'input' => json_encode($input),
-        'instructions' =>
-            'Controleer elk muzieknummer uit de invoer. Bepaal of het een echt'
-            . ' bestaand muzieknummer is en of zowel de titel als artiest'
-            . ' correct gespeld zijn. Zet is_correct alleen op true als het'
-            . ' nummer bestaat en titel en artiest correct zijn. Corrigeer de'
-            . ' titel en artiest indien mogelijk. Let ook op'
-            . ' hoofdlettergebruik. Gebruik een lege string voor een correctie'
-            . ' als geen betrouwbare correctie mogelijk is. Neem altijd het'
-            . ' oorspronkelijke ID ongewijzigd over.',
+        'instructions' => <<<'EOT'
+        Controleer voor elk muzieknummer of de opgegeven combinatie van artiest en titel echt bestaat en correct
+        geschreven is.
+
+        - Zet `is_correct` alleen op true als de opgegeven artiest het nummer daadwerkelijk heeft uitgevoerd of
+          uitgebracht en artiest en titel correct geschreven zijn.
+
+        - Corrigeer de aangeleverde artiest en titel: Let op spelling, hoofdlettergebruik, accenten, typfouten en laat
+          tekst die duidelijk geen onderdeel van de titel is weg.
+
+        - Behoud altijd zoveel mogelijk de bedoeling van de invoer. Vervang de artiest niet door de oorspronkelijke,
+          bekendste of gebruikelijkste uitvoerder als de opgegeven artiest zelf een bestaande uitvoering heeft.
+
+        - Geef alleen een correctie als deze betrouwbaar kan worden bepaald; gebruik anders een lege string.
+
+        - Neem het oorspronkelijke `id` altijd ongewijzigd over.
+        EOT,
         'model' => 'gpt-6-luna',
         'reasoning' => [
             'effort' => 'low',

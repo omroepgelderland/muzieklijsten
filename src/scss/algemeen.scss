@@ -41,3 +41,8 @@ table.table.dataTable.table-striped
   // Geen stripe kleur voor geselecteerde rijen
   box-shadow: inset 0 0 0 9999px rgba(var(--bs-primary-rgb), 0.95);
 }
+
+label.required::after {
+  content: " *";
+  color: var(--bs-danger);
+}

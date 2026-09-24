@@ -127,6 +127,9 @@ class Invoerveld {
       e_input.placeholder = placeholder;
     }
     e_input.required = verplicht;
+    if (verplicht) {
+      e_label.classList.add("required");
+    }
 
     document.getElementById("formulier-velden").appendChild(this.e_form_group);
   }

@@ -291,8 +291,8 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
         - Zet `is_correct` alleen op true als de opgegeven artiest het nummer daadwerkelijk heeft uitgevoerd of
           uitgebracht en artiest en titel correct geschreven zijn.
 
-        - Corrigeer de aangeleverde artiest en titel: Let op spelling, hoofdlettergebruik, accenten, typfouten en laat
-          tekst die duidelijk geen onderdeel van de titel is weg.
+        - Corrigeer de aangeleverde artiest en titel. Verbeter ook spelling, hoofdlettergebruik, accenten, typfouten en
+          laat tekst die duidelijk geen onderdeel van de titel is weg.
 
         - Behoud altijd zoveel mogelijk de bedoeling van de invoer. Vervang de artiest niet door de oorspronkelijke,
           bekendste of gebruikelijkste uitvoerder als de opgegeven artiest zelf een bestaande uitvoering heeft.

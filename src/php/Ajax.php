@@ -847,7 +847,7 @@ class Ajax
      *
      * Duurt lang want alle nummers worden gecheckt bij OpenAI.
      *
-     * Geeft max 15 nummers.
+     * Geeft max 50 nummers.
      *
      * De lijst is leeg als de OpenAI API key niet is ingesteld.
      *
@@ -886,7 +886,7 @@ class Ajax
             n.is_vrijekeuze = 1
             {$c_niet_ids}
         ORDER BY n.id
-        LIMIT 15
+        LIMIT 50
         EOT;
         $nummers = $this->factory->select_objecten(Nummer::class, $query);
         if (\count($nummers) === 0) {

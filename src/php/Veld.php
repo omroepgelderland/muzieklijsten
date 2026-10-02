@@ -129,11 +129,11 @@ class Veld
     {
         if (!isset($this->lijsten)) {
             $this->lijsten = [];
-            $sql = <<<EOT
+            $sql = <<<SQL
             SELECT lijst_id AS id
             FROM lijsten_velden
             WHERE veld_id = {$this->get_id()}
-            EOT;
+            SQL;
             $this->lijsten = $this->factory->select_objecten(Lijst::class, $sql);
         }
         return $this->lijsten;

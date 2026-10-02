@@ -156,13 +156,13 @@ class PowergoldImporter
             '","',
             $powergold_ids
         );
-        $aantal = (int)$this->db->selectSingle(<<<EOT
+        $aantal = (int)$this->db->selectSingle(<<<SQL
         SELECT COUNT(id)
         FROM `nummers`
         WHERE
             `muziek_id` IS NOT NULL
             AND `muziek_id` NOT IN ("{$i_powergold_ids}");
-        EOT);
+        SQL);
         if ($aantal > 0) {
             $ans = readline_met_default(
                 "{$aantal} nummers staan wel in de database, maar niet in de "
@@ -170,12 +170,12 @@ class PowergoldImporter
                 'n'
             );
             if (\strtolower(\trim($ans)) === 'j') {
-                $this->db->query(<<<EOT
+                $this->db->query(<<<SQL
                 DELETE FROM `nummers`
                 WHERE
                     `muziek_id` IS NOT NULL
                     AND `muziek_id` NOT IN ("{$i_powergold_ids}");
-                EOT);
+                SQL);
                 echo "{$aantal} nummers verwijderd.\n";
             }
         }
@@ -192,7 +192,7 @@ class PowergoldImporter
         $data = array_slice($data, 2);
 
         $db = $this->db->getDB();
-        $insert_query = <<<EOT
+        $insert_query = <<<'SQL'
         INSERT INTO `nummers` (
             `muziek_id`,
             `titel`,
@@ -205,8 +205,8 @@ class PowergoldImporter
             `vgl_titel`,
             `vgl_artiest`
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        EOT;
-        $update_query = <<<EOT
+        SQL;
+        $update_query = <<<'SQL'
         UPDATE nummers
         SET
             muziek_id = ?,
@@ -222,7 +222,7 @@ class PowergoldImporter
             vgl_artiest = ?
         WHERE
             id = ?
-        EOT;
+        SQL;
         $insert = $db->prepare($insert_query);
         if ($insert === false) {
             throw new SQLException('Prepared statement mislukt: ' . $db->error, $db->errno);
@@ -324,7 +324,7 @@ class PowergoldImporter
             // de titels met dat jaartal matches.
             $cond_jaar = $jaar === null ? '' : "AND (`jaar` = {$jaar} OR `jaar` IS NULL)";
             $e_powergold_id = $this->db->escape_string($powergold_id);
-            $query = <<<EOT
+            $query = <<<SQL
             SELECT id
             FROM nummers
             WHERE
@@ -335,7 +335,7 @@ class PowergoldImporter
                     {$cond_jaar}
                 )
             ORDER BY id
-            EOT;
+            SQL;
 
             $nummer_ids = \array_map(fn($i) => (int)$i, $this->db->selectSingleColumn($query));
             $nummer_id = \array_shift($nummer_ids);

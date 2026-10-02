@@ -166,11 +166,11 @@ class Nummer
     public function get_lijsten(): array
     {
         if (!isset($this->lijsten)) {
-            $query = <<<EOT
+            $query = <<<SQL
             SELECT lijst_id AS id
             FROM lijsten_nummers
             WHERE nummer_id = {$this->get_id()}
-            EOT;
+            SQL;
             $this->lijsten = $this->factory->select_objecten(Lijst::class, $query);
         }
         return $this->lijsten;
@@ -184,11 +184,11 @@ class Nummer
     public function get_stemmers(): array
     {
         if (!isset($this->stemmers)) {
-            $query = <<<EOT
+            $query = <<<SQL
             SELECT stemmer_id AS id
             FROM stemmers_nummers
             WHERE nummer_id = {$this->get_id()}
-            EOT;
+            SQL;
             $this->stemmers = $this->factory->select_objecten(Stemmer::class, $query);
         }
         return $this->stemmers;

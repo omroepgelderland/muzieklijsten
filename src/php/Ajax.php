@@ -316,14 +316,14 @@ class Ajax
                 $vgl_artiest = $this->db->escape_string(get_vgl_string($artiest, true));
                 $vgl_titel = $this->db->escape_string(get_vgl_string($titel, false));
                 $jaar_cond = isset($jaar) ? "AND (`jaar` = {$jaar} OR `jaar` IS NULL)" : '';
-                $sql = <<<EOT
+                $sql = <<<SQL
                 SELECT id
                 FROM nummers
                 WHERE
                     `vgl_artiest` = "{$vgl_artiest}"
                     AND `vgl_titel` = "{$vgl_titel}"
                     {$jaar_cond}
-                EOT;
+                SQL;
                 $res = $this->db->query($sql);
                 if ($res->num_rows > 0) {
                     $json['dubbel']++;
@@ -476,11 +476,23 @@ class Ajax
                     $fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl'
                     . '%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D' . $stemmer->get_id() . '&amp;src=sdkpreparse';
                 }
-                $html .= <<<EOT
-                <div class="fb-share-button" data-href="{$fbshare_url}" data-layout="button" data-size="large" data-mobile-iframe="true">
-                    <a class="fb-xfbml-parse-ignore" target="_blank" href="{$fb_url}">Deel mijn keuze op Facebook</a>
+                $html .= <<<HTML
+                <div
+                    class="fb-share-button"
+                    data-href="{$fbshare_url}"
+                    data-layout="button"
+                    data-size="large"
+                    data-mobile-iframe="true"
+                >
+                    <a
+                        class="fb-xfbml-parse-ignore"
+                        target="_blank"
+                        href="{$fb_url}"
+                    >
+                        Deel mijn keuze op Facebook
+                    </a>
                 </div>
-                EOT;
+                HTML;
             }
         } catch (BlacklistException) {
         }
@@ -1170,7 +1182,7 @@ class Ajax
         );
         $i_niet_ids = \implode(',', $niet_ids);
         $c_niet_ids = \count($niet_ids) === 0 ? '' : "AND n.id NOT IN ({$i_niet_ids})";
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT DISTINCT n.id
         FROM nummers n
         INNER JOIN stemmers_nummers sn ON
@@ -1183,7 +1195,7 @@ class Ajax
             {$c_niet_ids}
         ORDER BY n.id
         LIMIT 50
-        EOT;
+        SQL;
         $nummers = $this->factory->select_objecten(Nummer::class, $query);
         if (\count($nummers) === 0) {
             return [];
@@ -1223,7 +1235,7 @@ class Ajax
 
         $e_titel = $this->db->escape_string($vgl_titel);
         $e_artiest = $this->db->escape_string($vgl_artiest);
-        $duplicaten_query = <<<EOT
+        $duplicaten_query = <<<SQL
         SELECT id
         FROM nummers
         WHERE
@@ -1231,7 +1243,7 @@ class Ajax
             AND vgl_titel = "{$e_titel}"
             AND vgl_artiest = "{$e_artiest}"
         ORDER BY id
-        EOT;
+        SQL;
         /** @var list<int> $ids */
         $ids = [
             $nummer_id,
@@ -1277,10 +1289,10 @@ class Ajax
 
         // $nummer = $this->factory->create_nummer_uit_request($this->request);
         $nummer_id = (int)\filter_var($this->request->nummer, \FILTER_VALIDATE_INT);
-        $query = <<<EOT
+        $query = <<<SQL
         DELETE FROM nummers
         WHERE id = {$nummer_id}
-        EOT;
+        SQL;
         $this->db->query($query);
         $this->db->verwijder_stemmers_zonder_stemmen();
 

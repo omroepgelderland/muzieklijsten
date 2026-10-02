@@ -211,45 +211,45 @@ class SSP
 
         try {
             $lijst = $this->get_lijst();
-            $basis_query = <<<EOT
-                FROM nummers n
-                INNER JOIN lijsten_nummers l ON
-                    n.id = l.nummer_id
-                    AND l.lijst_id = {$lijst->get_id()}
-            EOT;
+            $basis_query = <<<SQL
+            FROM nummers n
+            INNER JOIN lijsten_nummers l ON
+                n.id = l.nummer_id
+                AND l.lijst_id = {$lijst->get_id()}
+            SQL;
             // Resultaten
-            $query = <<<EOT
-                SELECT n.id, n.titel, n.artiest, n.jaar 
-                {$basis_query} {$where} {$order} {$limit}
-            EOT;
+            $query = <<<SQL
+            SELECT n.id, n.titel, n.artiest, n.jaar 
+            {$basis_query} {$where} {$order} {$limit}
+            SQL;
             // Aantal resultaten
-            $count_query = <<<EOT
-                SELECT COUNT(n.id)
-                {$basis_query} {$where}
-            EOT;
+            $count_query = <<<SQL
+            SELECT COUNT(n.id)
+            {$basis_query} {$where}
+            SQL;
             // Total data set length
-            $total_length_query = <<<EOT
-                SELECT COUNT(n.id) 
-                {$basis_query}
-            EOT;
+            $total_length_query = <<<SQL
+            SELECT COUNT(n.id) 
+            {$basis_query}
+            SQL;
         } catch (GLDException $e) {
             $select = implode("`, `", self::pluck($this->kolommen, 'db'));
             $basis_query = "FROM nummers";
             // Resultaten
-            $query = <<<EOT
-                SELECT `{$select}`
-                {$basis_query} {$where} {$order} {$limit}
-            EOT;
+            $query = <<<SQL
+            SELECT `{$select}`
+            {$basis_query} {$where} {$order} {$limit}
+            SQL;
             // Aantal resultaten
-            $count_query = <<<EOT
-                SELECT COUNT(id)
-                {$basis_query} {$where}
-            EOT;
+            $count_query = <<<SQL
+            SELECT COUNT(id)
+            {$basis_query} {$where}
+            SQL;
             // Total data set length
-            $total_length_query = <<<EOT
-                SELECT COUNT(id)
-                FROM nummers
-            EOT;
+            $total_length_query = <<<SQL
+            SELECT COUNT(id)
+            FROM nummers
+            SQL;
         }
         $data = $this->db->query($query);
 

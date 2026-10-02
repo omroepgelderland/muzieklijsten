@@ -211,16 +211,16 @@ function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
         return;
     }
     $i_duplicaten_ids = \implode(',', $duplicaten_ids);
-    $db->query(<<<EOT
+    $db->query(<<<SQL
     UPDATE IGNORE `lijsten_nummers`
     SET `nummer_id` = {$id}
     WHERE `nummer_id` IN ({$i_duplicaten_ids});
-    EOT);
-    $db->query(<<<EOT
+    SQL);
+    $db->query(<<<SQL
     UPDATE IGNORE `stemmers_nummers`
     SET `nummer_id` = {$id}
     WHERE `nummer_id` IN ({$i_duplicaten_ids});
-    EOT);
+    SQL);
     $db->query("DELETE FROM nummers WHERE id IN ({$i_duplicaten_ids})");
     $db->verwijder_stemmers_zonder_stemmen();
 }

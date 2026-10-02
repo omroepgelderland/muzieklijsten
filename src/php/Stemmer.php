@@ -339,12 +339,12 @@ class Stemmer
      */
     public function get_stemmen(): array
     {
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT *
         FROM stemmers_nummers
         WHERE
             stemmer_id = {$this->get_id()}
-        EOT;
+        SQL;
         $stemmen = [];
         foreach ($this->db->query($query) as $entry) {
             $stemmen[] = $this->factory->create_stemmer_nummer(
@@ -361,11 +361,11 @@ class Stemmer
      */
     public function verwijder_stemmen(): void
     {
-        $query = <<<EOT
+        $query = <<<SQL
         DELETE FROM stemmers_nummers
         WHERE
             stemmer_id = {$this->get_id()}
-        EOT;
+        SQL;
         $this->db->query($query);
         $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
     }
@@ -375,11 +375,11 @@ class Stemmer
      */
     public function verwijder_velden(): void
     {
-        $query = <<<EOT
+        $query = <<<SQL
         DELETE FROM stemmers_velden
         WHERE
             stemmer_id = {$this->get_id()}
-        EOT;
+        SQL;
         $this->db->query($query);
     }
 
@@ -406,14 +406,14 @@ class Stemmer
      */
     private function anonimiseer_toelichtingen(): void
     {
-        $query = <<<EOT
-            SELECT nummer_id, toelichting
-            FROM stemmers_nummers
-            WHERE
-                stemmer_id = {$this->id}
-                AND toelichting IS NOT NULL
-                AND toelichting != ''
-        EOT;
+        $query = <<<SQL
+        SELECT nummer_id, toelichting
+        FROM stemmers_nummers
+        WHERE
+            stemmer_id = {$this->id}
+            AND toelichting IS NOT NULL
+            AND toelichting != ''
+        SQL;
         foreach ($this->db->query($query) as ['nummer_id' => $nummer_id, 'toelichting' => $toelichting]) {
             $nummer_id = (int)$nummer_id;
             $this->db->updateMulti(
@@ -429,14 +429,14 @@ class Stemmer
      */
     private function anonimiseer_velden(): void
     {
-        $query = <<<EOT
-            SELECT veld_id, waarde
-            FROM stemmers_velden
-            WHERE
-                stemmer_id = {$this->id}
-                AND waarde IS NOT NULL
-                AND waarde != ''
-        EOT;
+        $query = <<<SQL
+        SELECT veld_id, waarde
+        FROM stemmers_velden
+        WHERE
+            stemmer_id = {$this->id}
+            AND waarde IS NOT NULL
+            AND waarde != ''
+        SQL;
         foreach ($this->db->query($query) as ['veld_id' => $veld_id, 'waarde' => $waarde]) {
             $veld_id = (int)$veld_id;
             $this->db->updateMulti(
@@ -455,13 +455,13 @@ class Stemmer
     {
         $this->verwijder_dubbele_artiesten_stemmen();
 
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT is_vrijekeuze, COUNT(nummer_id) AS aantal
         FROM stemmers_nummers
         WHERE
-        stemmer_id = {$this->get_id()}
+            stemmer_id = {$this->get_id()}
         GROUP BY is_vrijekeuze
-        EOT;
+        SQL;
         $aantal_vrije_keuzes = 0;
         $aantal_niet_vrije_keuzes = 0;
         foreach (
@@ -481,7 +481,7 @@ class Stemmer
 
         // Verwijder overschot aan niet-vrije keuzes
         if ($overschot_niet_vrije_keuzes > 0) {
-            $query = <<<EOT
+            $query = <<<SQL
             DELETE
             FROM stemmers_nummers
             WHERE
@@ -489,12 +489,12 @@ class Stemmer
                 AND is_vrijekeuze = 0
             ORDER BY RAND()
             LIMIT {$overschot_niet_vrije_keuzes}
-            EOT;
+            SQL;
             $this->db->query($query);
         }
         // Verwijder overschot aan vrije keuzes
         if ($overschot_vrije_keuzes > 0) {
-            $query = <<<EOT
+            $query = <<<SQL
             DELETE
             FROM stemmers_nummers
             WHERE
@@ -502,7 +502,7 @@ class Stemmer
                 AND is_vrijekeuze = 1
             ORDER BY RAND()
             LIMIT {$overschot_vrije_keuzes}
-            EOT;
+            SQL;
             $this->db->query($query);
         }
     }
@@ -521,7 +521,7 @@ class Stemmer
             return;
         }
 
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT
             GROUP_CONCAT(n.id)
         FROM stemmers_nummers sn
@@ -532,7 +532,7 @@ class Stemmer
         GROUP BY n.artiest
         HAVING
             COUNT(n.id) > 1
-        EOT;
+        SQL;
         $verwijder_stemmen_nummer_ids = [];
         foreach ($this->db->selectSingleColumn($query) as $idlijst) {
             $ids = \array_map(fn($id) => (int)$id, \explode(',', (string)$idlijst));
@@ -542,13 +542,13 @@ class Stemmer
         }
         if (\count($verwijder_stemmen_nummer_ids) > 0) {
             $i_ids = \implode(',', $verwijder_stemmen_nummer_ids);
-            $query = <<<EOT
+            $query = <<<SQL
             DELETE
             FROM stemmers_nummers
             WHERE
                 stemmer_id = {$this->get_id()}
                 AND nummer_id IN ({$i_ids})
-            EOT;
+            SQL;
             $this->db->query($query);
         }
     }

@@ -20,7 +20,7 @@ class HTMLTemplate
      */
     public function __construct(string $source = '', int $options = 0)
     {
-        $template = <<<EOT
+        $template = <<<HTML
         <!doctype html>
         <html>
             <head>
@@ -29,7 +29,7 @@ class HTMLTemplate
             </head>
             <body>{$source}</body>
         </html>
-        EOT;
+        HTML;
         $this->doc = new \DOMDocument();
         $this->doc->loadHTML($template, $options);
         $this->body = $this->doc->getElementsByTagName('body')->item(0);

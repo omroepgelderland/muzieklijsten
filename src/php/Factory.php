@@ -312,7 +312,7 @@ class Factory
         }
         $q_artiest = $this->db->escape_string($vgl_artiest);
         $q_titel = $this->db->escape_string($vgl_titel);
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT id
         FROM nummers
         WHERE
@@ -320,7 +320,7 @@ class Factory
             AND vgl_titel = "{$q_titel}"
         ORDER BY id
         LIMIT 1
-        EOT;
+        SQL;
         $nummers = $this->select_objecten(Nummer::class, $query);
         if (count($nummers) > 0) {
             return $nummers[0];

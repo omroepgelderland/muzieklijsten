@@ -188,12 +188,12 @@ class Lijst
     {
         if (!isset($this->velden)) {
             $this->velden = [];
-            $query = <<<EOT
-                SELECT veld_id, verplicht
-                FROM lijsten_velden
-                WHERE lijst_id = {$this->get_id()}
-                ORDER BY veld_id
-            EOT;
+            $query = <<<SQL
+            SELECT veld_id, verplicht
+            FROM lijsten_velden
+            WHERE lijst_id = {$this->get_id()}
+            ORDER BY veld_id
+            SQL;
             foreach ($this->db->query($query) as $entry) {
                 $id = (int)$entry['veld_id'];
                 $verplicht = (bool)$entry['verplicht'];
@@ -209,7 +209,7 @@ class Lijst
     public function get_alle_velden_data(): array
     {
         $respons = [];
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT
             v.id,
             v.label,
@@ -220,7 +220,7 @@ class Lijst
             lv.lijst_id = {$this->get_id()}
             AND lv.veld_id = v.id
         ORDER BY v.id
-        EOT;
+        SQL;
         foreach (
             $this->db->query($query) as [
                 'id' => $id,
@@ -247,11 +247,11 @@ class Lijst
     public function get_nummers(): array
     {
         if (!isset($this->nummers)) {
-            $query = <<<EOT
+            $query = <<<SQL
             SELECT nummer_id AS id
             FROM lijsten_nummers
             WHERE lijst_id = {$this->get_id()}
-            EOT;
+            SQL;
             $this->nummers = $this->factory->select_objecten(Nummer::class, $query);
         }
         return $this->nummers;
@@ -263,11 +263,11 @@ class Lijst
     private function get_alle_stemmers(): array
     {
         if (!isset($this->stemmers)) {
-            $query = <<<EOT
+            $query = <<<SQL
             SELECT id
             FROM stemmers
             WHERE lijst_id = {$this->id}
-            EOT;
+            SQL;
             $this->stemmers = $this->factory->select_objecten(Stemmer::class, $query);
         }
         return $this->stemmers;
@@ -295,13 +295,13 @@ class Lijst
             $where[] = "DATE(timestamp) <= \"{$tot->format('Y-m-d')}\"";
         }
         $where_str = implode(' AND ', $where);
-        $query = <<<EOT
-            SELECT id
-            FROM stemmers
-            WHERE
-                lijst_id = {$this->get_id()}
-                AND {$where_str}
-        EOT;
+        $query = <<<SQL
+        SELECT id
+        FROM stemmers
+        WHERE
+            lijst_id = {$this->get_id()}
+            AND {$where_str}
+        SQL;
         return $this->factory->select_objecten(Stemmer::class, $query);
     }
 
@@ -313,14 +313,14 @@ class Lijst
     public function get_nummers_sorteer_titels(): array
     {
         $nummers = [];
-        $sql = <<<EOT
-            SELECT n.*
-            FROM nummers n
-            INNER JOIN lijsten_nummers nl ON
-                nl.lijst_id = {$this->get_id()}
-                AND nl.nummer_id = n.id
-            ORDER BY n.titel
-        EOT;
+        $sql = <<<SQL
+        SELECT n.*
+        FROM nummers n
+        INNER JOIN lijsten_nummers nl ON
+            nl.lijst_id = {$this->get_id()}
+            AND nl.nummer_id = n.id
+        ORDER BY n.titel
+        SQL;
         foreach ($this->db->query($sql) as $entry) {
             $nummers[] = $this->factory->create_nummer((int)$entry['id'], $entry);
         }
@@ -357,13 +357,13 @@ class Lijst
         }
         $where_str = implode(' AND ', $where);
         $on_str = implode(' AND ', $on);
-        $query = <<<EOT
-            SELECT sn.*
-            FROM stemmers_nummers sn
-            INNER JOIN stemmers s ON {$on_str}
-            WHERE
-                {$where_str}
-        EOT;
+        $query = <<<SQL
+        SELECT sn.*
+        FROM stemmers_nummers sn
+        INNER JOIN stemmers s ON {$on_str}
+        WHERE
+            {$where_str}
+        SQL;
         $stemmen = [];
         foreach ($this->db->query($query) as $entry) {
             $stem_nummer = $nummer ?? $this->factory->create_nummer((int)$entry['nummer_id']);
@@ -397,15 +397,15 @@ class Lijst
             $datumvoorwaarden[] = "DATE(s.timestamp) <= \"{$tot->format('Y-m-d')}\"";
         }
         $datumvoorwaarden_str = implode(' AND ', $datumvoorwaarden);
-        $query = <<<EOT
-            SELECT sn.nummer_id AS id
-            FROM stemmers_nummers sn
-            INNER JOIN stemmers s ON
-                s.lijst_id = {$this->id}
-                {$datumvoorwaarden_str}
-            GROUP BY sn.nummer_id
-            ORDER BY COUNT(sn.stemmer_id) DESC
-        EOT;
+        $query = <<<SQL
+        SELECT sn.nummer_id AS id
+        FROM stemmers_nummers sn
+        INNER JOIN stemmers s ON
+            s.lijst_id = {$this->id}
+            {$datumvoorwaarden_str}
+        GROUP BY sn.nummer_id
+        ORDER BY COUNT(sn.stemmer_id) DESC
+        SQL;
         return $this->factory->select_objecten(Nummer::class, $query);
     }
 
@@ -520,70 +520,70 @@ class Lijst
     {
         // Nieuwe lijst maken.
         $e_naam = $this->db->escape_string($naam);
-        $query = <<<EOT
-            INSERT INTO lijsten
-                (
-                    actief,
-                    naam,
-                    minkeuzes,
-                    maxkeuzes,
-                    stemmen_per_ip,
-                    artiest_eenmalig,
-                    recaptcha,
-                    email,
-                    bedankt_tekst,
-                    mail_stemmers,
-                    random_volgorde
-                )
-                SELECT
-                    0,
-                    "{$e_naam}",
-                    minkeuzes,
-                    maxkeuzes,
-                    stemmen_per_ip,
-                    artiest_eenmalig,
-                    recaptcha,
-                    email,
-                    bedankt_tekst,
-                    mail_stemmers,
-                    random_volgorde
-                FROM lijsten
-                WHERE id = {$this->get_id()}
-        EOT;
+        $query = <<<SQL
+        INSERT INTO lijsten
+            (
+                actief,
+                naam,
+                minkeuzes,
+                maxkeuzes,
+                stemmen_per_ip,
+                artiest_eenmalig,
+                recaptcha,
+                email,
+                bedankt_tekst,
+                mail_stemmers,
+                random_volgorde
+            )
+            SELECT
+                0,
+                "{$e_naam}",
+                minkeuzes,
+                maxkeuzes,
+                stemmen_per_ip,
+                artiest_eenmalig,
+                recaptcha,
+                email,
+                bedankt_tekst,
+                mail_stemmers,
+                random_volgorde
+            FROM lijsten
+            WHERE id = {$this->get_id()}
+        SQL;
         $this->db->query($query);
         $nieuw_id = $this->db->getDB()->insert_id;
 
         // Velden koppelen
-        $query = <<<EOT
-            INSERT INTO lijsten_velden
-                (lijst_id, veld_id, verplicht)
-                SELECT
-                    {$nieuw_id},
-                    veld_id,
-                    verplicht
-                FROM lijsten_velden
-                WHERE lijst_id = {$this->get_id()}
-        EOT;
+        $query = <<<SQL
+        INSERT INTO lijsten_velden
+            (lijst_id, veld_id, verplicht)
+            SELECT
+                {$nieuw_id},
+                veld_id,
+                verplicht
+            FROM lijsten_velden
+            WHERE lijst_id = {$this->get_id()}
+        SQL;
         $this->db->query($query);
 
         // Nummers koppelen
-        $query = <<<EOT
-            INSERT INTO lijsten_nummers
-                (nummer_id, lijst_id)
-                SELECT nummer_id, {$nieuw_id}
-                FROM lijsten_nummers
-                WHERE lijst_id = {$this->get_id()}
-        EOT;
+        $query = <<<SQL
+        INSERT INTO lijsten_nummers
+            (nummer_id, lijst_id)
+            SELECT nummer_id, {$nieuw_id}
+            FROM lijsten_nummers
+            WHERE lijst_id = {$this->get_id()}
+        SQL;
         $this->db->query($query);
 
         // Stemmen verplaatsen
-        $query = <<<EOT
-            UPDATE stemmers
-            SET
-                lijst_id = {$nieuw_id}
-            WHERE
-                lijst_id = {$this->get_id()}
-        EOT;
+        $query = <<<SQL
+        UPDATE stemmers
+        SET
+            lijst_id = {$nieuw_id}
+        WHERE
+            lijst_id = {$this->get_id()}
+        SQL;
         $this->db->query($query);
         $this->stemmers = [];
 
@@ -595,14 +595,14 @@ class Lijst
         if ($this->get_max_stemmen_per_ip() === null) {
             return false;
         }
-        $query = <<<EOT
-            SELECT
-                COUNT(s.id) >= {$this->get_max_stemmen_per_ip()}
-            FROM stemmers s
-            WHERE
-                s.lijst_id = {$this->id}
-                AND s.ip = "{$_SERVER['REMOTE_ADDR']}"
-        EOT;
+        $query = <<<SQL
+        SELECT
+            COUNT(s.id) >= {$this->get_max_stemmen_per_ip()}
+        FROM stemmers s
+        WHERE
+            s.lijst_id = {$this->id}
+            AND s.ip = "{$_SERVER['REMOTE_ADDR']}"
+        SQL;
         return (bool)$this->db->selectSingle($query);
     }
 
@@ -634,17 +634,17 @@ class Lijst
     public function verwijder_nummer(Nummer $nummer): void
     {
         // Verwijder de koppeling.
-        $query = <<<EOT
+        $query = <<<SQL
         DELETE
         FROM lijsten_nummers
         WHERE
             nummer_id = {$nummer->get_id()}
             AND lijst_id = {$this->id}
-        EOT;
+        SQL;
         $this->db->query($query);
 
         // Verwijder stemmen en stemmers
-        $query = <<<EOT
+        $query = <<<SQL
         DELETE s, sn
         FROM stemmers_nummers sn
         INNER JOIN stemmen s ON
@@ -652,7 +652,7 @@ class Lijst
             AND s.lijst_id = {$this->id}
         WHERE
             sn.nummer_id = {$nummer->get_id()}
-        EOT;
+        SQL;
 
         $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
         $this->db->verwijder_stemmers_zonder_stemmen();
@@ -679,13 +679,13 @@ class Lijst
 
     public function remove_veld(Veld $veld): void
     {
-        $query = <<<EOT
+        $query = <<<SQL
         DELETE
         FROM lijsten_velden
         WHERE
             lijst_id = {$this->get_id()}
             AND veld_id = {$veld->get_id()}
-        EOT;
+        SQL;
         $this->db->query($query);
     }
 
@@ -694,7 +694,7 @@ class Lijst
      */
     public function get_resultaten(): array
     {
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT
             n.id as nummer_id,
             sn.is_vrijekeuze,
@@ -745,7 +745,7 @@ class Lijst
             s.id,
             v.id,
             RAND()
-        EOT;
+        SQL;
         $nummers = [];
         foreach (
             $this->db->query($query) as [
@@ -866,7 +866,7 @@ class Lijst
                 \filter_var($email, \FILTER_SANITIZE_EMAIL)
             )
         );
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT sn.stemmer_id AS id
         FROM stemmers_nummers sn
         INNER JOIN stemmers s ON
@@ -876,7 +876,7 @@ class Lijst
             sv.stemmer_id = sn.stemmer_id
             AND sv.veld_id = 6
             AND sv.waarde = "{$e_email}"
-        EOT;
+        SQL;
         try {
             return $this->factory->select_objecten(Stemmer::class, $query)[0];
         } catch (IndexException) {
@@ -893,7 +893,7 @@ class Lijst
     public function get_stemmer_uit_telefoonnummer(string $telefoonnummer): ?Stemmer
     {
         $e_telefoonnummer = filter_telefoonnummer($telefoonnummer);
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT sn.stemmer_id AS id
         FROM stemmers_nummers sn
         INNER JOIN stemmers s ON
@@ -903,7 +903,7 @@ class Lijst
             sv.stemmer_id = sn.stemmer_id
             AND sv.veld_id = 5
             AND sv.waarde = "{$e_telefoonnummer}"
-        EOT;
+        SQL;
         try {
             return $this->factory->select_objecten(Stemmer::class, $query)[0];
         } catch (IndexException) {

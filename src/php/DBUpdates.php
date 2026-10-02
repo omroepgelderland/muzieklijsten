@@ -24,18 +24,18 @@ class DBUpdates
      */
     public function update_1(): void
     {
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         CREATE TABLE `versie` (
             `versie` int(10) unsigned NOT NULL,
             PRIMARY KEY (`versie`)
            ) ENGINE=InnoDB;
-        EOT);
+        SQL);
         $this->db->insertMulti('versie', ['versie' => 1]);
     }
 
     public function update_2(): void
     {
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         ALTER TABLE `lijsten`
             DROP `veld_telefoonnummer`,
             DROP `veld_email`,
@@ -43,8 +43,8 @@ class DBUpdates
             DROP `veld_adres`,
             DROP `veld_uitzenddatum`,
             DROP `veld_vrijekeus`;
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmers`
             DROP `naam`,
             DROP `adres`,
@@ -54,7 +54,7 @@ class DBUpdates
             DROP `emailadres`,
             DROP `uitzenddatum`,
             DROP `vrijekeus`;
-        EOT);
+        SQL);
     }
 
     public function update_3(): void
@@ -81,68 +81,68 @@ class DBUpdates
 
     public function update_6(): void
     {
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmers`
             ADD `lijst_id` INT UNSIGNED NOT NULL AFTER `id`, ADD INDEX (`lijst_id`);
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         UPDATE stemmers
         JOIN stemmen ON
             stemmers.id = stemmen.stemmer_id
         SET
             stemmers.lijst_id = stemmen.lijst_id
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmers`
             ADD FOREIGN KEY (`lijst_id`) REFERENCES `lijsten`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-        EOT);
+        SQL);
 
         // alle indexen droppen in stemmen behalve stemmer_id
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmen` DROP INDEX `lijst_id_2`;
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmen` DROP INDEX `lijst_id`;
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmen` DROP PRIMARY KEY;
-        EOT);
+        SQL);
 
         // drop foreign key lijst_id en dan kolom lijst_id
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         ALTER TABLE stemmen DROP FOREIGN KEY stemmen_ibfk_2;
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmen` DROP `lijst_id`;
-        EOT);
+        SQL);
 
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmen` ADD UNIQUE (`nummer_id`, `stemmer_id`);
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         ALTER TABLE `stemmen` ADD PRIMARY KEY (`nummer_id`, `stemmer_id`);
-        EOT);
-        $this->db->query(<<<EOT
+        SQL);
+        $this->db->query(<<<'SQL'
         RENAME TABLE `stemmen` TO `stemmers_nummers`;
-        EOT);
+        SQL);
     }
 
     public function update_7(): void
     {
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         ALTER TABLE `nummers`
         ADD `duur` INT UNSIGNED NULL DEFAULT NULL AFTER `opener`;
-        EOT);
+        SQL);
     }
 
     public function update_8(): void
     {
-        $this->db->query(<<<EOT
+        $this->db->query(<<<'SQL'
         ALTER TABLE `nummers`
         ADD `vgl_titel` VARCHAR(128) CHARACTER SET ascii
             COLLATE ascii_general_ci NOT NULL AFTER `is_vrijekeuze`,
         ADD `vgl_artiest` VARCHAR(128) CHARACTER SET ascii
             COLLATE ascii_general_ci NOT NULL AFTER `vgl_titel`;
-        EOT);
+        SQL);
     }
 }

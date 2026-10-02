@@ -83,11 +83,11 @@ class StemmerNummer
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $query = <<<EOT
-                SELECT *
-                FROM stemmers_nummers
-                WHERE {$this->get_where_voorwaarden()}
-            EOT;
+            $query = <<<SQL
+            SELECT *
+            FROM stemmers_nummers
+            WHERE {$this->get_where_voorwaarden()}
+            SQL;
             $this->set_data($this->db->selectSingleRow($query));
         }
     }
@@ -107,10 +107,10 @@ class StemmerNummer
 
     private function get_where_voorwaarden(): string
     {
-        return <<<EOT
+        return <<<SQL
             nummer_id = {$this->nummer->get_id()}
             AND stemmer_id = {$this->stemmer->get_id()}
-        EOT;
+        SQL;
     }
 
     /**

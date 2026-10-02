@@ -21,13 +21,13 @@ function anonimiseer_stemmers(DB $db, Factory $factory): void
     $db->disableAutocommit();
 
     $toen = (new \DateTime())->sub(new \DateInterval('P3M'));
-    $query = <<<EOT
-        SELECT id
-        FROM stemmers
-        WHERE
-            is_geanonimiseerd = 0
-            AND timestamp < "{$toen->format('Y-m-d H:i:s')}"
-    EOT;
+    $query = <<<SQL
+    SELECT id
+    FROM stemmers
+    WHERE
+        is_geanonimiseerd = 0
+        AND timestamp < "{$toen->format('Y-m-d H:i:s')}"
+    SQL;
     foreach ($factory->select_objecten(Stemmer::class, $query) as $stemmer) {
         $stemmer->anonimiseer();
     }
@@ -162,14 +162,14 @@ function get_fbshare_data(Factory $factory, Config $config, Log $log, DB $db): o
     try {
         $stemmer = $factory->create_stemmer_uit_request((object)$_GET);
 
-        $query = <<<EOT
+        $query = <<<SQL
         SELECT n.artiest, n.titel
         FROM nummers n
         INNER JOIN stemmers_nummers sn ON
             sn.nummer_id = n.id
             AND sn.stemmer_id = {$stemmer->get_id()}
         ORDER BY n.artiest, n.titel
-        EOT;
+        SQL;
         $res = $db->query($query);
         $nummers_meta = [];
         $nummers_html_str = '';
@@ -320,11 +320,11 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
     $db_root_user = readline_met_default('MySQL user met rechten voor maken van databases en gebruikers', 'root');
     $db_root_password = readline_met_default('Wachtwoord (leeglaten bij authenticatie met auth_socket)');
     $root_password_param = $db_root_password === '' ? '' : "-p '{$db_root_password}'";
-    $root_queries = <<<EOT
+    $root_queries = <<<SQL
     CREATE DATABASE IF NOT EXISTS `{$sql_database}`;
     CREATE USER IF NOT EXISTS "{$sql_user}"@"{$sql_server}" IDENTIFIED BY "{$sql_password}";
     GRANT ALL PRIVILEGES ON `{$sql_database}`.* TO "{$sql_user}"@"{$sql_server}";
-    EOT;
+    SQL;
     exec("sudo mysql -u {$db_root_user} {$root_password_param} -e '{$root_queries}'", $output, $result_code);
     if ($result_code !== 0) {
         echo implode('\n', $output) . "\n";
@@ -368,14 +368,14 @@ function vgl_bijwerken(\muzieklijsten\DB $db): void
     $vgl_titel =
         $vgl_artiest =
         $nummer_id = null;
-    $update_query = <<<EOT
+    $update_query = <<<'SQL'
     UPDATE nummers
     SET
         vgl_titel = ?,
         vgl_artiest = ?
     WHERE
         id = ?
-    EOT;
+    SQL;
     $update = $db->getDB()->prepare($update_query);
     $update->bind_param(
         'ssi',
@@ -384,11 +384,11 @@ function vgl_bijwerken(\muzieklijsten\DB $db): void
         $nummer_id,
     );
 
-    $query = <<<EOT
+    $query = <<<'SQL'
     SELECT id, artiest, titel
     FROM nummers
     ORDER BY id
-    EOT;
+    SQL;
     foreach ($db->query($query) as $entry) {
         $nummer_id = (int)$entry['id'];
         $artiest = $entry['artiest'];

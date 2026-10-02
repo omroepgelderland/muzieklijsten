@@ -575,7 +575,7 @@ class DB
      */
     public function verwijder_ongekoppelde_vrije_keuze_nummers(): void
     {
-        $this->query(<<<EOT
+        $this->query(<<<'SQL'
         DELETE n
         FROM nummers n
         WHERE
@@ -584,7 +584,7 @@ class DB
                 SELECT nummer_id
                 FROM stemmers_nummers
             )
-        EOT);
+        SQL);
     }
 
     /**
@@ -592,14 +592,14 @@ class DB
      */
     public function verwijder_stemmers_zonder_stemmen(): void
     {
-        $query = <<<EOT
+        $query = <<<'SQL'
         DELETE
         FROM stemmers
         WHERE id NOT IN (
             SELECT stemmer_id
             FROM stemmers_nummers
         )
-        EOT;
+        SQL;
         $this->query($query);
     }
 }

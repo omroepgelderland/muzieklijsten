@@ -20,7 +20,8 @@
     "ext-mysqli": "*",
     "ext-intl": "*",
     "omroepgelderland/phpstdlib": "^3.0",
-    "php-di/php-di": "^7.0"
+    "php-di/php-di": "^7.0",
+    "phpoffice/phpspreadsheet": "^2.4"
   },
   "autoload": {
     "psr-4": {

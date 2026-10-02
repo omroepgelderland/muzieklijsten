@@ -466,6 +466,8 @@ class ResultatenModal {
   e_totaal_aantal_stemmers;
   /** @type {HTMLFormElement} */
   e_filters_form;
+  /** @type {HTMLButtonElement} */
+  e_exportknop;
   /** @type {HTMLTableSectionElement} */
   e_resultaten_tabel;
   /** @type {{[key: number]: ResultatenNummer}} */
@@ -493,6 +495,7 @@ class ResultatenModal {
     this.e_filters_form = this.e_modal.querySelector("form.filters");
     this.e_filters_form.addEventListener("submit", this.filter.bind(this));
     this.e_filters_form.addEventListener("reset", this.filter_reset.bind(this));
+    this.e_exportknop = this.e_modal.querySelector("#export-resultaten");
     this.e_resultaten_tabel = this.e_modal.querySelector(".resultaten-tabel");
     this.e_resultaten_tabel.id = functies.get_random_string(12);
 
@@ -638,6 +641,10 @@ class ResultatenModal {
     if (!(target instanceof HTMLElement)) {
       return;
     }
+    if (target.closest("#export-resultaten")) {
+      this.exporteer_resultaten_handler();
+      return;
+    }
     if (target.closest(".stem-verwijderen")) {
       this.stem_verwijderen_handler(target.closest(".stem-verwijderen"));
     }
@@ -705,6 +712,69 @@ class ResultatenModal {
     const resultaten_nummer = this.resultaten_nummers[nummer_id];
     const resultaten_stem = resultaten_nummer.get_stem(stemmer_id);
     await resultaten_stem.behandeld_handler();
+  }
+
+  async exporteer_resultaten_handler() {
+    if (!(this.e_exportknop instanceof HTMLButtonElement)) {
+      return;
+    }
+    if (this.e_exportknop.disabled) {
+      return;
+    }
+
+    const icon_ready = this.e_exportknop.querySelector(".export-icon-ready");
+    const icon_loading = this.e_exportknop.querySelector(
+      ".export-icon-loading",
+    );
+    if (!(icon_ready instanceof HTMLElement)) {
+      return;
+    }
+    if (!(icon_loading instanceof HTMLElement)) {
+      return;
+    }
+
+    this.e_exportknop.disabled = true;
+    icon_ready.classList.add("d-none");
+    icon_loading.classList.remove("d-none");
+
+    try {
+      const form_data = new FormData();
+      form_data.append("lijst", String(this.lijst_id));
+      const response = await fetch("export_resultaten_ods.php", {
+        method: "POST",
+        body: form_data,
+      });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const blob = await response.blob();
+      let filename = "resultaten.ods";
+      const disposition = response.headers.get("Content-Disposition");
+      if (typeof disposition === "string") {
+        const utf8_match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+        const plain_match = disposition.match(/filename="?([^";]+)"?/i);
+        const matched = utf8_match?.[1] ?? plain_match?.[1];
+        if (matched) {
+          filename = decodeURIComponent(matched);
+        }
+      }
+
+      const blob_url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blob_url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(blob_url);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : String(error));
+    } finally {
+      this.e_exportknop.disabled = false;
+      icon_ready.classList.remove("d-none");
+      icon_loading.classList.add("d-none");
+    }
   }
 
   /**

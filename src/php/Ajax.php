@@ -11,6 +11,13 @@ use gldstdlib\exception\SQLDupEntryException;
 use gldstdlib\exception\SQLException;
 use gldstdlib\exception\UndefinedPropertyException;
 use gldstdlib\OpenAIClient;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Writer\Ods;
+use ZipArchive;
+
+use function gldstdlib\vervang_bestandsnaam_tekens;
 
 /**
  * Verwerking van AJAX-requests.
@@ -689,6 +696,295 @@ class Ajax
             throw new GebruikersException('Ongeldige lijst');
         }
         return $lijst->get_resultaten();
+    }
+
+    public function export_resultaten_ods(): void
+    {
+        $this->login();
+        try {
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
+        } catch (GeenLijstException) {
+            throw new GebruikersException('Ongeldige lijst');
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Resultaten');
+
+        $headers = [
+            'Aantal stemmen',
+            'Nummer ID',
+            'Artiest',
+            'Titel',
+            'Jaar',
+            'Duur',
+            'Vrije keuze',
+        ];
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+        $sheet->freezePane('A2');
+
+        $row_nr = 2;
+        /** @var array<int, int> $duur_per_rij */
+        $duur_per_rij = [];
+        foreach ($lijst->get_export_resultaten_nummers() as $resultaat) {
+            $is_vrijekeuze = (int)$resultaat['is_vrijekeuze'];
+            $vrije_keuze = match ($is_vrijekeuze) {
+                0 => 'Nee',
+                1 => 'Ja (niet beoordeeld)',
+                2 => 'Ja (goedgekeurd)',
+                default => 'Onbekend',
+            };
+
+            $sheet->setCellValue("A{$row_nr}", (int)$resultaat['aantal_stemmen']);
+            $sheet->setCellValue("B{$row_nr}", (int)$resultaat['id']);
+            $sheet->setCellValueExplicit("C{$row_nr}", $resultaat['artiest'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit("D{$row_nr}", $resultaat['titel'], DataType::TYPE_STRING);
+            if ($resultaat['jaar'] !== null) {
+                $sheet->setCellValue("E{$row_nr}", (int)$resultaat['jaar']);
+            }
+            if ($resultaat['duur'] !== null) {
+                $duur_totaal_seconden = (int)$resultaat['duur'];
+                $duur_per_rij[$row_nr] = $duur_totaal_seconden;
+                $sheet->setCellValue("F{$row_nr}", $duur_totaal_seconden / 86400);
+                $sheet->getStyle("F{$row_nr}")->getNumberFormat()->setFormatCode(
+                    $duur_totaal_seconden >= 3600
+                        ? NumberFormat::FORMAT_DATE_TIME4
+                        : NumberFormat::FORMAT_DATE_TIME5
+                );
+            }
+            $sheet->setCellValueExplicit("G{$row_nr}", $vrije_keuze, DataType::TYPE_STRING);
+            $row_nr++;
+        }
+
+        if ($row_nr > 2) {
+            $last_row = $row_nr - 1;
+            $sheet->getStyle("A2:B{$last_row}")->getNumberFormat()->setFormatCode('0');
+            $sheet->getStyle("E2:E{$last_row}")->getNumberFormat()->setFormatCode('0');
+        }
+
+        foreach (range('A', 'G') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        $timestamp = (new \DateTime())->format('Y-m-d H.i.s');
+        $lijst_naam = $lijst->get_naam();
+        $lijst_naam = trim(preg_replace('~\s+~u', ' ', $lijst_naam) ?? '');
+        if ($lijst_naam === '') {
+            $lijst_naam = (string)$lijst->get_id();
+        }
+        $filename = vervang_bestandsnaam_tekens(sprintf('%s - Resultaten ‘%s’.ods', $timestamp, $lijst_naam));
+        $ascii_filename = preg_replace('~[^A-Za-z0-9 ._\-()\[\]{}]~', '_', $filename) ?? 'resultaten.ods';
+        $ascii_filename = trim($ascii_filename);
+        if ($ascii_filename === '') {
+            $ascii_filename = 'resultaten.ods';
+        }
+        header('Content-Type: application/vnd.oasis.opendocument.spreadsheet');
+        header(
+            'Content-Disposition: attachment; filename="' . $ascii_filename . '"; '
+            . "filename*=UTF-8''" . rawurlencode($filename)
+        );
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
+
+        $writer = new Ods($spreadsheet);
+        $tmp_file = tempnam(sys_get_temp_dir(), 'resultaten_ods_');
+        if ($tmp_file === false) {
+            throw new GLDException('Kon tijdelijk exportbestand niet maken');
+        }
+        $writer->save($tmp_file);
+
+        $zip = new ZipArchive();
+        if ($zip->open($tmp_file) === true) {
+            $content_xml = $zip->getFromName('content.xml');
+            if ($content_xml !== false) {
+                $nieuwe_content_xml = $this->apply_ods_time_styles_for_duration_column(
+                    $content_xml,
+                    $duur_per_rij
+                );
+                $zip->addFromString('content.xml', $nieuwe_content_xml);
+            }
+            $zip->close();
+        }
+
+        readfile($tmp_file);
+        unlink($tmp_file);
+    }
+
+    /**
+     * ODS-nabewerking voor de duurkolom (kolom F).
+     *
+     * Waarom dit nodig is:
+     * PhpSpreadsheet schrijft in ODS numerieke tijdwaarden als gewone floats
+     * (office:value-type="float") en genereert hierbij niet altijd de
+     * benodigde ODS time-styles/data-styles. LibreOffice Calc toont die dan als
+     * kale decimalen in plaats van tijdnotatie.
+     *
+     * Wat deze functie doet:
+     * 1. Voegt expliciete ODS time-styles toe voor mm:ss en h:mm:ss.
+     * 2. Zet duurcellen om naar office:value-type="time" met office:time-value.
+     * 3. Past een afgeleide celstijl toe die de originele opmaak (zoals
+     *    lettertypegrootte) behoudt en alleen de datastijl voor tijd toevoegt.
+     *
+     * @param array<int, int> $duur_per_rij Rij-index => duur in seconden.
+     */
+    private function apply_ods_time_styles_for_duration_column(
+        string $content_xml,
+        array $duur_per_rij
+    ): string {
+        if ($duur_per_rij === []) {
+            return $content_xml;
+        }
+
+        $dom = new \DOMDocument();
+        $dom->loadXML($content_xml);
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('office', 'urn:oasis:names:tc:opendocument:xmlns:office:1.0');
+        $xpath->registerNamespace('style', 'urn:oasis:names:tc:opendocument:xmlns:style:1.0');
+        $xpath->registerNamespace('table', 'urn:oasis:names:tc:opendocument:xmlns:table:1.0');
+        $xpath->registerNamespace('number', 'urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0');
+
+        $automatic_styles = $xpath->query('/office:document-content/office:automatic-styles')->item(0);
+        if (!($automatic_styles instanceof \DOMElement)) {
+            return $content_xml;
+        }
+
+        $number_ns = 'urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0';
+        $style_ns = 'urn:oasis:names:tc:opendocument:xmlns:style:1.0';
+
+        $time_short = $dom->createElementNS($number_ns, 'number:time-style');
+        $time_short->setAttributeNS($style_ns, 'style:name', 'NdurShort');
+        $short_minutes = $dom->createElementNS($number_ns, 'number:minutes');
+        $short_minutes->setAttributeNS($number_ns, 'number:style', 'long');
+        $time_short->appendChild($short_minutes);
+        $time_short->appendChild($dom->createElementNS($number_ns, 'number:text', ':'));
+        $short_seconds = $dom->createElementNS($number_ns, 'number:seconds');
+        $short_seconds->setAttributeNS($number_ns, 'number:style', 'long');
+        $time_short->appendChild($short_seconds);
+        $automatic_styles->appendChild($time_short);
+
+        $time_long = $dom->createElementNS($number_ns, 'number:time-style');
+        $time_long->setAttributeNS($style_ns, 'style:name', 'NdurLong');
+        $long_hours = $dom->createElementNS($number_ns, 'number:hours');
+        $long_hours->setAttributeNS($number_ns, 'number:style', 'long');
+        $time_long->appendChild($long_hours);
+        $time_long->appendChild($dom->createElementNS($number_ns, 'number:text', ':'));
+        $long_minutes = $dom->createElementNS($number_ns, 'number:minutes');
+        $long_minutes->setAttributeNS($number_ns, 'number:style', 'long');
+        $time_long->appendChild($long_minutes);
+        $time_long->appendChild($dom->createElementNS($number_ns, 'number:text', ':'));
+        $long_seconds = $dom->createElementNS($number_ns, 'number:seconds');
+        $long_seconds->setAttributeNS($number_ns, 'number:style', 'long');
+        $time_long->appendChild($long_seconds);
+        $automatic_styles->appendChild($time_long);
+
+        /** @var array<string, string> $afgeleide_stijlen */
+        $afgeleide_stijlen = [];
+        /** @var array<string, \DOMElement> $bestaande_stijlen */
+        $bestaande_stijlen = [];
+        foreach ($xpath->query('style:style', $automatic_styles) as $stijl_node) {
+            if (!($stijl_node instanceof \DOMElement)) {
+                continue;
+            }
+            $stijl_naam = $stijl_node->getAttribute('style:name');
+            if ($stijl_naam !== '') {
+                $bestaande_stijlen[$stijl_naam] = $stijl_node;
+            }
+        }
+
+        $table_rows = $xpath->query('(//table:table)[1]/table:table-row');
+        if ($table_rows === false) {
+            return $content_xml;
+        }
+
+        foreach ($duur_per_rij as $rij_nr => $duur_seconden) {
+            $row_index = $rij_nr - 1;
+            $row_node = $table_rows->item($row_index);
+            if (!($row_node instanceof \DOMElement)) {
+                continue;
+            }
+
+            $cell = $this->get_ods_cell_by_column_index($row_node, 6);
+            if (!($cell instanceof \DOMElement)) {
+                continue;
+            }
+
+            $heeft_uren = $duur_seconden >= 3600;
+            $basis_stijl = $cell->getAttribute('table:style-name');
+            if ($basis_stijl === '') {
+                $basis_stijl = 'Default';
+            }
+            $stijl_suffix = $heeft_uren ? 'DurLong' : 'DurShort';
+            $data_stijl = $heeft_uren ? 'NdurLong' : 'NdurShort';
+            $afgeleide_stijl_sleutel = $basis_stijl . '|' . $stijl_suffix;
+            if (!isset($afgeleide_stijlen[$afgeleide_stijl_sleutel])) {
+                $afgeleide_stijl_naam = $basis_stijl . $stijl_suffix;
+                $afgeleide_stijlen[$afgeleide_stijl_sleutel] = $afgeleide_stijl_naam;
+
+                if (isset($bestaande_stijlen[$basis_stijl])) {
+                    $afgeleide_stijl = $bestaande_stijlen[$basis_stijl]->cloneNode(true);
+                    if (!($afgeleide_stijl instanceof \DOMElement)) {
+                        continue;
+                    }
+                } else {
+                    $afgeleide_stijl = $dom->createElementNS($style_ns, 'style:style');
+                    $afgeleide_stijl->setAttributeNS($style_ns, 'style:family', 'table-cell');
+                    $afgeleide_stijl->setAttributeNS($style_ns, 'style:parent-style-name', $basis_stijl);
+                }
+
+                $afgeleide_stijl->setAttributeNS($style_ns, 'style:name', $afgeleide_stijl_naam);
+                $afgeleide_stijl->setAttributeNS($style_ns, 'style:data-style-name', $data_stijl);
+                $automatic_styles->appendChild($afgeleide_stijl);
+                $bestaande_stijlen[$afgeleide_stijl_naam] = $afgeleide_stijl;
+            }
+
+            $cell->setAttribute('table:style-name', $afgeleide_stijlen[$afgeleide_stijl_sleutel]);
+            $cell->setAttribute('office:value-type', 'time');
+            $cell->removeAttribute('office:value');
+            $cell->setAttribute(
+                'office:time-value',
+                sprintf(
+                    'PT%dH%dM%dS',
+                    intdiv($duur_seconden, 3600),
+                    intdiv($duur_seconden % 3600, 60),
+                    $duur_seconden % 60
+                )
+            );
+        }
+
+        return $dom->saveXML();
+    }
+
+    /**
+     * Zoek in een ODS-tabelrij de cel op basis van 1-based kolomindex.
+     *
+     * Houdt rekening met table:number-columns-repeated, zodat ook herhaalde
+     * lege of uniforme cellen correct naar een logische kolompositie vertaald
+     * worden.
+     */
+    private function get_ods_cell_by_column_index(\DOMElement $row_node, int $column_index): ?\DOMElement
+    {
+        $current_index = 1;
+        foreach ($row_node->childNodes as $child) {
+            if (!($child instanceof \DOMElement) || $child->tagName !== 'table:table-cell') {
+                continue;
+            }
+            $repeat = (int)$child->getAttribute('table:number-columns-repeated');
+            if ($repeat < 1) {
+                $repeat = 1;
+            }
+            $start = $current_index;
+            $end = $current_index + $repeat - 1;
+            if ($column_index >= $start && $column_index <= $end) {
+                return $child;
+            }
+            $current_index = $end + 1;
+        }
+        return null;
     }
 
     /**

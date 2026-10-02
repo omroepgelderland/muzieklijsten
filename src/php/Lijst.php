@@ -804,6 +804,56 @@ class Lijst
     }
 
     /**
+     * @return list<array{
+     *     id: int,
+     *     artiest: string,
+     *     titel: string,
+     *     jaar: int|null,
+     *     duur: int|null,
+     *     is_vrijekeuze: int,
+     *     aantal_stemmen: int,
+     * }>
+     */
+    public function get_export_resultaten_nummers(): array
+    {
+        $query = <<<SQL
+        SELECT
+            COUNT(n.id) AS aantal_stemmen,
+            n.id,
+            n.artiest,
+            n.titel,
+            n.jaar,
+            n.duur,
+            n.is_vrijekeuze
+        FROM stemmers_nummers sn
+        INNER JOIN nummers n ON
+            n.id = sn.nummer_id
+        WHERE
+            sn.stemmer_id IN (
+                SELECT id
+                FROM stemmers
+                WHERE
+                    lijst_id = {$this->get_id()}
+            )
+        GROUP BY n.id
+        ORDER BY COUNT(n.id) DESC, RAND()
+        SQL;
+        $resultaten = [];
+        foreach ($this->db->query($query) as $row) {
+            $resultaten[] = [
+                'aantal_stemmen' => (int)$row['aantal_stemmen'],
+                'id' => (int)$row['id'],
+                'artiest' => $row['artiest'],
+                'titel' => $row['titel'],
+                'jaar' => $row['jaar'] !== null ? (int)$row['jaar'] : null,
+                'duur' => $row['duur'] !== null ? (int)$row['duur'] : null,
+                'is_vrijekeuze' => (int)$row['is_vrijekeuze'],
+            ];
+        }
+        return $resultaten;
+    }
+
+    /**
      * Zoekt een stemmer op deze lijst aan de hand van een e-mailadres.
      *
      * @return Stemmer|null De stemmer, of null als die niet kan  worden

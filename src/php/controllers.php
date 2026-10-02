@@ -128,6 +128,26 @@ function ajax(Factory $factory, DB $db, Log $log): void
     echo json_encode($respons);
 }
 
+function export_resultaten_ods(Factory $factory, DB $db, Log $log): void
+{
+    try {
+        $request = json_decode(json_encode($_POST));
+        $ajax = $factory->create_ajax($request);
+        $ajax->export_resultaten_ods();
+    } catch (GebruikersException $e) {
+        http_response_code(400);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo $e->getMessage();
+    } catch (\Throwable $e) {
+        $log->err((string)$e);
+        http_response_code(500);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo is_dev()
+            ? $e->getMessage()
+            : 'fout';
+    }
+}
+
 /**
  * @return object{
  *     jaar: string,

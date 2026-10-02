@@ -43,6 +43,12 @@ if [ -n "$(git status --untracked-files=no --porcelain)" ]; then
     fi
 fi
 
+head_version=$(git tag --points-at HEAD)
+if [[ $head_version != "" ]]; then
+    echo "HEAD is on existing version $head_version. Make a new commit to publish a new version"
+    exit 1
+fi
+
 # nvm environment
 # shellcheck disable=SC1091
 . "$HOME/.nvm/nvm.sh"

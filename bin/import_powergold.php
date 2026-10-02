@@ -2,8 +2,6 @@
 
 /**
  * Importscript voor nummers uit Powergold.
- *
- * @author Remy Glaser <rglaser@gld.nl>
  */
 
 namespace muzieklijsten;

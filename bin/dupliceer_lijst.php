@@ -6,8 +6,6 @@
  * Gebruik dit om een lijst die periodiek gebruikt wordt te resetten.
  * De bestaande lijst is de actieve; de gedupliceerde lijst is het archief.
  * De oude resultaten worden dan bewaard in een archieflijst.
- *
- * @author Remy Glaser <rglaser@gld.nl>
  */
 
 namespace muzieklijsten;

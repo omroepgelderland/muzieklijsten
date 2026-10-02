@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @author Remy Glaser <rglaser@gld.nl>
- */
-
 namespace muzieklijsten;
 
 use DI\FactoryInterface;

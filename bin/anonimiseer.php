@@ -2,8 +2,6 @@
 
 /**
  * Anonimiseert persoonlijke data van stemmers.
- *
- * @author Remy Glaser <rglaser@gld.nl>
  */
 
 namespace muzieklijsten;

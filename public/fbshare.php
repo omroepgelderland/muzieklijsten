@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @author Remy Glaser <rglaser@gld.nl>
- */
-
 namespace muzieklijsten;
 
 require_once __DIR__ . '/../vendor/autoload.php';

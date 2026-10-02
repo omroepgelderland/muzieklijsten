@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @author Sander Otten <sotten@gld.nl>
- */
-
 namespace muzieklijsten;
 
 class OLERead

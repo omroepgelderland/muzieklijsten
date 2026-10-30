@@ -35,7 +35,7 @@ Importeer nummers.
 
 ## Updaten
 
-Haal de nieuwste versie van github binnen door `./update.sh` in de projectroot uit te voeren.
+<del>Haal de nieuwste versie van github binnen door `./update.sh` in de projectroot uit te voeren.</del>
 
 ## Nummers invoeren
 

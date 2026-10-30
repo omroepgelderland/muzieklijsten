@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 
 /**
@@ -8,6 +9,9 @@
  * De oude resultaten worden dan bewaard in een archieflijst.
  */
 
+declare(strict_types=1);
+
+/** @disregard P1105 */
 namespace muzieklijsten;
 
 require_once __DIR__ . '/../vendor/autoload.php';

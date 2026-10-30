@@ -40,7 +40,8 @@
     "php-parallel-lint/php-parallel-lint": "^1.4",
     "squizlabs/php_codesniffer": "^4.0",
     "slevomat/coding-standard": "^8.15",
-    "zorac/phpstan-php-di": "^1.0"
+    "zorac/phpstan-php-di": "^1.0",
+    "omroepgelderland/php-coding-standard": "^1.0"
   },
   "config": {
     "allow-plugins": {

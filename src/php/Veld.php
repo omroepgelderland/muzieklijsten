@@ -43,7 +43,7 @@ class Veld
         private DB $db,
         int|string $id,
         ?array $data = null,
-        ?bool $verplicht = null
+        ?bool $verplicht = null,
     ) {
         $this->id = (int)$id;
         $this->db_props_set = false;
@@ -140,7 +140,7 @@ class Veld
      */
     public function get_html_id(): string
     {
-        return sprintf('veld-%d', $this->get_id());
+        return \sprintf('veld-%d', $this->get_id());
     }
 
     /**
@@ -152,22 +152,22 @@ class Veld
      *
      * @throws GLDException als er geen antwoord is.
      */
-    public function get_stemmer_waarde(Stemmer $stemmer)
+    public function get_stemmer_waarde(Stemmer $stemmer): mixed
     {
         try {
-            $waarde = $this->db->selectSingle(sprintf(
+            $waarde = $this->db->selectSingle(\sprintf(
                 'SELECT waarde FROM stemmers_velden WHERE stemmer_id = %d AND veld_id = %d',
                 $stemmer->get_id(),
-                $this->get_id()
+                $this->get_id(),
             ));
             if ($waarde === null) {
                 throw new GLDException();
             }
         } catch (GLDException $e) {
-            throw new GLDException(sprintf(
+            throw new GLDException(\sprintf(
                 'Geen waarde ingevuld door stemmer %d in veld %d',
                 $stemmer->get_id(),
-                $this->get_id()
+                $this->get_id(),
             ), $e->getCode(), $e);
         }
         return $waarde;
@@ -179,9 +179,9 @@ class Veld
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(\sprintf(
                 'SELECT * FROM velden WHERE id = %d',
-                $this->get_id()
+                $this->get_id(),
             )));
         }
     }
@@ -248,7 +248,7 @@ class Veld
             ]);
         } elseif ($this->is_verplicht()) {
             throw new GebruikersException(
-                "Veld {$this->get_label()} mag niet leeg zijn"
+                "Veld {$this->get_label()} mag niet leeg zijn",
             );
         }
     }

@@ -57,7 +57,7 @@ function dupliceer_lijst(Factory $factory, DB $db): void
 }
 
 /**
- * Werkt de database bij naar de nieuwste versie. Zie docs in bin/update.php.
+ * Werkt de database bij naar de nieuwste versie. Zie docs in bin/deploy.php.
  */
 function db_update(DB $db, Log $log, DBUpdates $dbupdates): void
 {
@@ -171,16 +171,16 @@ function get_fbshare_data(Factory $factory, Config $config, Log $log, DB $db): o
         $nummers_html_str = '';
         $i = 1;
         foreach ($res as $r) {
-            $nummers_meta[] = sprintf(
+            $nummers_meta[] = \sprintf(
                 '%d) %s - %s',
                 $i,
                 \htmlspecialchars($r['artiest']),
-                \htmlspecialchars($r['titel'])
+                \htmlspecialchars($r['titel']),
             );
-            $nummers_html_str .= sprintf(
+            $nummers_html_str .= \sprintf(
                 '<li>%s - %s</li>',
                 \htmlspecialchars($r['artiest']),
-                \htmlspecialchars($r['titel'])
+                \htmlspecialchars($r['titel']),
             );
             $i++;
         }
@@ -224,7 +224,7 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
             'user' => $sql_user = readline_met_default('SQL gebruikersnaam', 'muzieklijsten'),
             'password' => $sql_password = readline_met_default(
                 'Wachtwoord van de SQL-gebruiker (alleen als de gebruiker nog niet bestaat)',
-                mag_leeg: false
+                mag_leeg: false,
             ),
         ],
         'php_auth' => [
@@ -262,7 +262,7 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
     $config_pad = path_join($configdir, 'config.json');
     file_put_contents(
         $config_pad,
-        json_encode($config_json, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)
+        json_encode($config_json, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE),
     );
     echo "De configuratie is opgeslagen in {$config_pad}. Je kunt dit bestand zo nodig aanpassen.\n";
 
@@ -351,7 +351,7 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
 
 function import_powergold(
     Factory $factory,
-    string $filename
+    string $filename,
 ): void {
     $factory->create_powergold_importer($filename)->import();
 }

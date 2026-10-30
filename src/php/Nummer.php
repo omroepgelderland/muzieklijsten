@@ -59,7 +59,7 @@ class Nummer
         private DB $db,
         private Factory $factory,
         int|string $id,
-        ?array $data = null
+        ?array $data = null,
     ) {
         $this->id = (int)$id;
         $this->db_props_set = false;
@@ -196,9 +196,9 @@ class Nummer
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(\sprintf(
                 'SELECT * FROM nummers WHERE id = %d',
-                $this->get_id()
+                $this->get_id(),
             )));
         }
     }

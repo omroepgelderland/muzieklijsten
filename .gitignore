@@ -59,11 +59,12 @@ vendor/
 # PHPStan
 /phpstan.neon
 
-/debug-php.sh
-/config/
-node_modules
-/*.md5
-/public/**
 !/public/*.php
+/.dev/**
+/*.md5
+/config/
+/debug-php.sh
 /powergold/**
+/public/**
 /test/
+node_modules

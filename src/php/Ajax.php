@@ -427,7 +427,7 @@ class Ajax
         } catch (UndefinedPropertyException) {
             $tot = null;
         }
-        return count($lijst->get_stemmers($van, $tot));
+        return \count($lijst->get_stemmers($van, $tot));
     }
 
     /**
@@ -457,10 +457,10 @@ class Ajax
             $stemmer = $this->verwerk_stem($lijst);
             if ($lijst->get_id() == 31 || $lijst->get_id() == 201) {
                 if (is_dev()) {
-                    $fbshare_url = sprintf(
+                    $fbshare_url = \sprintf(
                         'https://webdev.gld.nl/%s/muzieklijsten/fbshare.php?stemmer=%d',
                         get_developer(),
-                        $stemmer->get_id()
+                        $stemmer->get_id(),
                     );
                     $fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebdev.gld.nl%2F'
                         . get_developer()
@@ -525,7 +525,7 @@ class Ajax
         // Maak nieuwe stemmer.
         $stemmer ??= $this->factory->insert_stemmer(
             $lijst,
-            $_SERVER['REMOTE_ADDR']
+            $_SERVER['REMOTE_ADDR'],
         );
 
         $this->request->nummers ??= new \stdClass();
@@ -545,14 +545,14 @@ class Ajax
             try {
                 $nummer = $this->factory->vrijekeuze_nummer_toevoegen(
                     $vrijekeus_invoer->artiest,
-                    $vrijekeus_invoer->titel
+                    $vrijekeus_invoer->titel,
                 );
                 if ($nummer->is_vrijekeuze() === 0) {
                     foreach ($lijst->get_nummers() as $lijst_nummer) {
                         if ($nummer->equals($lijst_nummer)) {
                             throw new GebruikersException(
                                 "Het nummer {$lijst_nummer->get_artiest()} – {$lijst_nummer->get_titel()} kan niet "
-                                . "worden gekozen als vrij nummer. Selecteer het nummer in de keuzelijst"
+                                . "worden gekozen als vrij nummer. Selecteer het nummer in de keuzelijst",
                             );
                         }
                     }
@@ -668,7 +668,7 @@ class Ajax
                     'db' => 'jaar',
                     'dt' => 3,
                 ],
-            ]
+            ],
         );
         $res = $ssp->simple();
         return $res;
@@ -758,7 +758,7 @@ class Ajax
                 $sheet->getStyle("F{$row_nr}")->getNumberFormat()->setFormatCode(
                     $duur_totaal_seconden >= 3600
                         ? NumberFormat::FORMAT_DATE_TIME4
-                        : NumberFormat::FORMAT_DATE_TIME5
+                        : NumberFormat::FORMAT_DATE_TIME5,
                 );
             }
             $sheet->setCellValueExplicit("G{$row_nr}", $vrije_keuze, DataType::TYPE_STRING);
@@ -785,7 +785,7 @@ class Ajax
         if ($lijst_naam === '') {
             $lijst_naam = (string)$lijst->get_id();
         }
-        $filename = vervang_bestandsnaam_tekens(sprintf('%s - Resultaten ‘%s’.ods', $timestamp, $lijst_naam));
+        $filename = vervang_bestandsnaam_tekens(\sprintf('%s - Resultaten ‘%s’.ods', $timestamp, $lijst_naam));
         $ascii_filename = preg_replace('~[^A-Za-z0-9 ._\-()\[\]{}]~', '_', $filename) ?? 'resultaten.ods';
         $ascii_filename = trim($ascii_filename);
         if ($ascii_filename === '') {
@@ -794,7 +794,7 @@ class Ajax
         header('Content-Type: application/vnd.oasis.opendocument.spreadsheet');
         header(
             'Content-Disposition: attachment; filename="' . $ascii_filename . '"; '
-            . "filename*=UTF-8''" . rawurlencode($filename)
+            . "filename*=UTF-8''" . rawurlencode($filename),
         );
         header('Cache-Control: no-store, no-cache, must-revalidate');
         header('Pragma: no-cache');
@@ -812,7 +812,7 @@ class Ajax
             if ($content_xml !== false) {
                 $nieuwe_content_xml = $this->apply_ods_time_styles_for_duration_column(
                     $content_xml,
-                    $duur_per_rij
+                    $duur_per_rij,
                 );
                 $zip->addFromString('content.xml', $nieuwe_content_xml);
             }
@@ -842,7 +842,7 @@ class Ajax
      */
     private function apply_ods_time_styles_for_duration_column(
         string $content_xml,
-        array $duur_per_rij
+        array $duur_per_rij,
     ): string {
         if ($duur_per_rij === []) {
             return $content_xml;
@@ -955,12 +955,12 @@ class Ajax
             $cell->removeAttribute('office:value');
             $cell->setAttribute(
                 'office:time-value',
-                sprintf(
+                \sprintf(
                     'PT%dH%dM%dS',
                     intdiv($duur_seconden, 3600),
                     intdiv($duur_seconden % 3600, 60),
-                    $duur_seconden % 60
-                )
+                    $duur_seconden % 60,
+                ),
             );
         }
 
@@ -1017,10 +1017,10 @@ class Ajax
         return [
             'naam' => $lijst->get_naam(),
             'nummer_ids' => $nummer_ids,
-            'iframe_url' => sprintf(
+            'iframe_url' => \sprintf(
                 '%s?lijst=%d',
                 $this->config->get()['root_url'],
-                $lijst->get_id()
+                $lijst->get_id(),
             ),
         ];
     }
@@ -1124,7 +1124,7 @@ class Ajax
     public function login(): void
     {
         session_start();
-        if (array_key_exists('is_ingelogd', $_SESSION) && $_SESSION['is_ingelogd']) {
+        if (\array_key_exists('is_ingelogd', $_SESSION) && $_SESSION['is_ingelogd']) {
             return;
         }
         if (!isset($_SERVER['PHP_AUTH_USER'])) {
@@ -1173,8 +1173,8 @@ class Ajax
             throw new GLDException('Ongeldige parameter: niet_ids');
         }
         $niet_ids = \array_map(
-            fn($v) => (int)\filter_var($v, \FILTER_VALIDATE_INT),
-            $this->request->niet_ids
+            static fn($v) => (int)\filter_var($v, \FILTER_VALIDATE_INT),
+            $this->request->niet_ids,
         );
         $i_niet_ids = \implode(',', $niet_ids);
         $c_niet_ids = \count($niet_ids) === 0 ? '' : "AND n.id NOT IN ({$i_niet_ids})";
@@ -1200,7 +1200,7 @@ class Ajax
         $ai_suggesties = get_ai_suggesties($this->openai_client, $nummers);
 
         return \array_map(
-            fn($nummer) => [
+            static fn($nummer) => [
                 'id' => $nummer->get_id(),
                 'artiest' => $nummer->get_artiest(),
                 'titel' => $nummer->get_titel(),

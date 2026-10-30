@@ -6,12 +6,13 @@ assets
 build-dev.sh
 build.sh
 deploy-dev.sh
+dev-env.sh
 eslint.config.js
 node_modules
 package-lock.json
 package.json
+phpcs.xml.dist
 phpstan.dist.neon
-ruleset.xml
 src/html
 src/js
 src/scss

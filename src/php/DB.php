@@ -55,21 +55,21 @@ class DB
             );
             if ($this->db->connect_error) {
                 throw new SQLException(
-                    sprintf(
+                    \sprintf(
                         'Kan geen verbinding met de database maken (fout %s). Details: %s',
                         $this->db->connect_errno,
-                        $this->db->connect_error
+                        $this->db->connect_error,
                     ),
-                    $this->db->connect_errno
+                    $this->db->connect_errno,
                 );
             } elseif ($this->db->errno > 0) {
                 throw new SQLException(
                     \sprintf(
                         'Kan geen verbinding met de database maken (fout %s). Details: %s',
                         $this->db->error,
-                        $this->db->errno
+                        $this->db->errno,
                     ),
-                    $this->db->errno
+                    $this->db->errno,
                 );
             }
             $this->db->set_charset('utf8mb4');
@@ -171,9 +171,9 @@ class DB
     {
         $res = $this->query($sql);
         if ($res->num_rows === 0) {
-            throw new SQLException(sprintf(
+            throw new SQLException(\sprintf(
                 'Geen resultaat bij query: "%s"',
-                $sql
+                $sql,
             ));
         }
         return self::typecast($res->fetch_row()[0], $res->fetch_field()->type);
@@ -195,9 +195,9 @@ class DB
     {
         $res = $this->query($sql);
         if ($res->num_rows === 0) {
-            throw new SQLException(sprintf(
+            throw new SQLException(\sprintf(
                 'Geen resultaat bij query: "%s"',
-                $sql
+                $sql,
             ));
         }
         $ret = [];
@@ -235,8 +235,6 @@ class DB
      * @param $min Minimum aantal resultaten. Standaard 1
      * @param $max Maximum aantal resultaten. Standaard 1
      *
-     * @return bool
-     *
      * @throws SQLException bij databasefouten
      */
     public function recordBestaat(string $sql, int $min = 1, int $max = 1): bool
@@ -253,7 +251,7 @@ class DB
      * @param array<string, DBWaarde> $data Associatieve array met kolomnamen als keys en in te
      * voegen gegevens als values.
      *
-     * @throws \Exception Als er niets is toegevoegd na uitvoering van de query.
+     * @throws SQLDupEntryException Als er een duplicate entry fout optreedt.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
@@ -261,17 +259,17 @@ class DB
     {
         $db = $this->getDB();
         $data = $this->prepareer_data($data);
-        $query = sprintf(
+        $query = \sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
             $table,
             implode(',', array_keys($data)),
-            implode(',', array_values($data))
+            implode(',', array_values($data)),
         );
         $this->query($query);
         if ($db->affected_rows == 0) {
-            throw new SQLException(sprintf(
+            throw new SQLException(\sprintf(
                 'Toevoegen van rij mislukt. Query: "%s"',
-                $query
+                $query,
             ));
         }
         return $db->insert_id;
@@ -429,9 +427,9 @@ class DB
      */
     private function throwQueryException(string $sql, ?\mysqli_sql_exception $e = null): never
     {
-        $this->throwException(sprintf(
+        $this->throwException(\sprintf(
             'Query: "%s"',
-            $sql
+            $sql,
         ), $e);
     }
 
@@ -453,11 +451,11 @@ class DB
             $error = $db->error;
             $errno = $db->errno;
         }
-        $e_msg = sprintf(
+        $e_msg = \sprintf(
             '%s. Error: "%s". Errornummer: %d.',
             $msg,
             $error,
-            $errno
+            $errno,
         );
         switch ($errno) {
             case 1062:
@@ -501,14 +499,14 @@ class DB
         $data = $this->prepareer_data($data);
         $update_values = [];
         foreach ($data as $key => $value) {
-            $update_values[] = sprintf('%s=%s', $key, $data[$key]);
+            $update_values[] = \sprintf('%s=%s', $key, $data[$key]);
         }
-        $this->query(sprintf(
+        $this->query(\sprintf(
             'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s',
             $table,
             implode(',', array_keys($data)),
             implode(',', array_values($data)),
-            implode(',', $update_values)
+            implode(',', $update_values),
         ));
         $respons = [
             'actie' => $db->affected_rows === 1 ? 'insert' : 'update',
@@ -531,7 +529,7 @@ class DB
     {
         $respons = [];
         foreach ($data as $key => $value) {
-            $key = sprintf('`%s`', $key);
+            $key = \sprintf('`%s`', $key);
             if ($value === null) {
                 $respons[$key] = 'NULL';
             } elseif ($value === 'NOW()') {
@@ -540,12 +538,12 @@ class DB
                 $respons[$key] = '1';
             } elseif ($value === false) {
                 $respons[$key] = '0';
-            } elseif (is_int($value) || is_float($value)) {
-                $respons[$key] = sprintf('%s', $value);
+            } elseif (\is_int($value) || \is_float($value)) {
+                $respons[$key] = \sprintf('%s', $value);
             } elseif ($value instanceof \DateTime) {
                 $respons[$key] = $value->format('"Y-m-d H:i:s"');
             } else {
-                $respons[$key] = sprintf('"%s"', $this->escape_string((string)$value));
+                $respons[$key] = \sprintf('"%s"', $this->escape_string((string)$value));
             }
         }
         return $respons;

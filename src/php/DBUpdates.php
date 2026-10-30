@@ -6,7 +6,7 @@ namespace muzieklijsten;
  * Functies met structuurwijzigingen in de database van versie-updates.
  * Voeg hier bij wijzingen nieuwe functies toe met een nieuw volgnummer.
  * Voer de wijzigingen ook door in install/install.sql
- * Zie ook bin/update.php.
+ * Zie ook bin/deploy.php.
  */
 class DBUpdates
 {
@@ -64,14 +64,14 @@ class DBUpdates
     public function update_4(): void
     {
         $this->db->query(
-            'ALTER TABLE `lijsten` ADD `mail_stemmers` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `bedankt_tekst`'
+            'ALTER TABLE `lijsten` ADD `mail_stemmers` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `bedankt_tekst`',
         );
     }
 
     public function update_5(): void
     {
         $this->db->query(
-            'ALTER TABLE lijsten ADD random_volgorde TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER mail_stemmers'
+            'ALTER TABLE lijsten ADD random_volgorde TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER mail_stemmers',
         );
     }
 

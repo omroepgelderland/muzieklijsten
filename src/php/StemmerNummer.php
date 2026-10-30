@@ -29,7 +29,7 @@ class StemmerNummer
         private DB $db,
         Nummer $nummer,
         Stemmer $stemmer,
-        ?array $data = null
+        ?array $data = null,
     ) {
         $this->nummer = $nummer;
         $this->stemmer = $stemmer;

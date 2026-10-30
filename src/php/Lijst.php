@@ -83,7 +83,7 @@ class Lijst
         private Config $config,
         private Factory $factory,
         int|string $id,
-        ?array $data = null
+        ?array $data = null,
     ) {
         $this->id = (int)$id;
         $this->db_props_set = false;
@@ -335,7 +335,7 @@ class Lijst
     public function get_stemmen(
         ?Nummer $nummer = null,
         ?\DateTime $van = null,
-        ?\DateTime $tot = null
+        ?\DateTime $tot = null,
     ): array {
         $where = [];
         if (isset($nummer)) {
@@ -366,7 +366,7 @@ class Lijst
             $stemmen[] = $this->factory->create_stemmer_nummer(
                 $stem_nummer,
                 $this->factory->create_stemmer((int)$entry['stemmer_id']),
-                $entry
+                $entry,
             );
         }
         return $stemmen;
@@ -383,7 +383,7 @@ class Lijst
      */
     public function get_nummers_volgorde_aantal_stemmen(
         ?\DateTime $van = null,
-        ?\DateTime $tot = null
+        ?\DateTime $tot = null,
     ): array {
         $datumvoorwaarden = [];
         if (isset($van)) {
@@ -456,9 +456,9 @@ class Lijst
      */
     public function remove(): void
     {
-        $this->db->query(sprintf(
+        $this->db->query(\sprintf(
             'DELETE FROM lijsten WHERE id = %d',
-            $this->get_id()
+            $this->get_id(),
         ));
         $this->reset();
     }
@@ -469,9 +469,9 @@ class Lijst
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(\sprintf(
                 'SELECT * FROM lijsten WHERE id = %d',
-                $this->get_id()
+                $this->get_id(),
             )));
         }
     }
@@ -496,7 +496,7 @@ class Lijst
         $this->notificatie_email_adressen = [];
         foreach (explode(',', $data['email']) as $adres) {
             $adres = trim($adres);
-            if (strlen($adres) > 0) {
+            if (\strlen($adres) > 0) {
                 $this->notificatie_email_adressen[] = $adres;
             }
         }
@@ -852,15 +852,15 @@ class Lijst
     /**
      * Zoekt een stemmer op deze lijst aan de hand van een e-mailadres.
      *
-     * @return Stemmer|null De stemmer, of null als die niet kan  worden
+     * @return Stemmer|null De stemmer, of null als die niet kan worden
      * gevonden.
      */
     public function get_stemmer_uit_email(string $email): ?Stemmer
     {
         $e_email = $this->db->escape_string(
             \strtolower(
-                \filter_var($email, \FILTER_SANITIZE_EMAIL)
-            )
+                \filter_var($email, \FILTER_SANITIZE_EMAIL),
+            ),
         );
         $query = <<<SQL
         SELECT sn.stemmer_id AS id
@@ -883,7 +883,7 @@ class Lijst
     /**
      * Zoekt een stemmer op deze lijst aan de hand van een telefoonnummer.
      *
-     * @return Stemmer|null De stemmer, of null als die niet kan  worden
+     * @return Stemmer|null De stemmer, of null als die niet kan worden
      * gevonden.
      */
     public function get_stemmer_uit_telefoonnummer(string $telefoonnummer): ?Stemmer

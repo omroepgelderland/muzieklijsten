@@ -5,8 +5,6 @@ namespace muzieklijsten;
 use DI\FactoryInterface;
 use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDataTooLongException;
-use gldstdlib\exception\SQLDupEntryException;
-use gldstdlib\exception\SQLException;
 use gldstdlib\exception\UndefinedPropertyException;
 use Psr\Container\ContainerInterface;
 
@@ -52,16 +50,16 @@ class Factory
      *
      * @return T
      *
-     * @throws SQLException Als er geen resultaat is.
-     * @throws SQLException Als de query mislukt.
-     * @throws SQLException Als er geen verbinding kan worden gemaakt met de
-     * database.
+     * @throws \gldstdlib\exception\SQLException Als er geen resultaat is.
+     * @throws \gldstdlib\exception\SQLException Als de query mislukt.
+     * @throws \gldstdlib\exception\SQLException Als er geen verbinding kan
+     * worden gemaakt met de database.
      */
     public function select_object(string $class, string $query): object
     {
         return $this->factory->make(
             $class,
-            $this->db->selectSingleRow($query)
+            $this->db->selectSingleRow($query),
         );
     }
 
@@ -84,7 +82,7 @@ class Factory
         foreach ($this->db->query($query) as $item) {
             $lijst[] = $this->factory->make(
                 $class,
-                $item
+                $item,
             );
         }
         return $lijst;
@@ -98,7 +96,7 @@ class Factory
     ): Ajax {
         return $this->factory->make(
             Ajax::class,
-            ['request' => $request]
+            ['request' => $request],
         );
     }
 
@@ -115,7 +113,7 @@ class Factory
             [
                 'id' => $id,
                 'data' => $data,
-            ]
+            ],
         );
     }
 
@@ -134,9 +132,9 @@ class Factory
             throw new GeenLijstException('Geen lijst in invoer');
         }
         if ($id === false) {
-            throw new GeenLijstException(sprintf(
+            throw new GeenLijstException(\sprintf(
                 'Ongeldige muzieklijst id: %s',
-                filter_var($request->lijst)
+                filter_var($request->lijst),
             ));
         }
         return $this->create_lijst($id);
@@ -155,7 +153,7 @@ class Factory
             [
                 'id' => $id,
                 'data' => $data,
-            ]
+            ],
         );
     }
 
@@ -174,9 +172,9 @@ class Factory
             throw new GLDException('Geen nummer in invoer');
         }
         if ($id === false) {
-            throw new GLDException(sprintf(
+            throw new GLDException(\sprintf(
                 'Ongeldige nummer id: %s',
-                filter_var($request->nummer)
+                filter_var($request->nummer),
             ));
         }
         return $this->create_nummer($id);
@@ -195,7 +193,7 @@ class Factory
             [
                 'id' => $id,
                 'data' => $data,
-            ]
+            ],
         );
     }
 
@@ -214,9 +212,9 @@ class Factory
             throw new GLDException('Geen stemmer in invoer');
         }
         if ($id === false) {
-            throw new GLDException(sprintf(
+            throw new GLDException(\sprintf(
                 'Ongeldig stemmer id: %s',
-                filter_var($request->stemmer)
+                filter_var($request->stemmer),
             ));
         }
         return $this->create_stemmer($id);
@@ -253,7 +251,7 @@ class Factory
                 'nummer' => $nummer,
                 'stemmer' => $stemmer,
                 'data' => $data,
-            ]
+            ],
         );
     }
 
@@ -288,7 +286,7 @@ class Factory
                 'id' => $id,
                 'data' => $data,
                 'verplicht' => $verplicht,
-            ]
+            ],
         );
     }
 
@@ -322,7 +320,7 @@ class Factory
         LIMIT 1
         SQL;
         $nummers = $this->select_objecten(Nummer::class, $query);
-        if (count($nummers) > 0) {
+        if (\count($nummers) > 0) {
             return $nummers[0];
         }
 
@@ -338,14 +336,14 @@ class Factory
      */
     public function create_ssp(
         object $request,
-        array $kolommen
+        array $kolommen,
     ): SSP {
         return $this->factory->make(
             SSP::class,
             [
                 'request' => $request,
                 'kolommen' => $kolommen,
-            ]
+            ],
         );
     }
 
@@ -358,7 +356,7 @@ class Factory
     {
         return $this->select_objecten(
             Lijst::class,
-            'SELECT id FROM lijsten ORDER BY naam'
+            'SELECT id FROM lijsten ORDER BY naam',
         );
     }
 
@@ -371,7 +369,7 @@ class Factory
     {
         return $this->select_objecten(
             Nummer::class,
-            'SELECT id FROM nummers'
+            'SELECT id FROM nummers',
         );
     }
 
@@ -392,7 +390,7 @@ class Factory
     {
         return $this->factory->make(
             PowergoldImporter::class,
-            ['filename' => $filename]
+            ['filename' => $filename],
         );
     }
 
@@ -401,8 +399,8 @@ class Factory
      *
      * @return Nummer het nieuwe nummer
      *
-     * @throws SQLDupEntryException Als er al een nummer bestaat met dit
-     * powergold-id of artiest-titel-jaar.
+     * @throws \gldstdlib\exception\SQLDupEntryException Als er al een nummer
+     * bestaat met dit powergold-id of artiest-titel-jaar.
      */
     public function insert_nummer(
         string $titel,

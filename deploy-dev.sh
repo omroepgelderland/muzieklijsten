@@ -5,6 +5,10 @@
 
 set -euo pipefail
 
+projectdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$projectdir"
+. "dev-env.sh"
+
 git fetch \
     --all \
     --tags \
@@ -26,4 +30,19 @@ while read -r branch upstream; do
     fi
 done
 
-php8.1 bin/update.php || rollback
+# Mappen aanmaken en juiste permissies instellen
+if getent passwd www-data > /dev/null; then
+    APACHE_USER="www-data"
+elif getent passwd apache > /dev/null; then
+    APACHE_USER="apache"
+else
+    echo "Geen geschikte Apache-gebruiker gevonden." >&2
+    exit 1
+fi
+mkdir -p "data/log"
+setfacl \
+        -m "u:$USER:rwX,u:$APACHE_USER:rwX,d:u:$USER:rwX,d:u:$APACHE_USER:rwX" \
+        "data/log"
+
+# Deployment
+php bin/deploy.php || rollback

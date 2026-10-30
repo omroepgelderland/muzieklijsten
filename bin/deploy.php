@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 
 /**
@@ -14,6 +15,9 @@
  * - Voeg een static functie toe aan de class DBUpdates met de naam update_[0-9]+
  */
 
+declare(strict_types=1);
+
+/** @disregard P1105 */
 namespace muzieklijsten;
 
 require_once __DIR__ . '/../vendor/autoload.php';

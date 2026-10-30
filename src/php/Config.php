@@ -9,7 +9,7 @@ use gldstdlib\exception\GLDException;
  * Hiermee kunnen instellingen worden opgehaald uit de serverconfiguratie.
  *
  * @phpstan-import-type DBConfigType from DB as DBConfigType
- * @phpstan-type        ConfigData array{
+ * @phpstan-type ConfigData array{
  *     organisatie: string,
  *     root_url: string,
  *     privacy_url: string,

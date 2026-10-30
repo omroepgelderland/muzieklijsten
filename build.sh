@@ -2,8 +2,9 @@
 
 set -euo pipefail
 
-GH_TOKEN="$(cat "$HOME/.config/github-token")"
-export GH_TOKEN
+projectdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$projectdir"
+. "dev-env.sh"
 
 mode="$1"
 if [[ $mode != "production" && $mode != "staging" ]]; then
@@ -11,12 +12,9 @@ if [[ $mode != "production" && $mode != "staging" ]]; then
     exit 1
 fi
 
-projectdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-projectnaam="$(basename "$projectdir")"
 build_dir="$(mktemp -d)"
 pack_dir="$(mktemp -d)"
 trap 'rm -rf "$build_dir" "$pack_dir"' EXIT
-cd "$projectdir"
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]]; then
@@ -49,11 +47,6 @@ if [[ $head_version != "" ]]; then
     exit 1
 fi
 
-# nvm environment
-# shellcheck disable=SC1091
-. "$HOME/.nvm/nvm.sh"
-nvm install node
-
 # versieverhoging
 if [[ $mode == "production" ]]; then
     oude_versie="$(git tag --list 'v*' --sort=v:refname | tail -n1 || :)"
@@ -70,9 +63,11 @@ if [[ $mode == "production" ]]; then
     releases_archive="${releases_dir}/${git_versie}"
     git tag "$git_versie"
     git push origin
-    git push github
     git push origin "$git_versie"
-    git push github "$git_versie"
+    if git remote | grep -Fxq -- github; then
+        git push github
+        git push github "$git_versie"
+    fi
 else
     commit="$(git rev-parse --short=12 HEAD)"
     archive="${pack_dir}/${projectnaam}-staging-${commit}.tar.gz"
@@ -96,13 +91,12 @@ BUILD_DATE=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 EOF
 
 # Composer packages
-composer8.1 install \
+composer install \
     --no-dev \
     --prefer-dist \
     --optimize-autoloader
 
 # Webpack output
-export NODE_ENV=development
 npm ci
 npx webpack --config "webpack.$mode.js"
 
@@ -129,7 +123,7 @@ rsync -av \
     "git@git.gld.nl:${releases_archive}/"
 ssh git@git.gld.nl \
     "ln -sfn '${releases_archive}' '${releases_dir}/latest'"
-if [[ $mode == "production" ]]; then
+if [[ $mode == "production" ]] && git remote | grep -Fxq -- github; then
     gh release create "$git_versie" \
         "$archive" \
         --generate-notes

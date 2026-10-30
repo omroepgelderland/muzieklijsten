@@ -71,10 +71,10 @@ function filter_postcode(mixed $postcode): ?string
     } elseif ($postcode === null || $postcode === '') {
         return null;
     } elseif (preg_match('~([0-9]{4}).*([a-zA-Z]{2})~', $postcode, $m) === 1) {
-        return sprintf(
+        return \sprintf(
             '%s %s',
             $m[1],
-            strtoupper($m[2])
+            strtoupper($m[2]),
         );
     } else {
         throw new OngeldigeInvoer("Ongeldige postcode: \"{$postcode}\"");
@@ -98,7 +98,7 @@ function filter_telefoonnummer(mixed $telefoonnummer): ?string
     } elseif ($telefoonnummer === null || $telefoonnummer === '') {
         return null;
     }
-    if (strlen($telefoonnummer) < 4) {
+    if (\strlen($telefoonnummer) < 4) {
         throw new OngeldigeInvoer("Ongeldig telefoonnummer: \"{$telefoonnummer}\"");
     }
     $telefoonnummer = preg_replace('~[^+0-9]~', '', $telefoonnummer);
@@ -160,11 +160,11 @@ function set_env(): void
  * Maak de dependency injection container. Voer dit niet meer dan één keer uit
  * per script.
  */
-function get_di_container(): FactoryInterface & ContainerInterface & InvokerInterface
+function get_di_container(): FactoryInterface&ContainerInterface&InvokerInterface
 {
     $config = [
         DB::class => \DI\create()->constructor(
-            \DI\get('config.database')
+            \DI\get('config.database'),
         ),
         'config.database' => \DI\factory([Config::class, 'get_db_config']),
         Log::class => \DI\autowire()->constructor(
@@ -178,10 +178,12 @@ function get_di_container(): FactoryInterface & ContainerInterface & InvokerInte
             mail_info: \DI\get('log.mailinfo'),
         ),
         'log.dir' => __DIR__ . '/../../data/log/',
-        'log.level' => fn() => is_dev() ? \Monolog\Level::Debug : \Monolog\Level::Info,
-        OpenAIClient::class => \DI\factory(function (?string $key) {
-            return isset($key) ? new OpenAIClient($key) : null;
-        })->parameter('key', \DI\get('config.openai.api_key')),
+        'log.level' => static fn() => is_dev() ? \Monolog\Level::Debug : \Monolog\Level::Info,
+        OpenAIClient::class => \DI\factory(
+            static fn (?string $key) => isset($key)
+                ? new OpenAIClient($key)
+                : null,
+        )->parameter('key', \DI\get('config.openai.api_key')),
         'config.openai.api_key' => \DI\factory([Config::class, 'get_openai_api_key']),
     ];
     $builder = new \DI\ContainerBuilder();
@@ -271,12 +273,12 @@ function get_vgl_string(string $invoer, bool $is_artiest): string
 function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
 {
     $input = \array_map(
-        fn($nummer) => [
+        static fn($nummer) => [
             'id' => $nummer->get_id(),
             'artiest' => $nummer->get_artiest(),
             'titel' => $nummer->get_titel(),
         ],
-        $nummers
+        $nummers,
     );
     $ai_res = json_decode($openai_client->get_struct_response([
         'input' => json_encode($input),
@@ -347,7 +349,7 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
     }
     $res = \array_fill_keys(
         \array_map(
-            fn($nummer) => $nummer->get_id(),
+            static fn($nummer) => $nummer->get_id(),
             $nummers,
         ),
         ['is_correct' => false],

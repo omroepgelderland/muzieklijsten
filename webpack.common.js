@@ -15,6 +15,9 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "public"),
     filename: "js/[name].js",
+    clean: {
+      keep: /\.php$/i,
+    },
   },
   module: {
     rules: [

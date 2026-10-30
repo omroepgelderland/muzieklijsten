@@ -90,10 +90,10 @@ class PowergoldImporter
                 'jaar',
             ];
             $ontbrekende_kolommen = array_diff($verplichte_kolommen, array_keys($this->kolomtitels));
-            if (count($ontbrekende_kolommen) > 0) {
+            if (\count($ontbrekende_kolommen) > 0) {
                 $ontbrekende_kolommen_str = implode(', ', $ontbrekende_kolommen);
                 throw new GLDException(
-                    "De volgende verplichte velden ontbreken in de sheet: {$ontbrekende_kolommen_str}"
+                    "De volgende verplichte velden ontbreken in de sheet: {$ontbrekende_kolommen_str}",
                 );
             }
         }
@@ -111,8 +111,8 @@ class PowergoldImporter
         array $rij,
         string $key,
         string $type,
-        bool $null_als_leeg
-    ): null|string|int {
+        bool $null_als_leeg,
+    ): string|int|null {
         $keys = $this->get_kolomtitels();
         try {
             if ($type === 'string') {
@@ -144,7 +144,7 @@ class PowergoldImporter
         /** @var list<list<string>> $data */
         $data = $this->excel->sheets[0]['cells'];
 
-        $data = array_slice($data, 2);
+        $data = \array_slice($data, 2);
         $powergold_ids = [];
         foreach ($data as $rij) {
             $powergold_id = self::get_cel($rij, 'muziek_id', 'string', true);
@@ -154,7 +154,7 @@ class PowergoldImporter
         }
         $i_powergold_ids = \implode(
             '","',
-            $powergold_ids
+            $powergold_ids,
         );
         $aantal = (int)$this->db->selectSingle(<<<SQL
         SELECT COUNT(id)
@@ -167,7 +167,7 @@ class PowergoldImporter
             $ans = readline_met_default(
                 "{$aantal} nummers staan wel in de database, maar niet in de "
                 . "het importbestand. Wilt u deze verwijderen? (j/n)",
-                'n'
+                'n',
             );
             if (\strtolower(\trim($ans)) === 'j') {
                 $this->db->query(<<<SQL
@@ -189,7 +189,7 @@ class PowergoldImporter
         /** @var list<list<string>> $data */
         $data = $this->excel->sheets[0]['cells'];
 
-        $data = array_slice($data, 2);
+        $data = \array_slice($data, 2);
 
         $db = $this->db->getDB();
         $insert_query = <<<'SQL'
@@ -305,10 +305,10 @@ class PowergoldImporter
             $opener = strtolower($opener_str) === 'yes';
             $duur_str = self::get_cel($rij, 'duur', 'string', false);
             $duur_array = \explode(':', $duur_str);
-            if (count($duur_array) === 2) {
+            if (\count($duur_array) === 2) {
                 // Duur in minuten en seconden
                 $duur = (int)$duur_array[0] * 60 + (int)$duur_array[1];
-            } elseif (count($duur_array) === 1 && $duur_array[0] !== '') {
+            } elseif (\count($duur_array) === 1 && $duur_array[0] !== '') {
                 // Duur in seconden
                 $duur = (int)$duur_array[0];
             } else {
@@ -337,7 +337,7 @@ class PowergoldImporter
             ORDER BY id
             SQL;
 
-            $nummer_ids = \array_map(fn($i) => (int)$i, $this->db->selectSingleColumn($query));
+            $nummer_ids = \array_map(static fn($i) => (int)$i, $this->db->selectSingleColumn($query));
             $nummer_id = \array_shift($nummer_ids);
             if ($nummer_id === null) {
                 // Nummer bestaat nog niet, dus toevoegen.
@@ -348,7 +348,7 @@ class PowergoldImporter
                 $aantal_toegevoegd++;
             } else {
                 // Nummer bestaat al, dus bijwerken.
-                if (count($nummer_ids) > 0) {
+                if (\count($nummer_ids) > 0) {
                     // Er bestaat een nummer met dezelfde titel en artiest, maar een andere Powergold ID.
                     // Deze moeten worden samengevoegd voordat het powergold ID kan worden ge-update.
                     nummers_samenvoegen($this->db, $nummer_id, $nummer_ids);

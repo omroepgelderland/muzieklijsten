@@ -36,7 +36,7 @@ class Stemmer
         private Config $config,
         private Factory $factory,
         int|string $id,
-        ?array $data = null
+        ?array $data = null,
     ) {
         $this->id = (int)$id;
         $this->db_props_set = false;
@@ -95,9 +95,9 @@ class Stemmer
     private function set_db_properties(): void
     {
         if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(sprintf(
+            $this->set_data($this->db->selectSingleRow(\sprintf(
                 'SELECT * FROM stemmers WHERE id = %d',
-                $this->get_id()
+                $this->get_id(),
             )));
         }
     }
@@ -122,7 +122,7 @@ class Stemmer
     public function add_stem(
         Nummer $nummer,
         string $toelichting,
-        bool $is_vrijekeuze = false
+        bool $is_vrijekeuze = false,
     ): StemmerNummer {
         try {
             $this->db->insertMulti('stemmers_nummers', [
@@ -135,7 +135,7 @@ class Stemmer
         } catch (SQLDataTooLongException) {
             $max = $this->db->get_max_kolom_lengte('stemmers_nummers', 'toelichting');
             throw new GebruikersException(
-                "De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens."
+                "De toelichting bij \"{$nummer->get_titel()}\" is te lang. De maximale lengte is {$max} tekens.",
             );
         } catch (SQLDupEntryException) {
             // Bestaande stem teruggeven
@@ -234,12 +234,12 @@ class Stemmer
             $e_toelichting->appendChild($dom->createTextNode($stem->get_toelichting() ?? ''));
         }
 
-        if (count($lijst->get_notificatie_email_adressen()) > 0) {
+        if (\count($lijst->get_notificatie_email_adressen()) > 0) {
             send_mail(
                 to: $lijst->get_notificatie_email_adressen(),
                 from: $this->config->get_afzender_mail_adres(),
                 subject: $onderwerp,
-                html_message: $dom
+                html_message: $dom,
             );
         }
     }
@@ -307,7 +307,7 @@ class Stemmer
         foreach ($this->get_stemmen() as $stem) {
             $e_strong = $e_keuzes->appendChild($dom->createElement('strong'));
             $e_strong->appendChild($dom->createTextNode(
-                "{$stem->nummer->get_artiest()} – {$stem->nummer->get_titel()}"
+                "{$stem->nummer->get_artiest()} – {$stem->nummer->get_titel()}",
             ));
             $toelichting = $stem->get_toelichting();
             if ($toelichting !== null && $toelichting !== '') {
@@ -315,7 +315,7 @@ class Stemmer
                 $e_span = $e_keuzes->appendChild($dom->createElement('span'));
                 $e_span->setAttribute('style', 'margin-left: 20px; font-style: italic;');
                 $e_span->appendChild($dom->createTextNode(
-                    " Toelichting: {$stem->get_toelichting()}"
+                    " Toelichting: {$stem->get_toelichting()}",
                 ));
                 $e_keuzes->appendChild($e_span);
             }
@@ -346,7 +346,7 @@ class Stemmer
             $stemmen[] = $this->factory->create_stemmer_nummer(
                 $this->factory->create_nummer((int)$entry['nummer_id']),
                 $this,
-                $entry
+                $entry,
             );
         }
         return $stemmen;
@@ -390,7 +390,7 @@ class Stemmer
                 'ip' => anonimiseer($this->get_ip()),
                 'is_geanonimiseerd' => true,
             ],
-            "id = {$this->id}"
+            "id = {$this->id}",
         );
         $this->db_props_set = false;
         $this->anonimiseer_toelichtingen();
@@ -415,7 +415,7 @@ class Stemmer
             $this->db->updateMulti(
                 'stemmers_nummers',
                 ['toelichting' => anonimiseer($toelichting)],
-                "nummer_id = {$nummer_id} AND stemmer_id = {$this->id}"
+                "nummer_id = {$nummer_id} AND stemmer_id = {$this->id}",
             );
         }
     }
@@ -438,7 +438,7 @@ class Stemmer
             $this->db->updateMulti(
                 'stemmers_velden',
                 ['waarde' => anonimiseer($waarde)],
-                "veld_id = {$veld_id} AND stemmer_id = {$this->id}"
+                "veld_id = {$veld_id} AND stemmer_id = {$this->id}",
             );
         }
     }
@@ -531,7 +531,7 @@ class Stemmer
         SQL;
         $verwijder_stemmen_nummer_ids = [];
         foreach ($this->db->selectSingleColumn($query) as $idlijst) {
-            $ids = \array_map(fn($id) => (int)$id, \explode(',', (string)$idlijst));
+            $ids = \array_map(static fn($id) => (int)$id, \explode(',', (string)$idlijst));
             \shuffle($ids);
             \array_shift($ids); // Behoud random nummer
             $verwijder_stemmen_nummer_ids = \array_merge($verwijder_stemmen_nummer_ids, $ids);

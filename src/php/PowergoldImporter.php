@@ -337,7 +337,7 @@ class PowergoldImporter
             ORDER BY id
             SQL;
 
-            $nummer_ids = \array_map(static fn($i) => (int)$i, $this->db->selectSingleColumn($query));
+            $nummer_ids = \array_map(\intval(...), $this->db->selectSingleColumn($query));
             $nummer_id = \array_shift($nummer_ids);
             if ($nummer_id === null) {
                 // Nummer bestaat nog niet, dus toevoegen.

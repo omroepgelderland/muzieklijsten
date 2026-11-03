@@ -9,27 +9,18 @@ use gldstdlib\exception\SQLDupEntryException;
 use function gldstdlib\ns;
 use function gldstdlib\send_mail;
 
-/**
- * @phpstan-type DBData array{
- *     id: positive-int,
- *     lijst_id: positive-int,
- *     ip: string,
- *     timestamp: \DateTime,
- *     is_geanonimiseerd: positive-int
- * }
- */
 class Stemmer
 {
     private int $id;
     private Lijst $lijst;
     private string $ip;
-    private \DateTime $tijdstip;
+    private \DateTimeImmutable $tijdstip;
     private bool $is_geanonimiseerd;
     private bool $db_props_set;
 
     /**
      * @param $id ID van het object.
-     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct(
         private DB $db,
@@ -83,7 +74,7 @@ class Stemmer
         return $this->ip;
     }
 
-    public function get_tijdstip(): \DateTime
+    public function get_tijdstip(): \DateTimeImmutable
     {
         $this->set_db_properties();
         return $this->tijdstip;
@@ -105,13 +96,13 @@ class Stemmer
     /**
      * Plaatst metadata in het object
      *
-     * @param DBData $data Data.
+     * @param array<string,string|null> $data Data.
      */
     private function set_data(array $data): void
     {
-        $this->lijst = $this->factory->create_lijst($data['lijst_id']);
+        $this->lijst = $this->factory->create_lijst((int)$data['lijst_id']);
         $this->ip = $data['ip'];
-        $this->tijdstip = $data['timestamp'];
+        $this->tijdstip = dbDateTimeToDateTimeImmutable($data['timestamp']);
         $this->is_geanonimiseerd = (bool)$data['is_geanonimiseerd'];
         $this->db_props_set = true;
     }

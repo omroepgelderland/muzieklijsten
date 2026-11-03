@@ -15,6 +15,12 @@ use gldstdlib\exception\SQLException;
  *     user: string,
  *     password: string
  * }
+ * @phpstan-type DBWaarde scalar|\DateTimeInterface|null
+ * @phpstan-type DBInsertUpdateResult array{
+ *     actie: "insert"|"update",
+ *     veranderd: bool,
+ *     id?: int|string
+ * }
  */
 class DB
 {
@@ -161,22 +167,25 @@ class DB
      *
      * @param $sql SQL query
      *
-     * @return DBWaarde
-     *
      * @throws SQLException Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public function selectSingle(string $sql): mixed
+    public function selectSingle(string $sql): string|null
     {
+        $e = new SQLException(\sprintf(
+            'Geen resultaat bij query: "%s"',
+            $sql,
+        ));
         $res = $this->query($sql);
         if ($res->num_rows === 0) {
-            throw new SQLException(\sprintf(
-                'Geen resultaat bij query: "%s"',
-                $sql,
-            ));
+            throw $e;
         }
-        return self::typecast($res->fetch_row()[0], $res->fetch_field()->type);
+        $row = $res->fetch_row();
+        if (\count($row) === 0) {
+            throw $e;
+        }
+        return $row[0];
     }
 
     /**
@@ -185,7 +194,7 @@ class DB
      *
      * @param $sql SQL query
      *
-     * @return array<string, DBWaarde> associatieve array met resultaat
+     * @return array<string, string|null> associatieve array met resultaat
      *
      * @throws SQLException Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
@@ -202,7 +211,7 @@ class DB
         }
         $ret = [];
         foreach ($res->fetch_assoc() as $key => $value) {
-            $ret[$key] = self::typecast($value, $res->fetch_field()->type);
+            $ret[$key] = $value;
         }
         return $ret;
     }
@@ -212,7 +221,7 @@ class DB
      *
      * @param $sql SQL query
      *
-     * @return list<DBWaarde> resultaat. Kan leeg zijn.
+     * @return list<string|null> resultaat. Kan leeg zijn.
      *
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
@@ -220,10 +229,9 @@ class DB
     public function selectSingleColumn(string $sql): array
     {
         $res = $this->query($sql);
-        $type = $res->fetch_field()->type;
         $ret = [];
         while (( $r = $res->fetch_row() ) !== null) {
-            $ret[] = self::typecast($r[0], $type);
+            $ret[] = $r[0] ?? null;
         }
         return $ret;
     }
@@ -304,120 +312,6 @@ class DB
     }
 
     /**
-     * Zet een waarde uit de database om naar het juiste PHP type aan de hand van het MySQL veldtype
-     *
-     * @param mixed $waarde Waarde uit de database
-     * @param $type MySQLi type
-     *
-     * @return DBWaarde
-     */
-    private static function typecast(mixed $waarde, int $type): mixed
-    {
-        if ($waarde === null) {
-            return null;
-        }
-        if ($type === \MYSQLI_TYPE_DECIMAL) {
-            return self::typecast_nummer((float)$waarde);
-        }
-        if ($type === \MYSQLI_TYPE_NEWDECIMAL) {
-            return self::typecast_nummer((float)$waarde);
-        }
-//    if ( $type === MYSQLI_TYPE_BIT ) {
-//        return $waarde;
-//    }
-        if ($type === \MYSQLI_TYPE_TINY) {
-            return (int)$waarde;
-        }
-        if ($type === \MYSQLI_TYPE_SHORT) {
-            return (int)$waarde;
-        }
-        if ($type === \MYSQLI_TYPE_LONG) {
-            return self::typecast_nummer((float)$waarde);
-        }
-        if ($type === \MYSQLI_TYPE_FLOAT) {
-            return self::typecast_nummer((float)$waarde);
-        }
-        if ($type === \MYSQLI_TYPE_DOUBLE) {
-            return self::typecast_nummer((float)$waarde);
-        }
-        if ($type === \MYSQLI_TYPE_NULL) {
-            return null;
-        }
-        if ($type === \MYSQLI_TYPE_TIMESTAMP) {
-            return new \DateTime($waarde);
-        }
-        if ($type === \MYSQLI_TYPE_LONGLONG) {
-            return self::typecast_nummer((float)$waarde);
-        }
-        if ($type === \MYSQLI_TYPE_INT24) {
-            return self::typecast_nummer((float)$waarde);
-        }
-        if ($type === \MYSQLI_TYPE_DATE) {
-            return new \DateTime($waarde);
-        }
-//        if ( $type === MYSQLI_TYPE_TIME ) {
-//            return $waarde;
-//        }
-        if ($type === \MYSQLI_TYPE_DATETIME) {
-            return new \DateTime($waarde);
-        }
-        if ($type === \MYSQLI_TYPE_YEAR) {
-            return (int)$waarde;
-        }
-//        if ( $type === MYSQLI_TYPE_NEWDATE ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_INTERVAL ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_ENUM ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_SET ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_TINY_BLOB ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_MEDIUM_BLOB ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_LONG_BLOB ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_BLOB ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_VAR_STRING ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_STRING ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_CHAR ) {
-//            return $waarde;
-//        }
-//        if ( $type === MYSQLI_TYPE_GEOMETRY ) {
-//            return $waarde;
-//        }
-        return $waarde;
-    }
-
-    /**
-     * Zet floats om in ints als dat kan zonder dataverlies
-     *
-     * @param $waarde
-     */
-    private static function typecast_nummer(int|float $waarde): int|float
-    {
-        if ($waarde == (int)$waarde) {
-            return (int)$waarde;
-        } else {
-            return $waarde;
-        }
-    }
-
-    /**
      * Genereert een foutmelding aan de hand van de foutinformatie uit MySQLi.
      *
      * @param $sql De query die de fout veroorzaakte.
@@ -493,7 +387,7 @@ class DB
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public function insert_update_multi(string $table, array $data = []): object
+    public function insert_update_multi(string $table, array $data = []): array
     {
         $db = $this->getDB();
         $data = $this->prepareer_data($data);
@@ -515,7 +409,7 @@ class DB
         if ($db->affected_rows > 0) {
             $respons['id'] = $db->insert_id;
         }
-        return (object)$respons;
+        return $respons;
     }
 
     /**

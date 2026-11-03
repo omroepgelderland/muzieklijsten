@@ -6,19 +6,18 @@ use gldstdlib\exception\IndexException;
 
 /**
  * @phpstan-type DBData array{
- *     id: positive-int,
- *     actief: positive-int,
  *     naam: string,
- *     minkeuzes: positive-int,
- *     maxkeuzes: positive-int,
- *     vrijekeuzes: positive-int,
- *     stemmen_per_ip: ?positive-int,
- *     artiest_eenmalig: positive-int,
- *     recaptcha: positive-int,
- *     email: ?string,
+ *     actief: int,
+ *     minkeuzes: int,
+ *     maxkeuzes: int,
+ *     vrijekeuzes: int,
+ *     stemmen_per_ip: ?int,
+ *     artiest_eenmalig: bool,
+ *     recaptcha: bool,
+ *     notificatie_email_adressen: list<string>,
  *     bedankt_tekst: string,
- *     mail_stemmers: positive-int,
- *     random_volgorde: positive-int
+ *     mail_stemmers: bool,
+ *     random_volgorde: bool,
  * }
  * @phpstan-type VeldenData list<array{
  *     id: int,
@@ -53,42 +52,29 @@ class Lijst
     public const VELD_VERPLICHT_BIT = 1;
 
     private int $id;
-    private bool $actief;
-    private string $naam;
-    private int $minkeuzes;
-    private int $maxkeuzes;
-    private int $vrijekeuzes;
-    private ?int $stemmen_per_ip;
-    private bool $artiest_eenmalig;
-    private bool $recaptcha;
-    /** @var list<string> */
-    private array $notificatie_email_adressen;
-    private string $bedankt_tekst;
-    private bool $mail_stemmers;
-    private bool $random_volgorde;
+    /** @var ?DBData */
+    private ?array $db_data = null;
     /** @var list<Veld> */
     private array $velden;
     /** @var list<Nummer> */
     private array $nummers;
     /** @var list<Stemmer> */
     private array $stemmers;
-    private bool $db_props_set;
 
     /**
      * @param $id ID van het object.
-     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $db_data Metadata uit de databasevelden (optioneel).
      */
     public function __construct(
         private DB $db,
         private Config $config,
         private Factory $factory,
         int|string $id,
-        ?array $data = null,
+        ?array $db_data = null,
     ) {
         $this->id = (int)$id;
-        $this->db_props_set = false;
-        if (isset($data)) {
-            $this->set_data($data);
+        if ($db_data !== null) {
+            $this->db_data = self::parse_db_data($db_data);
         }
     }
 
@@ -114,26 +100,22 @@ class Lijst
      */
     public function is_actief(): bool
     {
-        $this->set_db_properties();
-        return $this->actief;
+        return $this->get_db_data()['actief'];
     }
 
     public function get_naam(): string
     {
-        $this->set_db_properties();
-        return $this->naam;
+        return $this->get_db_data()['naam'];
     }
 
     public function get_minkeuzes(): int
     {
-        $this->set_db_properties();
-        return $this->minkeuzes;
+        return $this->get_db_data()['minkeuzes'];
     }
 
     public function get_maxkeuzes(): int
     {
-        $this->set_db_properties();
-        return $this->maxkeuzes;
+        return $this->get_db_data()['maxkeuzes'];
     }
 
     /**
@@ -141,20 +123,17 @@ class Lijst
      */
     public function get_vrijekeuzes(): int
     {
-        $this->set_db_properties();
-        return $this->vrijekeuzes;
+        return $this->get_db_data()['vrijekeuzes'];
     }
 
     public function get_max_stemmen_per_ip(): ?int
     {
-        $this->set_db_properties();
-        return $this->stemmen_per_ip;
+        return $this->get_db_data()['stemmen_per_ip'];
     }
 
     public function is_artiest_eenmalig(): bool
     {
-        $this->set_db_properties();
-        return $this->artiest_eenmalig;
+        return $this->get_db_data()['artiest_eenmalig'];
     }
 
     public function heeft_gebruik_recaptcha(): bool
@@ -162,8 +141,7 @@ class Lijst
         if (!$this->config->heeft_recaptcha_keys()) {
             return false;
         }
-        $this->set_db_properties();
-        return $this->recaptcha;
+        return $this->get_db_data()['recaptcha'];
     }
 
     /**
@@ -171,8 +149,7 @@ class Lijst
      */
     public function get_notificatie_email_adressen(): array
     {
-        $this->set_db_properties();
-        return $this->notificatie_email_adressen;
+        return $this->get_db_data()['notificatie_email_adressen'];
     }
 
     /**
@@ -277,7 +254,7 @@ class Lijst
      *
      * @return list<Stemmer>
      */
-    public function get_stemmers(?\DateTime $van = null, ?\DateTime $tot = null): array
+    public function get_stemmers(?\DateTimeInterface $van = null, ?\DateTimeInterface $tot = null): array
     {
         if ($van === null && $tot === null) {
             return $this->get_alle_stemmers();
@@ -334,8 +311,8 @@ class Lijst
      */
     public function get_stemmen(
         ?Nummer $nummer = null,
-        ?\DateTime $van = null,
-        ?\DateTime $tot = null,
+        ?\DateTimeInterface $van = null,
+        ?\DateTimeInterface $tot = null,
     ): array {
         $where = [];
         if (isset($nummer)) {
@@ -382,8 +359,8 @@ class Lijst
      * @return list<Nummer>
      */
     public function get_nummers_volgorde_aantal_stemmen(
-        ?\DateTime $van = null,
-        ?\DateTime $tot = null,
+        ?\DateTimeInterface $van = null,
+        ?\DateTimeInterface $tot = null,
     ): array {
         $datumvoorwaarden = [];
         if (isset($van)) {
@@ -410,8 +387,7 @@ class Lijst
      */
     public function get_bedankt_tekst(): string
     {
-        $this->set_db_properties();
-        return $this->bedankt_tekst;
+        return $this->get_db_data()['bedankt_tekst'];
     }
 
     /**
@@ -419,8 +395,7 @@ class Lijst
      */
     public function is_mail_stemmers(): bool
     {
-        $this->set_db_properties();
-        return $this->mail_stemmers;
+        return $this->get_db_data()['mail_stemmers'];
     }
 
     /**
@@ -428,8 +403,7 @@ class Lijst
      */
     public function is_random_volgorde(): bool
     {
-        $this->set_db_properties();
-        return $this->random_volgorde;
+        return $this->get_db_data()['random_volgorde'];
     }
 
     /**
@@ -445,10 +419,7 @@ class Lijst
      */
     public function reset(): void
     {
-        $this->db_props_set = false;
-        unset($this->velden);
-        unset($this->nummers);
-        unset($this->stemmers);
+        $this->db_data = null;
     }
 
     /**
@@ -464,46 +435,55 @@ class Lijst
     }
 
     /**
-     * Vul het object met velden uit de database.
+     * @return DBData
      */
-    private function set_db_properties(): void
+    private function get_db_data(): array
     {
-        if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(\sprintf(
-                'SELECT * FROM lijsten WHERE id = %d',
-                $this->get_id(),
-            )));
+        if ($this->db_data === null) {
+            $raw_db_data = $this->db->selectSingleRow(<<<SQL
+            SELECT *
+            FROM lijsten
+            WHERE id = {$this->get_id()}
+            SQL);
+            $this->db_data = self::parse_db_data($raw_db_data);
         }
+        return $this->db_data;
     }
 
     /**
      * Plaatst metadata in het object
      *
-     * @param DBData $data Data.
+     * @param array<string,string|null> $raw_db_data Data.
+     *
+     * @return DBData
      */
-    private function set_data(array $data): void
+    private static function parse_db_data(array $raw_db_data): array
     {
-        $this->actief = (bool)$data['actief'];
-        $this->naam = $data['naam'];
-        $this->minkeuzes = (int)$data['minkeuzes'];
-        $this->maxkeuzes = (int)$data['maxkeuzes'];
-        $this->vrijekeuzes = (int)$data['vrijekeuzes'];
-        $this->stemmen_per_ip = isset($data['stemmen_per_ip'])
-            ? (int)$data['stemmen_per_ip']
-            : $data['stemmen_per_ip'];
-        $this->artiest_eenmalig = (bool)$data['artiest_eenmalig'];
-        $this->recaptcha = (bool)$data['recaptcha'];
-        $this->notificatie_email_adressen = [];
-        foreach (explode(',', $data['email']) as $adres) {
+        $notificatie_email_adressen = [];
+        foreach (explode(',', $raw_db_data['email']) as $adres) {
             $adres = trim($adres);
             if (\strlen($adres) > 0) {
-                $this->notificatie_email_adressen[] = $adres;
+                $notificatie_email_adressen[] = $adres;
             }
         }
-        $this->bedankt_tekst = $data['bedankt_tekst'];
-        $this->mail_stemmers = (bool)$data['mail_stemmers'];
-        $this->random_volgorde = (bool)$data['random_volgorde'];
-        $this->db_props_set = true;
+
+        return [
+            'naam' => $raw_db_data['naam'],
+            'starttijd' => dbDateTimeToDateTimeImmutable($raw_db_data['starttijd']),
+            'eindtijd' => dbDateTimeToDateTimeImmutable($raw_db_data['eindtijd']),
+            'minkeuzes' => (int)$raw_db_data['minkeuzes'],
+            'maxkeuzes' => (int)$raw_db_data['maxkeuzes'],
+            'vrijekeuzes' => (int)$raw_db_data['vrijekeuzes'],
+            'stemmen_per_ip' => $raw_db_data['stemmen_per_ip'] === null
+                ? null
+                : (int)$raw_db_data['stemmen_per_ip'],
+            'artiest_eenmalig' => (bool)$raw_db_data['artiest_eenmalig'],
+            'recaptcha' => (bool)$raw_db_data['recaptcha'],
+            'notificatie_email_adressen' => $notificatie_email_adressen,
+            'bedankt_tekst' => $raw_db_data['bedankt_tekst'],
+            'mail_stemmers' => (bool)$raw_db_data['mail_stemmers'],
+            'random_volgorde' => (bool)$raw_db_data['random_volgorde'],
+        ];
     }
 
     /**

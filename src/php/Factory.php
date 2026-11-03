@@ -8,13 +8,6 @@ use gldstdlib\exception\SQLDataTooLongException;
 use gldstdlib\exception\UndefinedPropertyException;
 use Psr\Container\ContainerInterface;
 
-/**
- * @phpstan-import-type DBData from Lijst as LijstDBData
- * @phpstan-import-type DBData from Nummer as NummerDBData
- * @phpstan-import-type DBData from Stemmer as StemmerDBData
- * @phpstan-import-type DBData from StemmerNummer as StemmerNummerDBData
- * @phpstan-import-type DBData from Veld as VeldDBData
- */
 class Factory
 {
     public function __construct(
@@ -102,7 +95,7 @@ class Factory
 
     /**
      * @param $id ID van de lijst.
-     * @param ?LijstDBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      */
     public function create_lijst(
         int $id,
@@ -142,7 +135,7 @@ class Factory
 
     /**
      * @param $id ID van het object.
-     * @param ?NummerDBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      */
     public function create_nummer(
         int $id,
@@ -182,7 +175,7 @@ class Factory
 
     /**
      * @param $id ID van het object.
-     * @param ?StemmerDBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      */
     public function create_stemmer(
         int $id,
@@ -238,7 +231,7 @@ class Factory
     /**
      * @param $nummer
      * @param $stemmer
-     * @param ?StemmerNummerDBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      */
     public function create_stemmer_nummer(
         Nummer $nummer,
@@ -272,7 +265,7 @@ class Factory
 
     /**
      * @param $id Database-id van het veld.
-     * @param ?VeldDBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      * @param $verplicht Of het veld verplicht is (optioneel)
      */
     public function create_veld(
@@ -417,16 +410,16 @@ class Factory
             'muziek_id' => $powergold_id,
             'titel' => $titel,
             'artiest' => $artiest,
-            'jaar' => $jaar,
+            'jaar' => $jaar === null ? null : (string)$jaar,
             'categorie' => $categorie,
             'map' => $map,
-            'opener' => (int)$opener,
-            'duur' => $duur,
-            'is_vrijekeuze' => $is_vrijekeuze,
+            'opener' => $opener ? '1' : '0',
+            'duur' => $duur === null ? null : (string)$duur,
+            'is_vrijekeuze' => (string)$is_vrijekeuze,
             'vgl_artiest' => get_vgl_string($artiest, true),
             'vgl_titel' => get_vgl_string($titel, false),
         ];
-        $db_data['id'] = $id = (int)$this->db->insertMulti('nummers', $db_data);
-        return $this->create_nummer($id, $db_data);
+        $db_data['id'] = $id = (string)$this->db->insertMulti('nummers', $db_data);
+        return $this->create_nummer((int)$id, $db_data);
     }
 }

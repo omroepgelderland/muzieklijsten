@@ -2,21 +2,9 @@
 
 namespace muzieklijsten;
 
+use function gldstdlib\ns;
+
 /**
- * @phpstan-type DBData array{
- *     id: positive-int,
- *     muziek_id: ?string,
- *     titel: string,
- *     artiest: string,
- *     jaar: ?int,
- *     categorie: ?string,
- *     map: ?string,
- *     opener: positive-int,
- *     duur: ?positive-int,
- *     is_vrijekeuze: positive-int,
- *     vgl_artiest: string,
- *     vgl_titel: string,
- * }
  * @phpstan-type AISuggestieType array{
  *     is_correct: bool,
  *     suggestie?: array{
@@ -53,7 +41,7 @@ class Nummer
 
     /**
      * @param $id ID van het object.
-     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      */
     public function __construct(
         private DB $db,
@@ -206,23 +194,25 @@ class Nummer
     /**
      * Plaatst metadata in het object
      *
-     * @param DBData $data Data.
+     * @param array<string,string|null> $data Data.
      */
     private function set_data(array $data): void
     {
         $this->muziek_id = $data['muziek_id'];
-        $this->titel = $data['titel'];
-        $this->artiest = $data['artiest'];
+        $this->titel = ns($data['titel']);
+        $this->artiest = ns($data['artiest']);
         $this->jaar = isset($data['jaar'])
             ? (int)$data['jaar']
             : null;
         $this->categorie = $data['categorie'];
         $this->map = $data['map'];
         $this->is_opener = (bool)$data['opener'];
-        $this->duur = $data['duur'];
+        $this->duur = isset($data['duur'])
+            ? (int)$data['duur']
+            : null;
         $this->is_vrijekeuze = (int)$data['is_vrijekeuze'];
-        $this->vgl_titel = $data['vgl_titel'];
-        $this->vgl_artiest = $data['vgl_artiest'];
+        $this->vgl_titel = ns($data['vgl_titel']);
+        $this->vgl_artiest = ns($data['vgl_artiest']);
         $this->db_props_set = true;
     }
 

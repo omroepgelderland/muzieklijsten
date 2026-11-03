@@ -254,10 +254,10 @@ class SSP
         $data = $this->db->query($query);
 
         // Data set length after filtering
-        $recordsFiltered = $this->db->selectSingle($count_query);
+        $recordsFiltered = (int)$this->db->selectSingle($count_query);
 
         // Total data set length
-        $recordsTotal = $this->db->selectSingle($total_length_query);
+        $recordsTotal = (int)$this->db->selectSingle($total_length_query);
 
         // Output
         return [

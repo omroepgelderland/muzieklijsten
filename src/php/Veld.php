@@ -4,19 +4,8 @@ namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
 
-/**
- * @phpstan-type DBData array{
- *     id: positive-int,
- *     label: string,
- *     leeg_feedback: string,
- *     max: ?positive-int,
- *     maxlength: ?positive-int,
- *     min: ?positive-int,
- *     minlength: ?positive-int,
- *     placeholder: ?string,
- *     type: string
- * }
- */
+use function gldstdlib\ns;
+
 class Veld
 {
     private int $id;
@@ -35,7 +24,7 @@ class Veld
 
     /**
      * @param $id Database-id van het veld.
-     * @param ?DBData $data Metadata uit de databasevelden (optioneel).
+     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      * @param $verplicht Of het veld verplicht is (optioneel)
      */
     public function __construct(
@@ -189,12 +178,12 @@ class Veld
     /**
      * Plaatst metadata in het object
      *
-     * @param DBData $data Data.
+     * @param array<string,string|null> $data Data.
      */
     private function set_data(array $data): void
     {
-        $this->label = $data['label'];
-        $this->leeg_feedback = $data['leeg_feedback'];
+        $this->label = ns($data['label']);
+        $this->leeg_feedback = ns($data['leeg_feedback']);
         $this->max = isset($data['max'])
             ? (int)$data['max']
             : null;
@@ -204,9 +193,11 @@ class Veld
         $this->min = isset($data['min'])
             ? (int)$data['min']
             : null;
-        $this->minlength = $data['minlength'];
+        $this->minlength = isset($data['minlength'])
+            ? (int)$data['minlength']
+            : null;
         $this->placeholder = $data['placeholder'];
-        $this->type = $data['type'];
+        $this->type = ns($data['type']);
         $this->db_props_set = true;
     }
 

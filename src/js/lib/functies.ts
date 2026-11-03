@@ -83,3 +83,112 @@ export async function set_config_classes(): Promise<server.Config> {
   }
   return config;
 }
+
+/**
+ * Geeft een leesbare tekst die aangeeft hoe lang het duurt tot de stemmen geopend zijn.
+ */
+export function get_stemlijst_actief_vanaf_tekst(dt: Date): string {
+  const nu = new Date();
+  const verschil = dt.getTime() - nu.getTime();
+
+  const format_datum = (datum: Date): string => {
+    if (datum.getFullYear() === nu.getFullYear()) {
+      const formatter = new Intl.DateTimeFormat("nl-NL", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+      return `vanaf ${formatter.format(datum)}`;
+    }
+    const formatter = new Intl.DateTimeFormat("nl-NL", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    return `vanaf ${formatter.format(datum)}`;
+  };
+
+  if (verschil <= 0) {
+    return format_datum(dt);
+  }
+
+  if (verschil < 60_000) {
+    return `over ${Math.max(1, Math.ceil(verschil / 1000))} seconden`;
+  }
+
+  if (verschil < 3_600_000) {
+    return `over ${Math.max(1, Math.ceil(verschil / 60_000))} minuten`;
+  }
+
+  if (verschil < 14_400_000) {
+    return `over ${Math.max(1, Math.ceil(verschil / 3_600_000))} uren`;
+  }
+
+  const start_vandaag = new Date(nu);
+  start_vandaag.setHours(0, 0, 0, 0);
+
+  const start_morgen = new Date(start_vandaag);
+  start_morgen.setDate(start_morgen.getDate() + 1);
+
+  const is_vandaag =
+    dt.getFullYear() === nu.getFullYear() &&
+    dt.getMonth() === nu.getMonth() &&
+    dt.getDate() === nu.getDate();
+
+  const is_morgen =
+    dt.getFullYear() === start_morgen.getFullYear() &&
+    dt.getMonth() === start_morgen.getMonth() &&
+    dt.getDate() === start_morgen.getDate();
+
+  if (is_morgen) {
+    return "vanaf morgen";
+  }
+
+  if (is_vandaag) {
+    return `vanaf ${String(dt.getHours())}.${String(dt.getMinutes()).padStart(2, "0")} uur`;
+  }
+
+  return format_datum(dt);
+}
+
+/**
+ * Zet een Date om naar een string in het formaat dat gebruikt wordt door datetime-local inputs.
+ *
+ * @param dt De datum die omgezet moet worden.
+ * @returns De datum als string in het formaat YYYY-MM-DDTHH:MM.
+ */
+export function date_to_datetime_local(dt: Date | string): string {
+  if (typeof dt === "string") {
+    dt = new Date(dt);
+    if (isNaN(dt.getTime())) {
+      throw new Error("Ongeldige datum");
+    }
+  }
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return (
+    `${dt.getFullYear()}-` +
+    `${pad(dt.getMonth() + 1)}-` +
+    `${pad(dt.getDate())}T` +
+    `${pad(dt.getHours())}:` +
+    `${pad(dt.getMinutes())}`
+  );
+}
+
+/**
+ * Zet de waarde van een datetime-local input om naar een Date object.
+ *
+ * @param value De waarde van een datetime-local input.
+ * @returns De datum als Date object, of null als de waarde leeg is.
+ */
+export function get_datetime_local_value(value?: string): Date | null {
+  if (value == null || value.trim() === "") {
+    return null;
+  }
+  const dt = new Date(value);
+  if (isNaN(dt.getTime())) {
+    throw new Error("Ongeldige datum");
+  }
+  return dt;
+}

@@ -11,6 +11,7 @@ use Invoker\InvokerInterface;
 use Psr\Container\ContainerInterface;
 
 use function gldstdlib\exception_error_handler_plus;
+use function gldstdlib\fs;
 use function gldstdlib\get_tijdzone;
 
 /**
@@ -412,4 +413,33 @@ function parse_ai_suggestie_nummer(mixed $input): array
         ];
     }
     return [$id, $suggestie];
+}
+
+/**
+ * @return ($db_datetime is null ? null : \DateTimeImmutable)
+ */
+function dbDateTimeToDateTimeImmutable(?string $db_datetime): ?\DateTimeImmutable
+{
+    if (empty($db_datetime)) {
+        return null;
+    }
+    $dt = fs(\DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $db_datetime));
+    return $dt->setTimezone(new \DateTimeZone(\date_default_timezone_get()));
+}
+
+/**
+ * @param string|null $input De datum en tijd in ISO-8601
+ *
+ * @return ($input is null ? null : \DateTimeImmutable)
+ */
+function isoDateTimeToDateTimeImmutable(?string $input): ?\DateTimeImmutable
+{
+    if (empty($input)) {
+        return null;
+    }
+    $dt = new \DateTimeImmutable(
+        $input,
+        new \DateTimeZone(\date_default_timezone_get()),
+    );
+    return $dt->setTimezone(new \DateTimeZone(\date_default_timezone_get()));
 }

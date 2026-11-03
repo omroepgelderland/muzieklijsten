@@ -1374,8 +1374,15 @@ class BeheerModal {
     for (const e_lijst_naam of this.e_modal.querySelectorAll(".lijst-naam")) {
       e_lijst_naam.textContent = data.naam;
     }
-    this.e_form.elements["is-actief"].checked = data.is_actief;
     this.e_form.elements.naam.value = data.naam;
+    this.e_form.elements.starttijd.value =
+      data.starttijd == null
+        ? ""
+        : functies.date_to_datetime_local(data.starttijd);
+    this.e_form.elements.eindtijd.value =
+      data.eindtijd == null
+        ? ""
+        : functies.date_to_datetime_local(data.eindtijd);
     this.e_form.elements.minkeuzes.value = data.minkeuzes;
     this.e_form.elements.maxkeuzes.value = data.maxkeuzes;
     this.e_form.elements.vrijekeuzes.value = data.vrijekeuzes;
@@ -1470,6 +1477,17 @@ class BeheerModal {
     }
 
     const fd = new FormData(this.e_form);
+    fd.set(
+      "starttijd",
+      functies.get_datetime_local_value(fd.get("starttijd"))?.toISOString() ??
+        "",
+    );
+    fd.set(
+      "eindtijd",
+      functies.get_datetime_local_value(fd.get("eindtijd"))?.toISOString() ??
+        "",
+    );
+
     if (this.is_nieuw()) {
       try {
         const lijst_id = await server.post("lijst_maken", fd);

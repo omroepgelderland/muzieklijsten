@@ -13,6 +13,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Writer\Ods;
 use ZipArchive;
 
+use function gldstdlib\fs;
 use function gldstdlib\vervang_bestandsnaam_tekens;
 
 /**
@@ -49,7 +50,8 @@ class Ajax
      *     organisatie: string,
      *     lijst_naam: string,
      *     heeft_gebruik_recaptcha: bool,
-     *     is_actief: bool,
+     *     starttijd: ?string,
+     *     eindtijd: ?string,
      *     velden: list<array{
      *         id: int,
      *         label: string,
@@ -118,7 +120,8 @@ class Ajax
             'organisatie' => $this->config->get()['organisatie'],
             'lijst_naam' => $lijst->get_naam(),
             'heeft_gebruik_recaptcha' => $lijst->heeft_gebruik_recaptcha(),
-            'is_actief' => $lijst->is_actief(),
+            'starttijd' => $lijst->get_starttijd() === null ? null : $lijst->get_starttijd()->format(\DateTime::ATOM),
+            'eindtijd' => $lijst->get_eindtijd() === null ? null : $lijst->get_eindtijd()->format(\DateTime::ATOM),
             'velden' => $velden,
             'recaptcha_sitekey' => $this->config->heeft_recaptcha_keys()
                 ? $this->config->get()['recaptcha']['sitekey']
@@ -164,32 +167,40 @@ class Ajax
      *
      * @return array{
      *     naam: string,
-     *     actief: bool,
-     *     minkeuzes: positive-int,
-     *     maxkeuzes: positive-int,
-     *     vrijekeuzes: int<0, max>,
-     *     stemmen_per_ip: ?positive-int,
-     *     artiest_eenmalig: bool,
-     *     mail_stemmers: bool,
-     *     random_volgorde: bool,
-     *     recaptcha: bool,
+     *     starttijd: ?string,
+     *     eindtijd: ?string,
+     *     minkeuzes: int,
+     *     maxkeuzes: int,
+     *     vrijekeuzes: int,
+     *     stemmen_per_ip: ?int,
+     *     artiest_eenmalig: int,
+     *     recaptcha: int,
      *     email: string,
-     *     bedankt_tekst: string
+     *     bedankt_tekst: string,
+     *     mail_stemmers: int,
+     *     random_volgorde: int,
      * }
      */
     private function filter_lijst_metadata(): array
     {
         $naam = trim(filter_var($this->request->naam));
-        $is_actief = isset($this->request->{'is-actief'});
-        $minkeuzes = (int)filter_var($this->request->minkeuzes, \FILTER_VALIDATE_INT);
-        $maxkeuzes = (int)filter_var($this->request->maxkeuzes, \FILTER_VALIDATE_INT);
-        $vrijekeuzes = (int)filter_var($this->request->vrijekeuzes, \FILTER_VALIDATE_INT);
+        $starttijd_str = trim(filter_var($this->request->{'starttijd'}));
+        $starttijd = empty($starttijd_str)
+            ? null
+            : isoDateTimeToDateTimeImmutable($starttijd_str);
+        $eindtijd_str = trim(filter_var($this->request->{'eindtijd'}));
+        $eindtijd = empty($eindtijd_str)
+            ? null
+            : isoDateTimeToDateTimeImmutable($eindtijd_str);
+        $minkeuzes = (int)fs(filter_var($this->request->minkeuzes, \FILTER_VALIDATE_INT));
+        $maxkeuzes = (int)fs(filter_var($this->request->maxkeuzes, \FILTER_VALIDATE_INT));
+        $vrijekeuzes = (int)fs(filter_var($this->request->vrijekeuzes, \FILTER_VALIDATE_INT));
         /** @var ?int $stemmen_per_ip */
         $stemmen_per_ip = filter_var($this->request->{'stemmen-per-ip'}, \FILTER_VALIDATE_INT, \FILTER_NULL_ON_FAILURE);
-        $artiest_eenmalig = isset($this->request->{'artiest-eenmalig'});
-        $mail_stemmers = isset($this->request->{'mail-stemmers'});
-        $random_volgorde = isset($this->request->{'random-volgorde'});
-        $recaptcha = isset($this->request->recaptcha);
+        $artiest_eenmalig = isset($this->request->{'artiest-eenmalig'}) ? 1 : 0;
+        $mail_stemmers = isset($this->request->{'mail-stemmers'}) ? 1 : 0;
+        $random_volgorde = isset($this->request->{'random-volgorde'}) ? 1 : 0;
+        $recaptcha = isset($this->request->recaptcha) ? 1 : 0;
         $emails = explode(',', filter_var($this->request->email));
         $emails_geparsed = [];
         foreach ($emails as $email) {
@@ -209,6 +220,9 @@ class Ajax
         if ($naam === '') {
             throw new GebruikersException('Geef een naam aan de lijst.');
         }
+        if ($starttijd !== null && $eindtijd !== null && $starttijd >= $eindtijd) {
+            throw new GebruikersException('De starttijd kan niet later zijn dan de eindtijd.');
+        }
         if ($minkeuzes < 0) {
             throw new GebruikersException('Het minimum aantal keuzes moet positief zijn.');
         }
@@ -224,17 +238,18 @@ class Ajax
         }
         return [
             'naam' => $naam,
-            'actief' => $is_actief,
+            'starttijd' => $starttijd === null ? null : $starttijd->format('Y-m-d H:i:s'),
+            'eindtijd' => $eindtijd === null ? null : $eindtijd->format('Y-m-d H:i:s'),
             'minkeuzes' => $minkeuzes,
             'maxkeuzes' => $maxkeuzes,
             'vrijekeuzes' => $vrijekeuzes,
             'stemmen_per_ip' => $stemmen_per_ip,
             'artiest_eenmalig' => $artiest_eenmalig,
-            'mail_stemmers' => $mail_stemmers,
-            'random_volgorde' => $random_volgorde,
             'recaptcha' => $recaptcha,
             'email' => $emails_str,
             'bedankt_tekst' => $bedankt_tekst,
+            'mail_stemmers' => $mail_stemmers,
+            'random_volgorde' => $random_volgorde,
         ];
     }
 
@@ -443,6 +458,9 @@ class Ajax
         $bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
         $html = "<h4>{$bedankt_tekst}</h4>";
 
+        if (!$lijst->is_actief()) {
+            throw new GebruikersException('De stemmen zijn gesloten.');
+        }
         if (
             $lijst->heeft_gebruik_recaptcha()
             && !$this->config->is_captcha_ok($this->request->{'g-recaptcha-response'})
@@ -1079,18 +1097,19 @@ class Ajax
     /**
      * @return array{
      *     naam: string,
-     *     is_actief: bool,
+     *     starttijd: ?string,
+     *     eindtijd: ?string,
      *     minkeuzes: int,
      *     maxkeuzes: int,
      *     vrijekeuzes: int,
      *     stemmen_per_ip: ?int,
      *     artiest_eenmalig: bool,
-     *     mail_stemmers: bool,
-     *     random_volgorde: bool,
      *     recaptcha: bool,
      *     email: string,
      *     bedankt_tekst: string,
-     *     velden: VeldenData
+     *     mail_stemmers: bool,
+     *     random_volgorde: bool,
+     *     velden: VeldenData,
      * }
      */
     public function get_beheer_lijstdata(): array
@@ -1103,7 +1122,8 @@ class Ajax
         }
         return [
             'naam' => $lijst->get_naam(),
-            'is_actief' => $lijst->is_actief(),
+            'starttijd' => $lijst->get_starttijd()?->format(\DateTimeInterface::ATOM),
+            'eindtijd' => $lijst->get_eindtijd()?->format(\DateTimeInterface::ATOM),
             'minkeuzes' => $lijst->get_minkeuzes(),
             'maxkeuzes' => $lijst->get_maxkeuzes(),
             'vrijekeuzes' => $lijst->get_vrijekeuzes(),
@@ -1240,10 +1260,10 @@ class Ajax
             AND vgl_artiest = "{$e_artiest}"
         ORDER BY id
         SQL;
-        /** @var list<int> $ids */
+        $duplicaten_ids = array_map(\intval(...), $this->db->selectSingleColumn($duplicaten_query));
         $ids = [
             $nummer_id,
-            ...$this->db->selectSingleColumn($duplicaten_query),
+            ...$duplicaten_ids,
         ];
         \sort($ids);
         /** @var int $laagste_id */

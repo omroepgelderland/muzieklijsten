@@ -2,6 +2,7 @@
 import "bootstrap";
 import DataTable, * as datatables from "datatables.net-bs5";
 import "datatables.net-select-bs5";
+import * as gld from "gld-ts-lib/functions";
 
 // Project js
 import * as server from "@muzieklijsten/server";
@@ -292,13 +293,8 @@ class StemView {
    * Vult serverdata in in het object en de DOM.
    */
   async vul_serverdata() {
-    let serverdata;
-    try {
-      serverdata = await this.get_serverdata();
-    } catch (msg) {
-      this.error(msg);
-      return;
-    }
+    const serverdata = await this.get_serverdata();
+
     this.minkeuzes = serverdata.minkeuzes;
     this.maxkeuzes = serverdata.maxkeuzes;
     this.is_artiest_eenmalig = serverdata.is_artiest_eenmalig;
@@ -307,9 +303,26 @@ class StemView {
     if (serverdata.heeft_gebruik_recaptcha) {
       this.e_body.classList.add("heeft-recaptcha");
     }
-    if (serverdata.is_actief) {
+
+    const nu = new Date();
+    const starttijd =
+      serverdata.starttijd === null ? null : new Date(serverdata.starttijd);
+    const eindtijd =
+      serverdata.eindtijd === null ? null : new Date(serverdata.eindtijd);
+    if (
+      (starttijd == null || nu >= starttijd) &&
+      (eindtijd == null || nu <= eindtijd)
+    ) {
       this.e_body.classList.add("is-actief");
+    } else if (eindtijd != null && nu > eindtijd) {
+      this.e_body.classList.add("is-gesloten");
+    } else {
+      const e_stemmen_vanaf = document.getElementById("stemmen-vanaf-tekst");
+      e_stemmen_vanaf.innerText =
+        functies.get_stemlijst_actief_vanaf_tekst(starttijd);
+      this.e_body.classList.add("is-nog-niet-actief");
     }
+
     this.e_keuzeformulier.elements.lijst.value = this.lijst_id;
     for (const velddata of serverdata.velden) {
       new Invoerveld(velddata);
@@ -338,13 +351,18 @@ class StemView {
   /**
    * Haalt gegevens over de stemlijst van de server.
    */
-  get_serverdata() {
-    return (this.serverdata_promise ??= server.post(
-      "get_stemlijst_frontend_data",
-      {
-        lijst: this.lijst_id,
-      },
-    ));
+  async get_serverdata() {
+    try {
+      return (this.serverdata_promise ??= server.post(
+        "get_stemlijst_frontend_data",
+        {
+          lijst: this.lijst_id,
+        },
+      ));
+    } catch (msg) {
+      this.error(msg);
+      throw msg;
+    }
   }
 
   /**

@@ -52,17 +52,3 @@ Beheerders kunnen losse nummers toevoegen op de pagina los_toevoegen.html
 ### Toevoegen in MySQL
 
 Nieuwe nummers kunnen worden ingevoerd in de tabel nummers.
-
-## Scheduled commands
-
-Lijst activeren:
-
-```mysql
-CREATE EVENT muzieklijsten_stemmen_aan_[lijst id] ON SCHEDULE AT '1999-12-31 23:59:59' ON COMPLETION NOT PRESERVE ENABLE DO UPDATE lijsten SET actief=1 WHERE id=[lijst id];
-```
-
-Lijst deactiveren:
-
-```mysql
-CREATE EVENT muzieklijsten_stemmen_uit_[lijst id] ON SCHEDULE AT '1999-12-31 23:59:59' ON COMPLETION NOT PRESERVE ENABLE DO UPDATE lijsten SET actief=0 WHERE id=[lijst id];
-```

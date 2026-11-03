@@ -21,7 +21,8 @@ export interface AjaxMap {
       organisatie: string;
       lijst_naam: string;
       heeft_gebruik_recaptcha: boolean;
-      is_actief: boolean;
+      starttijd: string | null;
+      eindtijd: string | null;
       velden: {
         id: number;
         label: string;
@@ -212,17 +213,18 @@ export interface AjaxMap {
     };
     response: {
       naam: string;
-      is_actief: boolean;
+      starttijd: string | null;
+      eindtijd: string | null;
       minkeuzes: number;
       maxkeuzes: number;
       vrijekeuzes: number;
       stemmen_per_ip: number | null;
       artiest_eenmalig: boolean;
-      mail_stemmers: boolean;
-      random_volgorde: boolean;
       recaptcha: boolean;
       email: string;
       bedankt_tekst: string;
+      mail_stemmers: boolean;
+      random_volgorde: boolean;
       velden: {
         id: number;
         tonen: boolean;

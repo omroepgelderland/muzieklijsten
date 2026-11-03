@@ -141,4 +141,26 @@ class DBUpdates
             COLLATE ascii_general_ci NOT NULL AFTER `vgl_titel`;
         SQL);
     }
+
+    public function update_9(): void
+    {
+        $this->db->query(<<<'SQL'
+        ALTER TABLE `lijsten`
+        ADD `starttijd` DATETIME NULL DEFAULT NULL AFTER `naam`,
+        ADD `eindtijd` DATETIME NULL DEFAULT NULL AFTER `starttijd`,
+        CHANGE `email` `email` VARCHAR(255) NOT NULL DEFAULT '';
+        SQL);
+        $this->db->updateMulti(
+            'lijsten',
+            [
+                'starttijd' => null,
+                'eindtijd' => '1970-01-01 01:00:00',
+            ],
+            "actief = 0",
+        );
+        $this->db->query(<<<'SQL'
+        ALTER TABLE `lijsten`
+        DROP `actief`;
+        SQL);
+    }
 }

@@ -66,6 +66,24 @@
           </div>
           <h5>Opties</h5>
           <div class="mb-3">
+            <label for="starttijd" class="form-label">Actief vanaf</label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              id="starttijd"
+              name="starttijd"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="eindtijd" class="form-label">Actief tot</label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              id="eindtijd"
+              name="eindtijd"
+            />
+          </div>
+          <div class="mb-3">
             <label for="minkeuzes" class="form-label required"
               >Minimum aantal keuzes</label
             >
@@ -115,17 +133,6 @@
               name="stemmen-per-ip"
               min="1"
             />
-          </div>
-          <div class="form-check">
-            <input
-              type="checkbox"
-              class="form-check-input"
-              id="is-actief"
-              name="is-actief"
-            />
-            <label class="form-check-label" for="is-actief"
-              >Lijst is actief (stemmen staat aan)</label
-            >
           </div>
           <div class="form-check">
             <input

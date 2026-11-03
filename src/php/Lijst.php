@@ -7,7 +7,8 @@ use gldstdlib\exception\IndexException;
 /**
  * @phpstan-type DBData array{
  *     naam: string,
- *     actief: int,
+ *     starttijd: ?\DateTimeImmutable,
+ *     eindtijd: ?\DateTimeImmutable,
  *     minkeuzes: int,
  *     maxkeuzes: int,
  *     vrijekeuzes: int,
@@ -100,12 +101,25 @@ class Lijst
      */
     public function is_actief(): bool
     {
-        return $this->get_db_data()['actief'];
+        $nu = new \DateTimeImmutable();
+        return
+            ($this->get_starttijd() === null || $nu >= $this->get_starttijd()) &&
+            ($this->get_eindtijd() === null || $nu <= $this->get_eindtijd());
     }
 
     public function get_naam(): string
     {
         return $this->get_db_data()['naam'];
+    }
+
+    public function get_starttijd(): ?\DateTimeImmutable
+    {
+        return $this->get_db_data()['starttijd'];
+    }
+
+    public function get_eindtijd(): ?\DateTimeImmutable
+    {
+        return $this->get_db_data()['eindtijd'];
     }
 
     public function get_minkeuzes(): int
@@ -499,8 +513,9 @@ class Lijst
         $query = <<<SQL
         INSERT INTO lijsten
             (
-                actief,
                 naam,
+                starttijd,
+                eindtijd,
                 minkeuzes,
                 maxkeuzes,
                 stemmen_per_ip,
@@ -512,8 +527,9 @@ class Lijst
                 random_volgorde
             )
             SELECT
-                0,
                 "{$e_naam}",
+                starttijd,
+                eindtijd,
                 minkeuzes,
                 maxkeuzes,
                 stemmen_per_ip,

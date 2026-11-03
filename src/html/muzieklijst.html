@@ -36,8 +36,14 @@
   <body>
     <div class="container-fluid">
       <div id="errormsg" class="alert alert-danger error"></div>
-      <div class="is-niet-actief not-error">
+      <div class="is-gesloten not-error">
         <p>Er kan niet meer worden gestemd.</p>
+      </div>
+      <div class="is-nog-niet-actief not-error">
+        <p>
+          De stemmen zijn nog gesloten. Je kunt stemmen
+          <span id="stemmen-vanaf-tekst"></span>.
+        </p>
       </div>
       <div id="stemsegment" class="not-gestemd is-actief not-error">
         <form

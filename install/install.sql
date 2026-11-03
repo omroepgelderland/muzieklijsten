@@ -6,15 +6,16 @@ CREATE TABLE `blacklist` (
 
 CREATE TABLE `lijsten` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `actief` tinyint(1) UNSIGNED NOT NULL DEFAULT 1,
   `naam` varchar(255) NOT NULL,
+  `starttijd` DATETIME DEFAULT NULL,
+  `eindtijd` DATETIME DEFAULT NULL,
   `minkeuzes` int(2) UNSIGNED NOT NULL DEFAULT 0,
   `maxkeuzes` int(2) UNSIGNED NOT NULL DEFAULT 0,
   `vrijekeuzes` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `stemmen_per_ip` int(2) UNSIGNED DEFAULT NULL,
   `artiest_eenmalig` tinyint(1) UNSIGNED NOT NULL DEFAULT 0,
   `recaptcha` tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
-  `email` varchar(100) DEFAULT NULL,
+  `email` varchar(255) NOT NULL DEFAULT '',
   `bedankt_tekst` varchar(4096) NOT NULL DEFAULT 'Bedankt voor je keuze.',
   `mail_stemmers` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
   `random_volgorde` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
@@ -130,4 +131,4 @@ INSERT IGNORE INTO `velden` (`label`, `leeg_feedback`, `max`, `maxlength`, `min`
 ('E‑mailadres', 'Vul uw e-mailadres in a.u.b.', NULL, 100, NULL, NULL, '', 'email'),
 ('Vrije keuze', 'Vul een eigen keuze in a.u.b.', NULL, NULL, NULL, NULL, 'Vul hier je eigen favoriet in.', 'text');
 
-INSERT INTO `versie` (`versie`) VALUES (8);
+INSERT INTO `versie` (`versie`) VALUES (9);

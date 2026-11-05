@@ -29,11 +29,11 @@ export interface AjaxMap {
         leeg_feedback: string;
         type: string;
         verplicht: boolean;
-        max: number;
-        maxlength: number;
-        min: number;
-        minlength: number;
-        placeholder: string;
+        max?: number;
+        maxlength?: number;
+        min?: number;
+        minlength?: number;
+        placeholder?: string;
       }[];
       recaptcha_sitekey: string | null;
       privacy_url: string;
@@ -133,7 +133,7 @@ export interface AjaxMap {
       id: number;
       titel: string;
       artiest: string;
-      jaar: number;
+      jaar: number | null;
     }[];
   };
   vul_datatables: {

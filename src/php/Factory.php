@@ -1,13 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use DI\FactoryInterface;
 use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDataTooLongException;
-use gldstdlib\exception\UndefinedPropertyException;
+use gldstdlib\exception\SQLNoResultException;
 use Psr\Container\ContainerInterface;
 
+/**
+ * @phpstan-import-type LijstData from \muzieklijsten\Lijst
+ * @phpstan-import-type NummerData from \muzieklijsten\Nummer
+ * @phpstan-import-type StemmerData from \muzieklijsten\Stemmer
+ * @phpstan-import-type StemmerNummerData from \muzieklijsten\StemmerNummer
+ * @phpstan-import-type VeldData from \muzieklijsten\Veld
+ */
 class Factory
 {
     public function __construct(
@@ -37,22 +46,23 @@ class Factory
      * @template T of object
      *
      * @param class-string<T> $class Type object.
-     * @param $query Databasequery. De namen van de kolommen in het
-     * SELECT-statement moeten overeenkomen met de namen van de
-     * parameterargumenten van de constructor van de class.
+     * @param $query Databasequery. Verwacht één kolom in het SELECT-statement.
+     * De waarde daarvan moet een integer zijn.
      *
      * @return T
      *
-     * @throws \gldstdlib\exception\SQLException Als er geen resultaat is.
      * @throws \gldstdlib\exception\SQLException Als de query mislukt.
      * @throws \gldstdlib\exception\SQLException Als er geen verbinding kan
      * worden gemaakt met de database.
+     * @throws \gldstdlib\exception\SQLNoResultException Als er geen resultaat is.
      */
     public function select_object(string $class, string $query): object
     {
         return $this->factory->make(
             $class,
-            $this->db->selectSingleRow($query),
+            [
+                'id' => $this->db->selectSingle($query),
+            ],
         );
     }
 
@@ -63,29 +73,26 @@ class Factory
      * @template T of object
      *
      * @param class-string<T> $class Type object.
-     * @param $query Databasequery. De namen van de kolommen in het
-     * SELECT-statement moeten overeenkomen met de namen van de
-     * parameterargumenten van de constructor van de class.
+     * @param $query Databasequery. Verwacht één kolom in het SELECT-statement.
+     * De waardes daarvan moeten integers zijn.
      *
-     * @return list<T>
+     * @return \Iterator<int, T>
      */
-    public function select_objecten(string $class, string $query): array
+    public function select_objecten(string $class, string $query): \Iterator
     {
-        $lijst = [];
-        foreach ($this->db->query($query) as $item) {
-            $lijst[] = $this->factory->make(
+        foreach ($this->db->selectSingleColumnInt($query) as $id) {
+            yield $this->factory->make(
                 $class,
-                $item,
+                ['id' => $id],
             );
         }
-        return $lijst;
     }
 
     /**
-     * @param object $request Requestdata van de frontend.
+     * @param array<string, mixed> $request Requestdata van de frontend.
      */
     public function create_ajax(
-        object $request,
+        array $request,
     ): Ajax {
         return $this->factory->make(
             Ajax::class,
@@ -95,119 +102,143 @@ class Factory
 
     /**
      * @param $id ID van de lijst.
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      */
     public function create_lijst(
         int $id,
-        ?array $data = null,
     ): Lijst {
         return $this->factory->make(
             Lijst::class,
             [
                 'id' => $id,
-                'data' => $data,
             ],
         );
     }
 
     /**
+     * @param array<string, string|null> $entry
+     */
+    public function create_lijst_uit_db_entry(
+        array $entry,
+    ): Lijst {
+        $lijst = $this->create_lijst((int)$entry['id']);
+        $lijst->set_db_data($entry);
+        return $lijst;
+    }
+
+    /**
      * Maakt een lijst uit een id aangeleverd door HTTP GET of POST.
      *
-     * @param object $request HTTP-request.
+     * @param array<string, mixed> $request HTTP-request.
      *
      * @throws GeenLijstException
      */
-    public function create_lijst_uit_request(object $request): Lijst
+    public function create_lijst_uit_request(array $request): Lijst
     {
-        try {
-            $id = filter_var($request->lijst, \FILTER_VALIDATE_INT);
-        } catch (UndefinedPropertyException) {
+        $id = filter_var($request['lijst'] ?? null, \FILTER_VALIDATE_INT);
+        if ($id === false) {
             throw new GeenLijstException('Geen lijst in invoer');
         }
-        if ($id === false) {
+        $id = (int)$id;
+        if ($id < 1) {
             throw new GeenLijstException(\sprintf(
                 'Ongeldige muzieklijst id: %s',
-                filter_var($request->lijst),
+                filter_var($request['lijst']),
             ));
         }
         return $this->create_lijst($id);
     }
 
     /**
-     * @param $id ID van het object.
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
+     * @param $id ID van het nummer.
      */
     public function create_nummer(
         int $id,
-        ?array $data = null,
     ): Nummer {
         return $this->factory->make(
             Nummer::class,
             [
                 'id' => $id,
-                'data' => $data,
             ],
         );
     }
 
     /**
+     * @param array<string, string|null> $entry
+     */
+    public function create_nummer_uit_db_entry(
+        array $entry,
+    ): Nummer {
+        $nummer = $this->create_nummer((int)$entry['id']);
+        $nummer->set_db_data($entry);
+        return $nummer;
+    }
+
+    /**
      * Maakt een nummer uit een id aangeleverd door HTTP POST.
      *
-     * @param object $request HTTP-request.
+     * @param array<string, mixed> $request HTTP-request.
      *
      * @throws GLDException
      */
-    public function create_nummer_uit_request(object $request): Nummer
+    public function create_nummer_uit_request(array $request): Nummer
     {
-        try {
-            $id = filter_var($request->nummer, \FILTER_VALIDATE_INT);
-        } catch (UndefinedPropertyException) {
+        $id = filter_var($request['nummer'] ?? null, \FILTER_VALIDATE_INT);
+        if ($id === false) {
             throw new GLDException('Geen nummer in invoer');
         }
-        if ($id === false) {
+        $id = (int)$id;
+        if ($id < 1) {
             throw new GLDException(\sprintf(
                 'Ongeldige nummer id: %s',
-                filter_var($request->nummer),
+                filter_var($request['nummer']),
             ));
         }
         return $this->create_nummer($id);
     }
 
     /**
-     * @param $id ID van het object.
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
+     * @param $id ID van de stemmer.
      */
     public function create_stemmer(
         int $id,
-        ?array $data = null,
     ): Stemmer {
         return $this->factory->make(
             Stemmer::class,
             [
                 'id' => $id,
-                'data' => $data,
             ],
         );
     }
 
     /**
+     * @param array<string, string|null> $entry
+     */
+    public function create_stemmer_uit_db_entry(
+        array $entry,
+    ): Stemmer {
+        $stemmer = $this->create_stemmer((int)$entry['id']);
+        $stemmer->set_db_data($entry);
+        return $stemmer;
+    }
+
+    /**
      * Maakt een stemmer uit een id aangeleverd door HTTP POST.
      *
-     * @param object $request HTTP-request.
+     * @param array<string, mixed> $request HTTP-request.
      *
      * @throws GLDException
      */
-    public function create_stemmer_uit_request(object $request): Stemmer
+    public function create_stemmer_uit_request(array $request): Stemmer
     {
-        try {
-            $id = filter_var($request->stemmer, \FILTER_VALIDATE_INT);
-        } catch (UndefinedPropertyException) {
+        $id = filter_var($request['stemmer'] ?? null, \FILTER_VALIDATE_INT);
+        if ($id === false) {
             throw new GLDException('Geen stemmer in invoer');
         }
-        if ($id === false) {
+        $id = (int)$id;
+        if ($id < 1) {
             throw new GLDException(\sprintf(
                 'Ongeldig stemmer id: %s',
-                filter_var($request->stemmer),
+                filter_var($request['stemmer']),
             ));
         }
         return $this->create_stemmer($id);
@@ -218,8 +249,8 @@ class Factory
         string $ip,
     ): Stemmer {
         try {
-            $id = $this->db->insertMulti('stemmers', [
-                'lijst_id' => $lijst->get_id(),
+            $id = (int)$this->db->insertMulti('stemmers', [
+                'lijst_id' => $lijst->id,
                 'ip' => $ip,
             ]);
             return $this->create_stemmer($id);
@@ -228,22 +259,15 @@ class Factory
         }
     }
 
-    /**
-     * @param $nummer
-     * @param $stemmer
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
-     */
     public function create_stemmer_nummer(
         Nummer $nummer,
         Stemmer $stemmer,
-        ?array $data = null,
     ): StemmerNummer {
         return $this->factory->make(
             StemmerNummer::class,
             [
                 'nummer' => $nummer,
                 'stemmer' => $stemmer,
-                'data' => $data,
             ],
         );
     }
@@ -251,11 +275,11 @@ class Factory
     /**
      * Maakt een object uit een id aangeleverd door HTTP POST.
      *
-     * @param object $request HTTP-request.
+     * @param array<string, mixed> $request HTTP-request.
      *
      * @throws GeenLijstException
      */
-    public function create_stemmer_nummer_uit_request(object $request): StemmerNummer
+    public function create_stemmer_nummer_uit_request(array $request): StemmerNummer
     {
         return $this->create_stemmer_nummer(
             $this->create_nummer_uit_request($request),
@@ -265,22 +289,30 @@ class Factory
 
     /**
      * @param $id Database-id van het veld.
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      * @param $verplicht Of het veld verplicht is (optioneel)
      */
     public function create_veld(
         int $id,
-        ?array $data = null,
         ?bool $verplicht = null,
     ): Veld {
         return $this->factory->make(
             Veld::class,
             [
                 'id' => $id,
-                'data' => $data,
                 'verplicht' => $verplicht,
             ],
         );
+    }
+
+    /**
+     * @param array<string, string|null> $entry
+     */
+    public function create_veld_uit_db_entry(
+        array $entry,
+    ): Veld {
+        $veld = $this->create_veld((int)$entry['id']);
+        $veld->set_db_data($entry);
+        return $veld;
     }
 
     /**
@@ -312,9 +344,10 @@ class Factory
         ORDER BY id
         LIMIT 1
         SQL;
-        $nummers = $this->select_objecten(Nummer::class, $query);
-        if (\count($nummers) > 0) {
-            return $nummers[0];
+
+        try {
+            return $this->select_object(Nummer::class, $query);
+        } catch (SQLNoResultException) {
         }
 
         return $this->insert_nummer(
@@ -325,10 +358,11 @@ class Factory
     }
 
     /**
+     * @param array<string, mixed> $request
      * @param array<mixed> $kolommen
      */
     public function create_ssp(
-        object $request,
+        array $request,
         array $kolommen,
     ): SSP {
         return $this->factory->make(
@@ -343,9 +377,9 @@ class Factory
     /**
      * Geeft alle muzieklijsten.
      *
-     * @return list<Lijst>
+     * @return \Iterator<int, Lijst>
      */
-    public function get_muzieklijsten(): array
+    public function get_muzieklijsten(): \Iterator
     {
         return $this->select_objecten(
             Lijst::class,
@@ -356,9 +390,9 @@ class Factory
     /**
      * Geeft alle nummers.
      *
-     * @return list<Nummer>
+     * @return \Iterator<int, Nummer>
      */
-    public function get_nummers(): array
+    public function get_nummers(): \Iterator
     {
         return $this->select_objecten(
             Nummer::class,
@@ -374,7 +408,9 @@ class Factory
         $velden = [];
         $query = 'SELECT * FROM velden ORDER BY id';
         foreach ($this->db->query($query) as $entry) {
-            $velden[] = $this->create_veld((int)$entry['id'], $entry);
+            $veld = $this->create_veld((int)$entry['id']);
+            $veld->set_db_data($entry);
+            $velden[] = $veld;
         }
         return $velden;
     }
@@ -406,20 +442,22 @@ class Factory
         ?int $duur = null,
         int $is_vrijekeuze = 0,
     ): Nummer {
-        $db_data = [
+        $data = [
             'muziek_id' => $powergold_id,
             'titel' => $titel,
             'artiest' => $artiest,
-            'jaar' => $jaar === null ? null : (string)$jaar,
+            'jaar' => $jaar,
             'categorie' => $categorie,
             'map' => $map,
-            'opener' => $opener ? '1' : '0',
-            'duur' => $duur === null ? null : (string)$duur,
-            'is_vrijekeuze' => (string)$is_vrijekeuze,
+            'is_opener' => $opener,
+            'duur' => $duur,
+            'is_vrijekeuze' => $is_vrijekeuze,
             'vgl_artiest' => get_vgl_string($artiest, true),
             'vgl_titel' => get_vgl_string($titel, false),
         ];
-        $db_data['id'] = $id = (string)$this->db->insertMulti('nummers', $db_data);
-        return $this->create_nummer((int)$id, $db_data);
+        $id = (int)$this->db->insertMulti('nummers', $data);
+        $nummer = $this->create_nummer($id);
+        $nummer->set_data($data);
+        return $nummer;
     }
 }

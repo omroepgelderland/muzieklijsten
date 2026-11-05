@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 /**
@@ -20,7 +22,7 @@ class DBUpdates
      */
     public function update_1(): void
     {
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         CREATE TABLE `versie` (
             `versie` int(10) unsigned NOT NULL,
             PRIMARY KEY (`versie`)
@@ -31,7 +33,7 @@ class DBUpdates
 
     public function update_2(): void
     {
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `lijsten`
             DROP `veld_telefoonnummer`,
             DROP `veld_email`,
@@ -40,7 +42,7 @@ class DBUpdates
             DROP `veld_uitzenddatum`,
             DROP `veld_vrijekeus`;
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmers`
             DROP `naam`,
             DROP `adres`,
@@ -55,77 +57,77 @@ class DBUpdates
 
     public function update_3(): void
     {
-        $this->db->query('ALTER TABLE `lijsten` ADD `vrijekeuzes` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `maxkeuzes`;');
-        $this->db->query('ALTER TABLE `nummers` ADD `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `opener`');
-        $this->db->query('ALTER TABLE stemmen DROP FOREIGN KEY stemmen_ibfk_5');
-        $this->db->query('ALTER TABLE `stemmen` ADD `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `behandeld`');
+        $this->db->execute('ALTER TABLE `lijsten` ADD `vrijekeuzes` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `maxkeuzes`;');
+        $this->db->execute('ALTER TABLE `nummers` ADD `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `opener`');
+        $this->db->execute('ALTER TABLE stemmen DROP FOREIGN KEY stemmen_ibfk_5');
+        $this->db->execute('ALTER TABLE `stemmen` ADD `is_vrijekeuze` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `behandeld`');
     }
 
     public function update_4(): void
     {
-        $this->db->query(
+        $this->db->execute(
             'ALTER TABLE `lijsten` ADD `mail_stemmers` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `bedankt_tekst`',
         );
     }
 
     public function update_5(): void
     {
-        $this->db->query(
+        $this->db->execute(
             'ALTER TABLE lijsten ADD random_volgorde TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER mail_stemmers',
         );
     }
 
     public function update_6(): void
     {
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmers`
             ADD `lijst_id` INT UNSIGNED NOT NULL AFTER `id`, ADD INDEX (`lijst_id`);
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         UPDATE stemmers
         JOIN stemmen ON
             stemmers.id = stemmen.stemmer_id
         SET
             stemmers.lijst_id = stemmen.lijst_id
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmers`
             ADD FOREIGN KEY (`lijst_id`) REFERENCES `lijsten`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
         SQL);
 
         // alle indexen droppen in stemmen behalve stemmer_id
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmen` DROP INDEX `lijst_id_2`;
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmen` DROP INDEX `lijst_id`;
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmen` DROP PRIMARY KEY;
         SQL);
 
         // drop foreign key lijst_id en dan kolom lijst_id
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE stemmen DROP FOREIGN KEY stemmen_ibfk_2;
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmen` DROP `lijst_id`;
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmen` ADD UNIQUE (`nummer_id`, `stemmer_id`);
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `stemmen` ADD PRIMARY KEY (`nummer_id`, `stemmer_id`);
         SQL);
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         RENAME TABLE `stemmen` TO `stemmers_nummers`;
         SQL);
     }
 
     public function update_7(): void
     {
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `nummers`
         ADD `duur` INT UNSIGNED NULL DEFAULT NULL AFTER `opener`;
         SQL);
@@ -133,7 +135,7 @@ class DBUpdates
 
     public function update_8(): void
     {
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `nummers`
         ADD `vgl_titel` VARCHAR(128) CHARACTER SET ascii
             COLLATE ascii_general_ci NOT NULL AFTER `is_vrijekeuze`,
@@ -144,7 +146,7 @@ class DBUpdates
 
     public function update_9(): void
     {
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `lijsten`
         ADD `starttijd` DATETIME NULL DEFAULT NULL AFTER `naam`,
         ADD `eindtijd` DATETIME NULL DEFAULT NULL AFTER `starttijd`,
@@ -158,7 +160,7 @@ class DBUpdates
             ],
             "actief = 0",
         );
-        $this->db->query(<<<'SQL'
+        $this->db->execute(<<<'SQL'
         ALTER TABLE `lijsten`
         DROP `actief`;
         SQL);

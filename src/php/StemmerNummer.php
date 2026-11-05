@@ -1,102 +1,84 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
+/**
+ * @phpstan-type StemmerNummerData array{
+ *     toelichting: string|null,
+ *     behandeld: bool,
+ *     is_vrijekeuze: bool,
+ * }
+ */
 class StemmerNummer
 {
-    public Nummer $nummer;
-    public Stemmer $stemmer;
-    private ?string $toelichting;
-    private bool $behandeld;
-    private bool $is_vrijekeuze;
-    private bool $db_props_set;
+    /** @var ?StemmerNummerData */
+    private ?array $data = null;
 
-    /**
-     * @param $nummer
-     * @param $stemmer
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
-     */
     public function __construct(
         private DB $db,
-        Nummer $nummer,
-        Stemmer $stemmer,
-        ?array $data = null,
+        public readonly Nummer $nummer,
+        public readonly Stemmer $stemmer,
     ) {
-        $this->nummer = $nummer;
-        $this->stemmer = $stemmer;
-        $this->db_props_set = false;
-        if (isset($data)) {
-            $this->set_data($data);
-        }
-    }
-
-    /**
-     * Geeft aan of twee stemmen dezelfde zijn. Wanneer $obj geen Stem is wordt
-     * false gegeven.
-     *
-     * @param $obj Object om deze instantie mee te vergelijken
-     *
-     * @return bool Of $obj dezelfde stem is als deze instantie
-     */
-    public function equals(mixed $obj): bool
-    {
-        return
-            $obj instanceof StemmerNummer
-            && $this->nummer->equals($obj->nummer)
-            && $this->stemmer->equals($obj->stemmer);
     }
 
     public function get_toelichting(): ?string
     {
-        $this->set_db_properties();
-        return $this->toelichting;
+        return $this->get_data()['toelichting'];
     }
 
     public function is_behandeld(): bool
     {
-        $this->set_db_properties();
-        return $this->behandeld;
+        return $this->get_data()['behandeld'];
     }
 
     public function is_vrijekeuze(): bool
     {
-        $this->set_db_properties();
-        return $this->is_vrijekeuze;
+        return $this->get_data()['is_vrijekeuze'];
     }
 
     /**
-     * Vul het object met velden uit de database.
+     * @return StemmerNummerData
      */
-    private function set_db_properties(): void
+    private function get_data(): array
     {
-        if (!$this->db_props_set) {
-            $query = <<<SQL
+        return $this->data ?? $this->set_db_data(
+            $this->db->selectSingleRow(<<<SQL
             SELECT *
             FROM stemmers_nummers
             WHERE {$this->get_where_voorwaarden()}
-            SQL;
-            $this->set_data($this->db->selectSingleRow($query));
-        }
+            SQL),
+        );
     }
 
     /**
-     * Plaatst metadata in het object
-     *
-     * @param array<string,string|null> $data Data.
+     * @param StemmerNummerData $data De nieuwe data voor de stem.
      */
-    private function set_data(array $data): void
+    public function set_data(array $data): void
     {
-        $this->toelichting = $data['toelichting'];
-        $this->behandeld = (bool)$data['behandeld'];
-        $this->is_vrijekeuze = (bool)$data['is_vrijekeuze'];
-        $this->db_props_set = true;
+        $this->data = $data;
+    }
+
+    /**
+     * @param array<string, string|null> $raw_db_data
+     *
+     * @return StemmerNummerData
+     */
+    public function set_db_data(array $raw_db_data): array
+    {
+        return $this->data = [
+            'toelichting' => $raw_db_data['toelichting'],
+            'behandeld' => (bool)$raw_db_data['behandeld'],
+            'is_vrijekeuze' => (bool)$raw_db_data['is_vrijekeuze'],
+        ];
     }
 
     private function get_where_voorwaarden(): string
     {
         return <<<SQL
-            nummer_id = {$this->nummer->get_id()}
-            AND stemmer_id = {$this->stemmer->get_id()}
+            nummer_id = {$this->nummer->id}
+            AND stemmer_id = {$this->stemmer->id}
         SQL;
     }
 
@@ -117,8 +99,8 @@ class StemmerNummer
      */
     public function verwijderen(): void
     {
-        $this->db->query("DELETE FROM stemmers_nummers WHERE {$this->get_where_voorwaarden()}");
+        $this->db->execute("DELETE FROM stemmers_nummers WHERE {$this->get_where_voorwaarden()}");
         $this->db->verwijder_stemmers_zonder_stemmen();
-        $this->db_props_set = false;
+        $this->data = null;
     }
 }

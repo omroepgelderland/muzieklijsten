@@ -1,10 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use function gldstdlib\ns;
 
 /**
+ * @phpstan-type NummerData array{
+ *     muziek_id: string|null,
+ *     titel: string,
+ *     artiest: string,
+ *     jaar: int|null,
+ *     categorie: string|null,
+ *     map: string|null,
+ *     is_opener: bool,
+ *     duur: int|null,
+ *     is_vrijekeuze: int,
+ *     vgl_titel: string,
+ *     vgl_artiest: string,
+ * }
  * @phpstan-type AISuggestieType array{
  *     is_correct: bool,
  *     suggestie?: array{
@@ -21,56 +36,21 @@ use function gldstdlib\ns;
  */
 class Nummer
 {
-    private int $id;
-    private ?string $muziek_id;
-    private string $titel;
-    private string $artiest;
-    private ?int $jaar;
-    private ?string $categorie;
-    private ?string $map;
-    private bool $is_opener;
-    private ?int $duur;
-    private int $is_vrijekeuze;
-    private string $vgl_artiest;
-    private string $vgl_titel;
-    /** @var list<Lijst> */
+    /** @var ?NummerData */
+    private ?array $data = null;
+    /** @var array<Lijst> */
     private array $lijsten;
-    /** @var list<Stemmer> */
+    /** @var array<Stemmer> */
     private array $stemmers;
-    private bool $db_props_set;
 
     /**
-     * @param $id ID van het object.
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
+     * @param $id ID van het nummer.
      */
     public function __construct(
         private DB $db,
         private Factory $factory,
-        int|string $id,
-        ?array $data = null,
+        public readonly int $id,
     ) {
-        $this->id = (int)$id;
-        $this->db_props_set = false;
-        if (isset($data)) {
-            $this->set_data($data);
-        }
-    }
-
-    public function get_id(): int
-    {
-        return $this->id;
-    }
-
-    /**
-     * Geeft aan of twee nummers dezelfde zijn. Wanneer $obj geen Nummer is wordt false gegeven.
-     *
-     * @param $obj Object om deze instantie mee te vergelijken
-     *
-     * @return bool Of $obj hetzelfde nummer is als deze instantie
-     */
-    public function equals(mixed $obj): bool
-    {
-        return ( $obj instanceof Nummer && $obj->get_id() == $this->id );
     }
 
     /**
@@ -78,74 +58,63 @@ class Nummer
      */
     public function get_muziek_id(): ?string
     {
-        $this->set_db_properties();
-        return $this->muziek_id;
+        return $this->get_data()['muziek_id'];
     }
 
     public function get_titel(): string
     {
-        $this->set_db_properties();
-        return $this->titel;
+        return $this->get_data()['titel'];
     }
 
     public function get_artiest(): string
     {
-        $this->set_db_properties();
-        return $this->artiest;
+        return $this->get_data()['artiest'];
     }
 
     public function get_jaar(): ?int
     {
-        $this->set_db_properties();
-        return $this->jaar;
+        return $this->get_data()['jaar'];
     }
 
     public function get_categorie(): ?string
     {
-        $this->set_db_properties();
-        return $this->categorie;
+        return $this->get_data()['categorie'];
     }
 
     public function get_map(): ?string
     {
-        $this->set_db_properties();
-        return $this->map;
+        return $this->get_data()['map'];
     }
 
     public function is_opener(): bool
     {
-        $this->set_db_properties();
-        return $this->is_opener;
+        return $this->get_data()['is_opener'];
     }
 
     public function get_duur(): ?int
     {
-        $this->set_db_properties();
-        return $this->duur;
+        return $this->get_data()['duur'];
     }
 
     public function is_vrijekeuze(): int
     {
-        $this->set_db_properties();
-        return $this->is_vrijekeuze;
+        return $this->get_data()['is_vrijekeuze'];
     }
 
     public function get_vgl_artiest(): string
     {
-        $this->set_db_properties();
-        return $this->vgl_artiest;
+        return $this->get_data()['vgl_artiest'];
     }
 
     public function get_vgl_titel(): string
     {
-        $this->set_db_properties();
-        return $this->vgl_titel;
+        return $this->get_data()['vgl_titel'];
     }
 
     /**
      * Geeft alle lijsten waar dit nummer op staat.
      *
-     * @return list<Lijst>
+     * @return array<Lijst>
      */
     public function get_lijsten(): array
     {
@@ -153,9 +122,9 @@ class Nummer
             $query = <<<SQL
             SELECT lijst_id AS id
             FROM lijsten_nummers
-            WHERE nummer_id = {$this->get_id()}
+            WHERE nummer_id = {$this->id}
             SQL;
-            $this->lijsten = $this->factory->select_objecten(Lijst::class, $query);
+            $this->lijsten = iterator_to_array($this->factory->select_objecten(Lijst::class, $query));
         }
         return $this->lijsten;
     }
@@ -163,7 +132,7 @@ class Nummer
     /**
      * Geeft alle stemmers op dit nummer (op verschillende lijsten)
      *
-     * @return list<Stemmer>
+     * @return array<Stemmer>
      */
     public function get_stemmers(): array
     {
@@ -171,49 +140,55 @@ class Nummer
             $query = <<<SQL
             SELECT stemmer_id AS id
             FROM stemmers_nummers
-            WHERE nummer_id = {$this->get_id()}
+            WHERE nummer_id = {$this->id}
             SQL;
-            $this->stemmers = $this->factory->select_objecten(Stemmer::class, $query);
+            $this->stemmers = iterator_to_array($this->factory->select_objecten(Stemmer::class, $query));
         }
         return $this->stemmers;
     }
 
     /**
-     * Vul het object met velden uit de database.
+     * @return NummerData
      */
-    private function set_db_properties(): void
+    private function get_data(): array
     {
-        if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(\sprintf(
-                'SELECT * FROM nummers WHERE id = %d',
-                $this->get_id(),
-            )));
-        }
+        return $this->data ?? $this->set_db_data(
+            $this->db->selectSingleRow(<<<SQL
+            SELECT *
+            FROM nummers
+            WHERE id = {$this->id}
+            SQL),
+        );
     }
 
     /**
-     * Plaatst metadata in het object
-     *
-     * @param array<string,string|null> $data Data.
+     * @param NummerData $data De nieuwe data voor het nummer.
      */
-    private function set_data(array $data): void
+    public function set_data(array $data): void
     {
-        $this->muziek_id = $data['muziek_id'];
-        $this->titel = ns($data['titel']);
-        $this->artiest = ns($data['artiest']);
-        $this->jaar = isset($data['jaar'])
-            ? (int)$data['jaar']
-            : null;
-        $this->categorie = $data['categorie'];
-        $this->map = $data['map'];
-        $this->is_opener = (bool)$data['opener'];
-        $this->duur = isset($data['duur'])
-            ? (int)$data['duur']
-            : null;
-        $this->is_vrijekeuze = (int)$data['is_vrijekeuze'];
-        $this->vgl_titel = ns($data['vgl_titel']);
-        $this->vgl_artiest = ns($data['vgl_artiest']);
-        $this->db_props_set = true;
+        $this->data = $data;
+    }
+
+    /**
+     * @param array<string, string|null> $raw_db_data
+     *
+     * @return NummerData
+     */
+    public function set_db_data(array $raw_db_data): array
+    {
+        return $this->data = [
+            'muziek_id' => $raw_db_data['muziek_id'],
+            'titel' => ns($raw_db_data['titel']),
+            'artiest' => ns($raw_db_data['artiest']),
+            'jaar' => $raw_db_data['jaar'] === null ? null : (int)$raw_db_data['jaar'],
+            'categorie' => $raw_db_data['categorie'],
+            'map' => $raw_db_data['map'],
+            'is_opener' => (bool)$raw_db_data['opener'],
+            'duur' => $raw_db_data['duur'] === null ? null : (int)$raw_db_data['duur'],
+            'is_vrijekeuze' => (int)$raw_db_data['is_vrijekeuze'],
+            'vgl_titel' => ns($raw_db_data['vgl_titel']),
+            'vgl_artiest' => ns($raw_db_data['vgl_artiest']),
+        ];
     }
 
     /**

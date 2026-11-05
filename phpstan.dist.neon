@@ -1,7 +1,7 @@
 includes:
 	- vendor/zorac/phpstan-php-di/extension.neon
 parameters:
-	level: 6
+	level: 8
 	paths:
 		- ./
 	excludePaths:
@@ -13,5 +13,3 @@ parameters:
 		- vendor/
 	exceptions:
 		reportUncheckedExceptionDeadCatch: false
-	ignoreErrors:
-		- '#Dead catch - (Throwable|gldstdlib\\exception\\IndexException|gldstdlib\\exception\\UndefinedPropertyException) is never thrown in the try block\.#'

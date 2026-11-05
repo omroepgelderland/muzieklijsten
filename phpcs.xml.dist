@@ -9,6 +9,7 @@
     <file>./</file>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
     <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/test/*</exclude-pattern>
 
     <!-- Legacy includes die een keer weg moeten -->
     <exclude-pattern>*/src/php/OLERead\.php$</exclude-pattern>
@@ -25,9 +26,6 @@
         <exclude-pattern>*/src/php/exceptions\.php$</exclude-pattern>
         <exclude-pattern>*/src/php/ajax/exceptions\.php$</exclude-pattern>
         <exclude-pattern>*/src/php/youtube/exceptions\.php$</exclude-pattern>
-    </rule>
-    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing">
-        <type>warning</type>
     </rule>
     <rule ref="Generic.Files.InlineHTML.Found">
         <type>warning</type>

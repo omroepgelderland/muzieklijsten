@@ -1,10 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\exception\SQLDataTooLongException;
 use gldstdlib\exception\SQLDupEntryException;
 use gldstdlib\exception\SQLException;
+use gldstdlib\exception\SQLNoResultException;
+
+use function gldstdlib\fs;
+use function gldstdlib\ns;
 
 /**
  * Abstractielaag voor de database.
@@ -125,7 +131,8 @@ class DB
      * Voert een MySQLi rollback uit.
      *
      * @throws SQLException Als de rollback is mislukt.
-     * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
+     * @throws SQLException Als er geen verbinding kan worden gemaakt met de
+     * database.
      */
     public function rollback(): void
     {
@@ -135,16 +142,48 @@ class DB
     }
 
     /**
-     * Voert een MySQL query uit.
+     * Voert een MySQL query uit die een resultaat kan opleveren (SELECT, SHOW,
+     * DESCRIBE of EXPLAIN).
      *
      * @param $sql SQL query
      *
-     * @return ?\mysqli_result Resultaat
+     * @return \mysqli_result Resultaat
      *
+     * @throws SQLException Als er een query werd uitgevoerd die geen resultaat
+     * oplevert, zoals INSERT of UPDATE.
      * @throws SQLException Als de query mislukt.
-     * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
+     * @throws SQLException Als er geen verbinding kan worden gemaakt met de
+     * database.
      */
-    public function query(string $sql): ?\mysqli_result
+    public function query(string $sql): \mysqli_result
+    {
+        try {
+            $res = $this->getDB()->query($sql);
+            if ($res === false) {
+                $this->throwQueryException($sql);
+            }
+        } catch (\mysqli_sql_exception $e) {
+            $this->throwQueryException($sql, $e);
+        }
+        if (! ($res instanceof \mysqli_result)) {
+            throw new SQLException("Geen resultaat bij query: \"{$sql}\"");
+        }
+        return $res;
+    }
+
+    /**
+     * Voert een MySQL query uit die geen resultaat teruggeeft (zoals UPDATE of
+     * DELETE).
+     *
+     * @param $sql SQL query
+     *
+     * @throws SQLException Als er een verkeerde type query wordt uitgevoerd
+     * die een resultaat oplevert.
+     * @throws SQLException Als de query mislukt.
+     * @throws SQLException Als er geen verbinding kan worden gemaakt met de
+     * database.
+     */
+    public function execute(string $sql): void
     {
         try {
             $res = $this->getDB()->query($sql);
@@ -155,9 +194,9 @@ class DB
             $this->throwQueryException($sql, $e);
         }
         if ($res instanceof \mysqli_result) {
-            return $res;
-        } else {
-            return null;
+            throw new SQLException(
+                "Gebruik DB::query ipv DB::execute voor query's die een resultaat opleveren",
+            );
         }
     }
 
@@ -167,13 +206,13 @@ class DB
      *
      * @param $sql SQL query
      *
-     * @throws SQLException Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
+     * @throws SQLNoResultException Als er geen resultaat is.
      */
     public function selectSingle(string $sql): string|null
     {
-        $e = new SQLException(\sprintf(
+        $e = new SQLNoResultException(\sprintf(
             'Geen resultaat bij query: "%s"',
             $sql,
         ));
@@ -181,7 +220,7 @@ class DB
         if ($res->num_rows === 0) {
             throw $e;
         }
-        $row = $res->fetch_row();
+        $row = $res->fetch_row() ?? throw $e;
         if (\count($row) === 0) {
             throw $e;
         }
@@ -196,24 +235,22 @@ class DB
      *
      * @return array<string, string|null> associatieve array met resultaat
      *
-     * @throws SQLException Als er geen resultaat is.
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
+     * @throws SQLNoResultException Als er geen resultaat is.
      */
     public function selectSingleRow(string $sql): array
     {
         $res = $this->query($sql);
         if ($res->num_rows === 0) {
-            throw new SQLException(\sprintf(
+            throw new SQLNoResultException(\sprintf(
                 'Geen resultaat bij query: "%s"',
                 $sql,
             ));
         }
-        $ret = [];
-        foreach ($res->fetch_assoc() as $key => $value) {
-            $ret[$key] = $value;
-        }
-        return $ret;
+        /** @var array<string, string|null>|false|null $row */
+        $row = $res->fetch_assoc();
+        return ns(fs($row));
     }
 
     /**
@@ -221,19 +258,33 @@ class DB
      *
      * @param $sql SQL query
      *
-     * @return list<string|null> resultaat. Kan leeg zijn.
+     * @return DBColumnResultDefault<string|null> resultaat. Kan leeg zijn.
      *
      * @throws SQLException Als de query mislukt.
      * @throws SQLException Als er geen verbinding kan worden gemaakt met de database.
      */
-    public function selectSingleColumn(string $sql): array
+    public function selectSingleColumn(string $sql): DBColumnResultDefault
     {
-        $res = $this->query($sql);
-        $ret = [];
-        while (( $r = $res->fetch_row() ) !== null) {
-            $ret[] = $r[0] ?? null;
-        }
-        return $ret;
+        return new DBColumnResultDefault($this->query($sql));
+    }
+
+    /**
+     * Geef de eerste kolom van het resultaat van een SQL query terug als
+     * integers.
+     *
+     * @param $sql SQL query
+     *
+     * @return DBColumnResultInt<int> resultaat. Kan leeg zijn.
+     *
+     * @throws \gldstdlib\safe\SafeException Als een waarde niet kan worden
+     * geconverteerd naar een integer.
+     * @throws SQLException Als de query mislukt.
+     * @throws SQLException Als er geen verbinding kan worden gemaakt met de
+     * database.
+     */
+    public function selectSingleColumnInt(string $sql): DBColumnResultInt
+    {
+        return new DBColumnResultInt($this->query($sql));
     }
 
     /**
@@ -273,7 +324,7 @@ class DB
             implode(',', array_keys($data)),
             implode(',', array_values($data)),
         );
-        $this->query($query);
+        $this->execute($query);
         if ($db->affected_rows == 0) {
             throw new SQLException(\sprintf(
                 'Toevoegen van rij mislukt. Query: "%s"',
@@ -307,8 +358,17 @@ class DB
             $updates[] = "{$key}={$value}";
         }
         $updates_str = implode(',', $updates);
-        $this->db->query("UPDATE {$table} SET {$updates_str} WHERE {$conditions}");
-        return $db->affected_rows;
+        $this->execute("UPDATE {$table} SET {$updates_str} WHERE {$conditions}");
+        if ($db->affected_rows === -1) {
+            throw new \RuntimeException();
+        }
+        if (\bccomp((string)$db->affected_rows, (string)\PHP_INT_MAX) > 0) {
+            throw new \RuntimeException(\sprintf(
+                'Aantal veranderde rijen overschrijdt PHP_INT_MAX. Aantal: %s',
+                $db->affected_rows,
+            ));
+        }
+        return (int)$db->affected_rows;
     }
 
     /**
@@ -395,7 +455,7 @@ class DB
         foreach ($data as $key => $value) {
             $update_values[] = \sprintf('%s=%s', $key, $data[$key]);
         }
-        $this->query(\sprintf(
+        $this->execute(\sprintf(
             'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s',
             $table,
             implode(',', array_keys($data)),
@@ -434,7 +494,7 @@ class DB
                 $respons[$key] = '0';
             } elseif (\is_int($value) || \is_float($value)) {
                 $respons[$key] = \sprintf('%s', $value);
-            } elseif ($value instanceof \DateTime) {
+            } elseif ($value instanceof \DateTimeInterface) {
                 $respons[$key] = $value->format('"Y-m-d H:i:s"');
             } else {
                 $respons[$key] = \sprintf('"%s"', $this->escape_string((string)$value));
@@ -463,7 +523,7 @@ class DB
      */
     public function verwijder_ongekoppelde_vrije_keuze_nummers(): void
     {
-        $this->query(<<<'SQL'
+        $this->execute(<<<'SQL'
         DELETE n
         FROM nummers n
         WHERE
@@ -488,6 +548,6 @@ class DB
             FROM stemmers_nummers
         )
         SQL;
-        $this->query($query);
+        $this->execute($query);
     }
 }

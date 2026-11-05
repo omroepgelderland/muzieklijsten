@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLException;
 use gldstdlib\Log;
 
+use function gldstdlib\fs;
 use function gldstdlib\path_join;
 use function gldstdlib\readline_met_default;
 
@@ -44,12 +47,12 @@ function dupliceer_lijst(Factory $factory, DB $db): void
 {
     $db->disableAutocommit();
 
-    $origineel_id = filter_var(readline('id van de te dupliceren lijst: '), \FILTER_VALIDATE_INT);
+    $origineel_id = (int)filter_var(readline('id van de te dupliceren lijst: '), \FILTER_VALIDATE_INT);
 
     $lijst = $factory->create_lijst($origineel_id);
     echo "We gaan de lijst \"{$lijst->get_naam()}\" ({$origineel_id}) dupliceren\n";
 
-    $nieuwe_naam = filter_var(readline('nieuwe naam: '));
+    $nieuwe_naam = fs(filter_var(readline('nieuwe naam: ')));
 
     $lijst->dupliceer($nieuwe_naam);
 
@@ -87,12 +90,15 @@ function ajax(Factory $factory, DB $db, Log $log): void
     try {
         $db->disableAutocommit();
         if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-            $request = json_decode(file_get_contents('php://input'));
+            $request = fs(json_decode(fs(file_get_contents('php://input')), true));
         } else {
-            $request = json_decode(json_encode($_POST));
+            $request = fs(json_decode(fs(json_encode($_POST)), true));
         }
         $ajax = $factory->create_ajax($request);
-        $functie = filter_var($request->functie);
+        $functie = filter_var($request['functie'] ?? null);
+        if (empty($functie)) {
+            throw new GLDException("Geen ajax-functie opgegeven");
+        }
         try {
             $respons = [
                 'data' => $ajax->$functie(),
@@ -127,7 +133,7 @@ function ajax(Factory $factory, DB $db, Log $log): void
 function export_resultaten_ods(Factory $factory, DB $db, Log $log): void
 {
     try {
-        $request = json_decode(json_encode($_POST));
+        $request = fs(json_decode(fs(json_encode($_POST))));
         $ajax = $factory->create_ajax($request);
         $ajax->export_resultaten_ods();
     } catch (GebruikersException $e) {
@@ -145,25 +151,25 @@ function export_resultaten_ods(Factory $factory, DB $db, Log $log): void
 }
 
 /**
- * @return object{
+ * @return array{
  *     jaar: string,
  *     nummers_html_str: string,
  *     nummers_meta_str: string,
  *     og_image: string,
- *     og_url: string
+ *     og_url: string,
  * }
  */
-function get_fbshare_data(Factory $factory, Config $config, Log $log, DB $db): object
+function get_fbshare_data(Factory $factory, Config $config, Log $log, DB $db): array
 {
     try {
-        $stemmer = $factory->create_stemmer_uit_request((object)$_GET);
+        $stemmer = $factory->create_stemmer_uit_request($_GET);
 
         $query = <<<SQL
         SELECT n.artiest, n.titel
         FROM nummers n
         INNER JOIN stemmers_nummers sn ON
             sn.nummer_id = n.id
-            AND sn.stemmer_id = {$stemmer->get_id()}
+            AND sn.stemmer_id = {$stemmer->id}
         ORDER BY n.artiest, n.titel
         SQL;
         $res = $db->query($query);
@@ -187,10 +193,10 @@ function get_fbshare_data(Factory $factory, Config $config, Log $log, DB $db): o
         $nummers_meta_str = implode("\n", $nummers_meta);
 
         $root_url = $config->get()['root_url'];
-        $og_url = "{$root_url}fbshare.php?stemmer={$stemmer->get_id()}";
+        $og_url = "{$root_url}fbshare.php?stemmer={$stemmer->id}";
         $og_image = "{$root_url}afbeeldingen/fbshare_top100.jpg";
         $jaar = (new \DateTime())->format('Y');
-        return (object)[
+        return [
             'jaar' => $jaar,
             'nummers_html_str' => $nummers_html_str,
             'nummers_meta_str' => $nummers_meta_str,
@@ -258,7 +264,7 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
     if (!is_dir($configdir)) {
         mkdir($configdir, 0770, true);
     }
-    $configdir = \realpath($configdir);
+    $configdir = fs(\realpath($configdir));
     $config_pad = path_join($configdir, 'config.json');
     file_put_contents(
         $config_pad,
@@ -267,8 +273,8 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
     echo "De configuratie is opgeslagen in {$config_pad}. Je kunt dit bestand zo nodig aanpassen.\n";
 
     $public_pad = realpath(path_join(__DIR__, '..', 'public'));
-    $root_host = parse_url($root_url, \PHP_URL_HOST);
-    $root_url_pad = parse_url($root_url, \PHP_URL_PATH);
+    $root_host = fs(parse_url($root_url, \PHP_URL_HOST));
+    $root_url_pad = fs(parse_url($root_url, \PHP_URL_PATH) ?? '');
     $root_url_pad = rtrim($root_url_pad, '/');
     $https_root_url = rtrim("https://{$root_host}/{$root_url_pad}/", '/') . '/';
     if ($root_url_pad === '') {
@@ -331,7 +337,7 @@ function install(Config $config, DB $db, Log $log, DBUpdates $dbupdates): void
         readline();
     }
 
-    $db->getDB()->multi_query(file_get_contents(path_join(__DIR__, 'install.sql')));
+    $db->getDB()->multi_query(fs(file_get_contents(path_join(__DIR__, 'install.sql'))));
     do {
     } while ($db->getDB()->next_result());
 
@@ -372,7 +378,7 @@ function vgl_bijwerken(\muzieklijsten\DB $db): void
     WHERE
         id = ?
     SQL;
-    $update = $db->getDB()->prepare($update_query);
+    $update = fs($db->getDB()->prepare($update_query));
     $update->bind_param(
         'ssi',
         $vgl_titel,

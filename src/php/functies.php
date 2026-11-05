@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use DI\FactoryInterface;
@@ -10,9 +12,10 @@ use gldstdlib\OpenAIClient;
 use Invoker\InvokerInterface;
 use Psr\Container\ContainerInterface;
 
-use function gldstdlib\exception_error_handler_plus;
+use function gldstdlib\exception_error_handler;
 use function gldstdlib\fs;
 use function gldstdlib\get_tijdzone;
+use function gldstdlib\ns;
 
 /**
  * Geef aan of dit de ontwikkelingsversie is.
@@ -88,21 +91,19 @@ function filter_postcode(mixed $postcode): ?string
  * Lokale nummers worden internationaal gemaakt.
  * Nederlands nummers worden gecheckt op geldige prefix en lengte.
  *
- * @param mixed $telefoonnummer Ruwe input.
+ * @param string $telefoonnummer Ruwe input.
  *
  * @return ?string Het geparste telefoonnummer of null als de invoer leeg is.
  */
-function filter_telefoonnummer(mixed $telefoonnummer): ?string
+function filter_telefoonnummer(string $telefoonnummer): ?string
 {
-    if ($telefoonnummer === false) {
-        throw new OngeldigeInvoer('Ongeldig telefoonnummer');
-    } elseif ($telefoonnummer === null || $telefoonnummer === '') {
+    if (empty($telefoonnummer)) {
         return null;
     }
     if (\strlen($telefoonnummer) < 4) {
         throw new OngeldigeInvoer("Ongeldig telefoonnummer: \"{$telefoonnummer}\"");
     }
-    $telefoonnummer = preg_replace('~[^+0-9]~', '', $telefoonnummer);
+    $telefoonnummer = ns(preg_replace('~[^+0-9]~', '', $telefoonnummer));
     if (substr($telefoonnummer, 0, 2) === '00') {
         // Handmatige uitbelcode
         $telefoonnummer = '+' . substr($telefoonnummer, 2);
@@ -138,14 +139,13 @@ function filter_van_tot(string $waarde): ?\DateTime
         $dt = new \DateTime($str);
         $dt->setTimezone(get_tijdzone());
         return $dt;
-    } else {
-        return null;
     }
+    return null;
 }
 
 function set_env(): void
 {
-    \set_error_handler(exception_error_handler_plus(...), error_reporting());
+    \set_error_handler(exception_error_handler(...), error_reporting());
     \locale_set_default('nl_NL');
     \setlocale(\LC_TIME, 'nl', 'nl_NL', 'Dutch');
     \date_default_timezone_set('Europe/Amsterdam');
@@ -201,7 +201,7 @@ function get_di_container(): FactoryInterface&ContainerInterface&InvokerInterfac
  * Stemmen worden ook bijgewerkt naar het juiste nummer.
  *
  * @param $id int Het id van het nummer dat overblijft.
- * @param list<int> $duplicaten_ids Een lijst van id's van de nummers die
+ * @param array<int> $duplicaten_ids Een lijst van id's van de nummers die
  * verwijderd moeten worden.
  */
 function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
@@ -210,17 +210,17 @@ function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
         return;
     }
     $i_duplicaten_ids = \implode(',', $duplicaten_ids);
-    $db->query(<<<SQL
+    $db->execute(<<<SQL
     UPDATE IGNORE `lijsten_nummers`
     SET `nummer_id` = {$id}
     WHERE `nummer_id` IN ({$i_duplicaten_ids});
     SQL);
-    $db->query(<<<SQL
+    $db->execute(<<<SQL
     UPDATE IGNORE `stemmers_nummers`
     SET `nummer_id` = {$id}
     WHERE `nummer_id` IN ({$i_duplicaten_ids});
     SQL);
-    $db->query("DELETE FROM nummers WHERE id IN ({$i_duplicaten_ids})");
+    $db->execute("DELETE FROM nummers WHERE id IN ({$i_duplicaten_ids})");
     $db->verwijder_stemmers_zonder_stemmen();
 }
 
@@ -238,12 +238,12 @@ function nummers_samenvoegen(DB $db, int $id, array $duplicaten_ids): void
 function get_vgl_string(string $invoer, bool $is_artiest): string
 {
     $invoer = \strtolower($invoer);
-    $invoer = \iconv('UTF-8', 'ASCII//TRANSLIT', $invoer);
+    $invoer = fs(\iconv('UTF-8', 'ASCII//TRANSLIT', $invoer));
     if ($is_artiest) {
-        $invoer = \preg_replace('~^(\'t|de|die|het|la|le|the)\s+~', '', $invoer);
+        $invoer = ns(\preg_replace('~^(\'t|de|die|het|la|le|the)\s+~', '', $invoer));
     }
-    $invoer = \preg_replace('~\(.*\)~', '', $invoer);
-    $invoer = \preg_replace('~[^a-z0-9]+~', ' ', $invoer);
+    $invoer = ns(\preg_replace('~\(.*\)~', '', $invoer));
+    $invoer = ns(\preg_replace('~[^a-z0-9]+~', ' ', $invoer));
     $invoer = \str_replace([
         ' feat ',
         ' ft ',
@@ -252,7 +252,7 @@ function get_vgl_string(string $invoer, bool $is_artiest): string
         ' radio edit ',
         ' live ',
     ], ' ', $invoer);
-    $invoer = \preg_replace('~\s+~', '', $invoer);
+    $invoer = ns(\preg_replace('~\s+~', '', $invoer));
     $invoer = \trim($invoer);
     return $invoer;
 }
@@ -261,7 +261,7 @@ function get_vgl_string(string $invoer, bool $is_artiest): string
  * Checkt m.b.v. de OpenAI api voor elk nummer in een lijst met vrije keuzenummers of het nummer correct is en zo nee
  * wat de correcte artiest en titel zouden moeten zijn.
  *
- * @param list<Nummer> $nummers
+ * @param array<Nummer> $nummers
  *
  * @return array<int, array{
  *     is_correct: bool,
@@ -275,14 +275,14 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
 {
     $input = \array_map(
         static fn($nummer) => [
-            'id' => $nummer->get_id(),
+            'id' => $nummer->id,
             'artiest' => $nummer->get_artiest(),
             'titel' => $nummer->get_titel(),
         ],
         $nummers,
     );
     $ai_res = json_decode($openai_client->get_struct_response([
-        'input' => json_encode($input),
+        'input' => fs(json_encode($input)),
         'instructions' => <<<'EOT'
         Controleer voor elk muzieknummer of de opgegeven combinatie van artiest en titel echt bestaat en correct
         geschreven is.
@@ -350,7 +350,7 @@ function get_ai_suggesties(OpenAIClient $openai_client, array $nummers): array
     }
     $res = \array_fill_keys(
         \array_map(
-            static fn($nummer) => $nummer->get_id(),
+            static fn($nummer) => $nummer->id,
             $nummers,
         ),
         ['is_correct' => false],

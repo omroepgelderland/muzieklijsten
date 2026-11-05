@@ -1,68 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
 
 use function gldstdlib\ns;
 
+/**
+ * @phpstan-type VeldData array{
+ *     label: string,
+ *     leeg_feedback: string,
+ *     max: int|null,
+ *     maxlength: int|null,
+ *     min: int|null,
+ *     minlength: int|null,
+ *     placeholder: string|null,
+ *     type: string,
+ * }
+ */
 class Veld
 {
-    private int $id;
-    private string $label;
-    private string $leeg_feedback;
-    private ?int $max;
-    private ?int $maxlength;
-    private ?int $min;
-    private ?int $minlength;
-    private ?string $placeholder;
-    private string $type;
-    private ?bool $verplicht;
-    /** @var list<Lijst> */
+    /** @var ?VeldData */
+    private ?array $data = null;
+    /** @var array<Lijst> */
     private array $lijsten;
-    private bool $db_props_set;
 
     /**
      * @param $id Database-id van het veld.
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
      * @param $verplicht Of het veld verplicht is (optioneel)
      */
     public function __construct(
         private Factory $factory,
         private DB $db,
-        int|string $id,
-        ?array $data = null,
-        ?bool $verplicht = null,
+        public readonly int $id,
+        private ?bool $verplicht = null,
     ) {
-        $this->id = (int)$id;
-        $this->db_props_set = false;
-        $this->verplicht = $verplicht;
-        if (isset($data)) {
-            $this->set_data($data);
-        }
-    }
-
-    public function get_id(): int
-    {
-        return $this->id;
-    }
-
-    /**
-     * Geeft aan of twee velden dezelfde zijn. Wanneer $obj geen Veld is wordt false gegeven.
-     *
-     * @param $obj Object om deze instantie mee te vergelijken
-     *
-     * @return bool Of $obj hetzelfde veld is als deze instantie
-     */
-    public function equals(mixed $obj): bool
-    {
-        return ( $obj instanceof Veld && $obj->get_id() == $this->id );
     }
 
     public function get_label(): string
     {
-        $this->set_db_properties();
-        return $this->label;
+        return $this->get_data()['label'];
     }
 
     /**
@@ -70,23 +49,21 @@ class Veld
      */
     public function get_placeholder(): string
     {
-        $this->set_db_properties();
-        if (!isset($this->placeholder)) {
+        $placeholder = $this->get_data()['placeholder'];
+        if ($placeholder === null) {
             throw new ObjectEigenschapOntbreekt();
         }
-        return $this->placeholder;
+        return $placeholder;
     }
 
     public function get_type(): string
     {
-        $this->set_db_properties();
-        return $this->type;
+        return $this->get_data()['type'];
     }
 
     public function get_leeg_feedback(): string
     {
-        $this->set_db_properties();
-        return $this->leeg_feedback;
+        return $this->get_data()['leeg_feedback'];
     }
 
     /**
@@ -108,7 +85,7 @@ class Veld
     /**
      * Geeft alle lijsten waar dit een veld is.
      *
-     * @return list<Lijst>
+     * @return array<Lijst>
      */
     public function get_lijsten(): array
     {
@@ -117,9 +94,9 @@ class Veld
             $sql = <<<SQL
             SELECT lijst_id AS id
             FROM lijsten_velden
-            WHERE veld_id = {$this->get_id()}
+            WHERE veld_id = {$this->id}
             SQL;
-            $this->lijsten = $this->factory->select_objecten(Lijst::class, $sql);
+            $this->lijsten = iterator_to_array($this->factory->select_objecten(Lijst::class, $sql));
         }
         return $this->lijsten;
     }
@@ -129,7 +106,7 @@ class Veld
      */
     public function get_html_id(): string
     {
-        return \sprintf('veld-%d', $this->get_id());
+        return \sprintf('veld-%d', $this->id);
     }
 
     /**
@@ -146,8 +123,8 @@ class Veld
         try {
             $waarde = $this->db->selectSingle(\sprintf(
                 'SELECT waarde FROM stemmers_velden WHERE stemmer_id = %d AND veld_id = %d',
-                $stemmer->get_id(),
-                $this->get_id(),
+                $stemmer->id,
+                $this->id,
             ));
             if ($waarde === null) {
                 throw new GLDException();
@@ -155,50 +132,52 @@ class Veld
         } catch (GLDException $e) {
             throw new GLDException(\sprintf(
                 'Geen waarde ingevuld door stemmer %d in veld %d',
-                $stemmer->get_id(),
-                $this->get_id(),
+                $stemmer->id,
+                $this->id,
             ), $e->getCode(), $e);
         }
         return $waarde;
     }
 
     /**
-     * Vul het object met velden uit de database.
+     * @return VeldData
      */
-    private function set_db_properties(): void
+    private function get_data(): array
     {
-        if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(\sprintf(
-                'SELECT * FROM velden WHERE id = %d',
-                $this->get_id(),
-            )));
-        }
+        return $this->data ?? $this->set_db_data(
+            $this->db->selectSingleRow(<<<SQL
+            SELECT *
+            FROM velden
+            WHERE id = {$this->id}
+            SQL),
+        );
     }
 
     /**
-     * Plaatst metadata in het object
-     *
-     * @param array<string,string|null> $data Data.
+     * @param VeldData $data De nieuwe data voor het veld.
      */
-    private function set_data(array $data): void
+    public function set_data(array $data): void
     {
-        $this->label = ns($data['label']);
-        $this->leeg_feedback = ns($data['leeg_feedback']);
-        $this->max = isset($data['max'])
-            ? (int)$data['max']
-            : null;
-        $this->maxlength = isset($data['maxlength'])
-            ? (int)$data['maxlength']
-            : null;
-        $this->min = isset($data['min'])
-            ? (int)$data['min']
-            : null;
-        $this->minlength = isset($data['minlength'])
-            ? (int)$data['minlength']
-            : null;
-        $this->placeholder = $data['placeholder'];
-        $this->type = ns($data['type']);
-        $this->db_props_set = true;
+        $this->data = $data;
+    }
+
+    /**
+     * @param array<string, string|null> $raw_db_data
+     *
+     * @return VeldData
+     */
+    public function set_db_data(array $raw_db_data): array
+    {
+        return $this->data = [
+            'label' => ns($raw_db_data['label']),
+            'leeg_feedback' => ns($raw_db_data['leeg_feedback']),
+            'max' => isset($raw_db_data['max']) ? (int)$raw_db_data['max'] : null,
+            'maxlength' => isset($raw_db_data['maxlength']) ? (int)$raw_db_data['maxlength'] : null,
+            'min' => isset($raw_db_data['min']) ? (int)$raw_db_data['min'] : null,
+            'minlength' => isset($raw_db_data['minlength']) ? (int)$raw_db_data['minlength'] : null,
+            'placeholder' => $raw_db_data['placeholder'],
+            'type' => ns($raw_db_data['type']),
+        ];
     }
 
     /**
@@ -233,8 +212,8 @@ class Veld
 
         if ($gefilterde_waarde !== false && $gefilterde_waarde !== null) {
             $this->db->insert_update_multi('stemmers_velden', [
-                'stemmer_id' => $stemmer->get_id(),
-                'veld_id' => $this->get_id(),
+                'stemmer_id' => $stemmer->id,
+                'veld_id' => $this->id,
                 'waarde' => $gefilterde_waarde,
             ]);
         } elseif ($this->is_verplicht()) {
@@ -249,11 +228,11 @@ class Veld
      */
     public function get_max(): int
     {
-        $this->set_db_properties();
-        if (!isset($this->max)) {
+        $max = $this->get_data()['max'];
+        if ($max === null) {
             throw new ObjectEigenschapOntbreekt();
         }
-        return $this->max;
+        return $max;
     }
 
     /**
@@ -261,11 +240,11 @@ class Veld
      */
     public function get_maxlength(): int
     {
-        $this->set_db_properties();
-        if (!isset($this->maxlength)) {
+        $maxlength = $this->get_data()['maxlength'];
+        if ($maxlength === null) {
             throw new ObjectEigenschapOntbreekt();
         }
-        return $this->maxlength;
+        return $maxlength;
     }
 
     /**
@@ -273,11 +252,11 @@ class Veld
      */
     public function get_min(): int
     {
-        $this->set_db_properties();
-        if (!isset($this->min)) {
+        $min = $this->get_data()['min'];
+        if ($min === null) {
             throw new ObjectEigenschapOntbreekt();
         }
-        return $this->min;
+        return $min;
     }
 
     /**
@@ -285,10 +264,10 @@ class Veld
      */
     public function get_minlength(): int
     {
-        $this->set_db_properties();
-        if (!isset($this->minlength)) {
+        $minlength = $this->get_data()['minlength'];
+        if ($minlength === null) {
             throw new ObjectEigenschapOntbreekt();
         }
-        return $this->minlength;
+        return $minlength;
     }
 }

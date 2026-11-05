@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDupEntryException;
 use gldstdlib\exception\SQLException;
-use gldstdlib\exception\UndefinedPropertyException;
 use gldstdlib\OpenAIClient;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -14,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Ods;
 use ZipArchive;
 
 use function gldstdlib\fs;
+use function gldstdlib\ns;
 use function gldstdlib\vervang_bestandsnaam_tekens;
 
 /**
@@ -28,14 +30,14 @@ use function gldstdlib\vervang_bestandsnaam_tekens;
 class Ajax
 {
     /**
-     * @param object $request Requestdata van de frontend.
+     * @param array<string, mixed> $request Requestdata van de frontend.
      */
     public function __construct(
         private Factory $factory,
         private Config $config,
         private DB $db,
         private readonly ?OpenAIClient $openai_client,
-        private object $request,
+        private array $request,
     ) {
     }
 
@@ -52,21 +54,21 @@ class Ajax
      *     heeft_gebruik_recaptcha: bool,
      *     starttijd: ?string,
      *     eindtijd: ?string,
-     *     velden: list<array{
+     *     velden: array<array{
      *         id: int,
      *         label: string,
      *         leeg_feedback: string,
      *         type: string,
      *         verplicht: bool,
-     *         max: int,
-     *         maxlength: int,
-     *         min: int,
-     *         minlength: int,
-     *         placeholder: string
+     *         max?: int,
+     *         maxlength?: int,
+     *         min?: int,
+     *         minlength?: int,
+     *         placeholder?: string,
      *     }>,
      *     recaptcha_sitekey: ?string,
      *     privacy_url: string,
-     *     random_volgorde: bool
+     *     random_volgorde: bool,
      * }
      *
      * @throws GeenLijstException
@@ -83,7 +85,7 @@ class Ajax
         $velden = [];
         foreach ($lijst->get_velden() as $veld) {
             $velddata = [
-                'id' => $veld->get_id(),
+                'id' => $veld->id,
                 'label' => $veld->get_label(),
                 'leeg_feedback' => $veld->get_leeg_feedback(),
                 'type' => $veld->get_type(),
@@ -123,9 +125,7 @@ class Ajax
             'starttijd' => $lijst->get_starttijd() === null ? null : $lijst->get_starttijd()->format(\DateTime::ATOM),
             'eindtijd' => $lijst->get_eindtijd() === null ? null : $lijst->get_eindtijd()->format(\DateTime::ATOM),
             'velden' => $velden,
-            'recaptcha_sitekey' => $this->config->heeft_recaptcha_keys()
-                ? $this->config->get()['recaptcha']['sitekey']
-                : null,
+            'recaptcha_sitekey' => $this->config->get()['recaptcha']['sitekey'] ?? null,
             'privacy_url' => $this->config->get()['privacy_url'],
             'random_volgorde' => $lijst->is_random_volgorde(),
         ];
@@ -153,12 +153,8 @@ class Ajax
         $this->login();
         $lijst = $this->factory->create_lijst_uit_request($this->request);
         $data = $this->filter_lijst_metadata();
-        $this->db->updateMulti('lijsten', $data, "id = {$lijst->get_id()}");
-        try {
-            $velden = $this->request->velden;
-        } catch (UndefinedPropertyException) {
-            $velden = new \stdClass();
-        }
+        $this->db->updateMulti('lijsten', $data, "id = {$lijst->id}");
+        $velden = $this->request['velden'] ?? [];
         $this->set_lijst_velden($lijst, $velden);
     }
 
@@ -183,25 +179,25 @@ class Ajax
      */
     private function filter_lijst_metadata(): array
     {
-        $naam = trim(filter_var($this->request->naam));
-        $starttijd_str = trim(filter_var($this->request->{'starttijd'}));
+        $naam = trim(fs(filter_var($this->request['naam'])));
+        $starttijd_str = trim(fs(filter_var($this->request['starttijd'])));
         $starttijd = empty($starttijd_str)
             ? null
             : isoDateTimeToDateTimeImmutable($starttijd_str);
-        $eindtijd_str = trim(filter_var($this->request->{'eindtijd'}));
+        $eindtijd_str = trim(fs(filter_var($this->request['eindtijd'])));
         $eindtijd = empty($eindtijd_str)
             ? null
             : isoDateTimeToDateTimeImmutable($eindtijd_str);
-        $minkeuzes = (int)fs(filter_var($this->request->minkeuzes, \FILTER_VALIDATE_INT));
-        $maxkeuzes = (int)fs(filter_var($this->request->maxkeuzes, \FILTER_VALIDATE_INT));
-        $vrijekeuzes = (int)fs(filter_var($this->request->vrijekeuzes, \FILTER_VALIDATE_INT));
+        $minkeuzes = (int)fs(filter_var($this->request['minkeuzes'] ?? null, \FILTER_VALIDATE_INT));
+        $maxkeuzes = (int)fs(filter_var($this->request['maxkeuzes'] ?? null, \FILTER_VALIDATE_INT));
+        $vrijekeuzes = (int)fs(filter_var($this->request['vrijekeuzes'] ?? null, \FILTER_VALIDATE_INT));
         /** @var ?int $stemmen_per_ip */
-        $stemmen_per_ip = filter_var($this->request->{'stemmen-per-ip'}, \FILTER_VALIDATE_INT, \FILTER_NULL_ON_FAILURE);
-        $artiest_eenmalig = isset($this->request->{'artiest-eenmalig'}) ? 1 : 0;
-        $mail_stemmers = isset($this->request->{'mail-stemmers'}) ? 1 : 0;
-        $random_volgorde = isset($this->request->{'random-volgorde'}) ? 1 : 0;
-        $recaptcha = isset($this->request->recaptcha) ? 1 : 0;
-        $emails = explode(',', filter_var($this->request->email));
+        $stemmen_per_ip = filter_var($this->request['stemmen-per-ip'] ?? null, \FILTER_VALIDATE_INT, \FILTER_NULL_ON_FAILURE);
+        $artiest_eenmalig = isset($this->request['artiest-eenmalig']) ? 1 : 0;
+        $mail_stemmers = isset($this->request['mail-stemmers']) ? 1 : 0;
+        $random_volgorde = isset($this->request['random-volgorde']) ? 1 : 0;
+        $recaptcha = isset($this->request['recaptcha']) ? 1 : 0;
+        $emails = explode(',', fs(filter_var($this->request['email'])));
         $emails_geparsed = [];
         foreach ($emails as $email) {
             $email = trim(strtolower($email));
@@ -215,7 +211,7 @@ class Ajax
             $emails_geparsed[] = $email_geparsed;
         }
         $emails_str = implode(',', $emails_geparsed);
-        $bedankt_tekst = trim(filter_var($this->request->{'bedankt-tekst'}));
+        $bedankt_tekst = trim(fs(filter_var($this->request['bedankt-tekst'])));
 
         if ($naam === '') {
             throw new GebruikersException('Geef een naam aan de lijst.');
@@ -253,21 +249,24 @@ class Ajax
         ];
     }
 
-    private function set_lijst_velden(Lijst $lijst, object $input_velden): void
+    /**
+     * @param array<string, mixed> $input_velden
+     */
+    private function set_lijst_velden(Lijst $lijst, array $input_velden): void
     {
         $alle_velden = $this->factory->get_velden();
         foreach ($alle_velden as $veld) {
-            try {
-                $id = $veld->get_id();
-                $input_veld = $input_velden->$id;
-                $tonen = isset($input_veld->tonen);
-                $verplicht = isset($input_veld->verplicht);
-                if ($tonen) {
-                    $lijst->set_veld($veld, $verplicht);
-                } else {
-                    $lijst->remove_veld($veld);
-                }
-            } catch (UndefinedPropertyException) {
+            $id = $veld->id;
+            if (!\array_key_exists($id, $input_velden)) {
+                $lijst->remove_veld($veld);
+                continue;
+            }
+            $input_veld = $input_velden[$id];
+            $tonen = isset($input_veld['tonen']);
+            $verplicht = isset($input_veld['verplicht']);
+            if ($tonen) {
+                $lijst->set_veld($veld, $verplicht);
+            } else {
                 $lijst->remove_veld($veld);
             }
         }
@@ -282,14 +281,10 @@ class Ajax
     {
         $this->login();
         $data = $this->filter_lijst_metadata();
-        $lijst = $this->factory->create_lijst($this->db->insertMulti('lijsten', $data));
-        try {
-            $velden = $this->request->velden;
-        } catch (UndefinedPropertyException) {
-            $velden = new \stdClass();
-        }
+        $lijst = $this->factory->create_lijst((int)$this->db->insertMulti('lijsten', $data));
+        $velden = $this->request['velden'] ?? [];
         $this->set_lijst_velden($lijst, $velden);
-        return $lijst->get_id();
+        return $lijst->id;
     }
 
     /**
@@ -304,19 +299,19 @@ class Ajax
     public function losse_nummers_toevoegen(): array
     {
         $this->login();
-        $this->request->nummers ??= [];
-        $this->request->lijsten ??= [];
+        $this->request['nummers'] ??= [];
+        $this->request['lijsten'] ??= [];
         $json = [
             'toegevoegd' => 0,
             'dubbel' => 0,
             'lijsten_nummers' => 0,
         ];
-        foreach ($this->request->nummers as $nummer) {
-            $artiest = trim($nummer->artiest);
-            $titel = trim($nummer->titel);
-            $jaar = \filter_var($nummer->jaar ?? null, \FILTER_VALIDATE_INT, \FILTER_NULL_ON_FAILURE);
+        foreach ($this->request['nummers'] as $nummer) {
+            $artiest = trim($nummer['artiest']);
+            $titel = trim($nummer['titel']);
+            $jaar = \filter_var($nummer['jaar'] ?? null, \FILTER_VALIDATE_INT, \FILTER_NULL_ON_FAILURE);
             $jaar = isset($jaar) ? (int)$jaar : null;
-            $duur_str = \trim($nummer->duur ?? '');
+            $duur_str = \trim($nummer['duur'] ?? '');
             $duur_res = \preg_match('/^([0-5]?[0-9])(?:\:|\.)([0-5][0-9])$/', $duur_str, $m);
             if ($duur_res === 1) {
                 $duur = (int)$m[1] * 60 + (int)$m[2];
@@ -338,7 +333,7 @@ class Ajax
                 $res = $this->db->query($sql);
                 if ($res->num_rows > 0) {
                     $json['dubbel']++;
-                    $nummer_id = (int)$res->fetch_array()[0];
+                    $nummer_id = (int)ns(fs($res->fetch_array())[0] ?? null);
                 } else {
                     $json['toegevoegd']++;
                     $nummer = $this->factory->insert_nummer(
@@ -347,9 +342,9 @@ class Ajax
                         jaar: $jaar,
                         duur: $duur,
                     );
-                    $nummer_id = $nummer->get_id();
+                    $nummer_id = $nummer->id;
                 }
-                foreach ($this->request->lijsten as $lijst) {
+                foreach ($this->request['lijsten'] as $lijst) {
                     try {
                         $this->db->insertMulti('lijsten_nummers', [
                             'nummer_id' => $nummer_id,
@@ -367,21 +362,19 @@ class Ajax
     /**
      * Geeft alle lijsten voor het toevoegen van losse nummers.
      *
-     * @return list<array{
-     *     id: positive-int,
-     *     naam: string
+     * @return \Iterator<int, array{
+     *     id: int,
+     *     naam: string,
      * }>
      */
-    public function get_lijsten(): array
+    public function get_lijsten(): \Iterator
     {
-        $respons = [];
         foreach ($this->factory->get_muzieklijsten() as $lijst) {
-            $respons[] = [
-                'id' => $lijst->get_id(),
+            yield [
+                'id' => $lijst->id,
                 'naam' => $lijst->get_naam(),
             ];
         }
-        return $respons;
     }
 
     /**
@@ -393,7 +386,7 @@ class Ajax
     {
         $this->login();
         $stem = $this->factory->create_stemmer_nummer_uit_request($this->request);
-        $waarde = filter_var($this->request->waarde, \FILTER_VALIDATE_BOOL);
+        $waarde = filter_var($this->request['waarde'], \FILTER_VALIDATE_BOOL);
         $stem->set_behandeld($waarde);
     }
 
@@ -432,17 +425,9 @@ class Ajax
     {
         $this->login();
         $lijst = $this->factory->create_lijst_uit_request($this->request);
-        try {
-            $van = filter_van_tot($this->request->van);
-        } catch (UndefinedPropertyException) {
-            $van = null;
-        }
-        try {
-            $tot = filter_van_tot($this->request->tot);
-        } catch (UndefinedPropertyException) {
-            $tot = null;
-        }
-        return \count($lijst->get_stemmers($van, $tot));
+        $van = filter_van_tot($this->request['van'] ?? '');
+        $tot = filter_van_tot($this->request['tot'] ?? '');
+        return \iter\count($lijst->get_stemmers($van, $tot));
     }
 
     /**
@@ -463,7 +448,7 @@ class Ajax
         }
         if (
             $lijst->heeft_gebruik_recaptcha()
-            && !$this->config->is_captcha_ok($this->request->{'g-recaptcha-response'})
+            && !$this->config->is_captcha_ok($this->request['g-recaptcha-response'])
         ) {
             throw new GebruikersException('Captcha verkeerd.');
         }
@@ -473,22 +458,22 @@ class Ajax
 
         try {
             $stemmer = $this->verwerk_stem($lijst);
-            if ($lijst->get_id() == 31 || $lijst->get_id() == 201) {
+            if ($lijst->id == 31 || $lijst->id == 201) {
                 if (is_dev()) {
                     $fbshare_url = \sprintf(
                         'https://webdev.gld.nl/%s/muzieklijsten/fbshare.php?stemmer=%d',
                         get_developer(),
-                        $stemmer->get_id(),
+                        $stemmer->id,
                     );
                     $fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebdev.gld.nl%2F'
                         . get_developer()
                         . '%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'
-                        . $stemmer->get_id() . '&amp;src=sdkpreparse';
+                        . $stemmer->id . '&amp;src=sdkpreparse';
                 } else {
                     $fbshare_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='
-                        . $stemmer->get_id();
+                        . $stemmer->id;
                     $fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl'
-                    . '%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D' . $stemmer->get_id() . '&amp;src=sdkpreparse';
+                    . '%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D' . $stemmer->id . '&amp;src=sdkpreparse';
                 }
                 $html .= <<<HTML
                 <div
@@ -527,13 +512,13 @@ class Ajax
 
         // Zoek bestaande stemmer.
         $stemmer = null;
-        try {
-            $stemmer = $lijst->get_stemmer_uit_telefoonnummer($this->request->velden->{5});
-        } catch (UndefinedPropertyException) {
+        $telefoonnummer = $this->request['velden'][5] ?? null;
+        if ($telefoonnummer !== null) {
+            $stemmer = $lijst->get_stemmer_uit_telefoonnummer($telefoonnummer);
         }
-        try {
-            $stemmer ??= $lijst->get_stemmer_uit_email($this->request->velden->{6});
-        } catch (UndefinedPropertyException) {
+        $email = $this->request['velden'][6] ?? null;
+        if ($email !== null) {
+            $stemmer ??= $lijst->get_stemmer_uit_email($email);
         }
 
         // Verwijder vorige stem en invoer.
@@ -546,28 +531,24 @@ class Ajax
             $_SERVER['REMOTE_ADDR'],
         );
 
-        $this->request->nummers ??= new \stdClass();
-        foreach ($this->request->nummers as $input_nummer) {
-            $nummer = $this->factory->create_nummer(filter_var($input_nummer->id, \FILTER_VALIDATE_INT));
-            $toelichting = filter_var($input_nummer->toelichting);
+        $this->request['nummers'] ??= [];
+        foreach ($this->request['nummers'] as $input_nummer) {
+            $nummer = $this->factory->create_nummer((int)filter_var($input_nummer['id'] ?? null, \FILTER_VALIDATE_INT));
+            $toelichting = fs(filter_var($input_nummer['toelichting']));
             $stemmer->add_stem($nummer, $toelichting, false);
         }
 
         // Invoer van (optionele) vrije keuzes
-        try {
-            $vrijekeuzes = $this->request->vrijekeuzes;
-        } catch (UndefinedPropertyException) {
-            $vrijekeuzes = [];
-        }
+        $vrijekeuzes = $this->request['vrijekeuzes'] ?? [];
         foreach ($vrijekeuzes as $vrijekeus_invoer) {
             try {
                 $nummer = $this->factory->vrijekeuze_nummer_toevoegen(
-                    $vrijekeus_invoer->artiest,
-                    $vrijekeus_invoer->titel,
+                    $vrijekeus_invoer['artiest'],
+                    $vrijekeus_invoer['titel'],
                 );
                 if ($nummer->is_vrijekeuze() === 0) {
                     foreach ($lijst->get_nummers() as $lijst_nummer) {
-                        if ($nummer->equals($lijst_nummer)) {
+                        if ($nummer->id === $lijst_nummer->id) {
                             throw new GebruikersException(
                                 "Het nummer {$lijst_nummer->get_artiest()} – {$lijst_nummer->get_titel()} kan niet "
                                 . "worden gekozen als vrij nummer. Selecteer het nummer in de keuzelijst",
@@ -575,12 +556,12 @@ class Ajax
                         }
                     }
                 }
-                $stemmer->add_stem($nummer, $vrijekeus_invoer->toelichting, true);
+                $stemmer->add_stem($nummer, $vrijekeus_invoer['toelichting'], true);
             } catch (LegeVrijeKeuze) {
             }
         }
 
-        if (\count((array)$this->request->nummers) + \count($vrijekeuzes) === 0) {
+        if (\count((array)$this->request['nummers']) + \count($vrijekeuzes) === 0) {
             throw new GebruikersException('Je hebt geen nummers gekozen.');
         }
 
@@ -588,12 +569,8 @@ class Ajax
 
         // Invoer van velden
         foreach ($lijst->get_velden() as $veld) {
-            try {
-                $id = $veld->get_id();
-                $waarde = $this->request->velden->$id;
-            } catch (UndefinedPropertyException) {
-                $waarde = null;
-            }
+            $id = $veld->id;
+            $waarde = $this->request['velden'][$id] ?? null;
             $veld->set_waarde($stemmer, $waarde);
         }
 
@@ -632,10 +609,10 @@ class Ajax
 
     /**
      * @return list<array{
-     *     id: positive-int,
+     *     id: int,
      *     titel: string,
      *     artiest: string,
-     *     jaar: int
+     *     jaar: int|null,
      * }>
      */
     public function get_geselecteerde_nummers(): array
@@ -649,7 +626,7 @@ class Ajax
         $respons = [];
         foreach ($nummers as $nummer) {
             $respons[] = [
-                'id' => $nummer->get_id(),
+                'id' => $nummer->id,
                 'titel' => $nummer->get_titel(),
                 'artiest' => $nummer->get_artiest(),
                 'jaar' => $nummer->get_jaar(),
@@ -663,7 +640,7 @@ class Ajax
      *     draw: int,
      *     recordsTotal: int,
      *     recordsFiltered: int,
-     *     data: list<list<string>>
+     *     data: list<list<string>>,
      * }
      *
      * @throws GeenLijstException
@@ -688,6 +665,13 @@ class Ajax
                 ],
             ],
         );
+        /** @var array{
+         *     draw: int,
+         *     recordsTotal: int,
+         *     recordsFiltered: int,
+         *     data: list<list<string>>,
+         * } $res
+         */
         $res = $ssp->simple();
         return $res;
     }
@@ -799,12 +783,12 @@ class Ajax
 
         $timestamp = (new \DateTime())->format('Y-m-d H.i.s');
         $lijst_naam = $lijst->get_naam();
-        $lijst_naam = trim(preg_replace('~\s+~u', ' ', $lijst_naam) ?? '');
+        $lijst_naam = trim(ns(preg_replace('~\s+~u', ' ', $lijst_naam)));
         if ($lijst_naam === '') {
-            $lijst_naam = (string)$lijst->get_id();
+            $lijst_naam = (string)$lijst->id;
         }
         $filename = vervang_bestandsnaam_tekens(\sprintf('%s - Resultaten ‘%s’.ods', $timestamp, $lijst_naam));
-        $ascii_filename = preg_replace('~[^A-Za-z0-9 ._\-()\[\]{}]~', '_', $filename) ?? 'resultaten.ods';
+        $ascii_filename = ns(preg_replace('~[^A-Za-z0-9 ._\-()\[\]{}]~', '_', $filename));
         $ascii_filename = trim($ascii_filename);
         if ($ascii_filename === '') {
             $ascii_filename = 'resultaten.ods';
@@ -874,7 +858,7 @@ class Ajax
         $xpath->registerNamespace('table', 'urn:oasis:names:tc:opendocument:xmlns:table:1.0');
         $xpath->registerNamespace('number', 'urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0');
 
-        $automatic_styles = $xpath->query('/office:document-content/office:automatic-styles')->item(0);
+        $automatic_styles = fs($xpath->query('/office:document-content/office:automatic-styles'))->item(0);
         if (!($automatic_styles instanceof \DOMElement)) {
             return $content_xml;
         }
@@ -912,7 +896,7 @@ class Ajax
         $afgeleide_stijlen = [];
         /** @var array<string, \DOMElement> $bestaande_stijlen */
         $bestaande_stijlen = [];
-        foreach ($xpath->query('style:style', $automatic_styles) as $stijl_node) {
+        foreach (fs($xpath->query('style:style', $automatic_styles)) as $stijl_node) {
             if (!($stijl_node instanceof \DOMElement)) {
                 continue;
             }
@@ -982,7 +966,7 @@ class Ajax
             );
         }
 
-        return $dom->saveXML();
+        return fs($dom->saveXML());
     }
 
     /**
@@ -1030,7 +1014,7 @@ class Ajax
         }
         $nummer_ids = [];
         foreach ($lijst->get_nummers() as $nummer) {
-            $nummer_ids[] = $nummer->get_id();
+            $nummer_ids[] = $nummer->id;
         }
         return [
             'naam' => $lijst->get_naam(),
@@ -1038,7 +1022,7 @@ class Ajax
             'iframe_url' => \sprintf(
                 '%s?lijst=%d',
                 $this->config->get()['root_url'],
-                $lijst->get_id(),
+                $lijst->id,
             ),
         ];
     }
@@ -1047,11 +1031,11 @@ class Ajax
      * @return array{
      *     organisatie: string,
      *     lijsten: list<array{
-     *         id: positive-int,
-     *         naam: string
+     *         id: int,
+     *         naam: string,
      *     }>,
      *     nimbus_url: string,
-     *     totaal_aantal_nummers: int
+     *     totaal_aantal_nummers: int,
      * }
      */
     public function get_metadata(): array
@@ -1060,7 +1044,7 @@ class Ajax
         $lijsten = [];
         foreach ($this->factory->get_muzieklijsten() as $lijst) {
             $lijsten[] = [
-                'id' => $lijst->get_id(),
+                'id' => $lijst->id,
                 'naam' => $lijst->get_naam(),
             ];
         }
@@ -1074,7 +1058,7 @@ class Ajax
 
     /**
      * @return list<array{
-     *     id: positive-int,
+     *     id: int,
      *     tonen: false,
      *     label: string,
      *     verplicht: false
@@ -1085,7 +1069,7 @@ class Ajax
         $respons = [];
         foreach ($this->factory->get_velden() as $veld) {
             $respons[] = [
-                'id' => $veld->get_id(),
+                'id' => $veld->id,
                 'tonen' => false,
                 'label' => $veld->get_label(),
                 'verplicht' => false,
@@ -1175,7 +1159,7 @@ class Ajax
      *
      * De lijst is leeg als de OpenAI API key niet is ingesteld.
      *
-     * @return list<ModVrijeKeuzeNummerData>
+     * @return array<ModVrijeKeuzeNummerData>
      */
     public function mod_vrijekeuze_get_nummers(): array
     {
@@ -1185,16 +1169,16 @@ class Ajax
 
         $this->login();
         $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
-        $lijst_id = (int)\filter_var($this->request->lijst_id ?? null, \FILTER_VALIDATE_INT);
+        $lijst_id = (int)\filter_var($this->request['lijst_id'] ?? null, \FILTER_VALIDATE_INT);
         if ($lijst_id === 0) {
             throw new GLDException('Ongeldige lijst_id');
         }
-        if (!\is_array($this->request->niet_ids)) {
+        if (!\is_array($this->request['niet_ids'])) {
             throw new GLDException('Ongeldige parameter: niet_ids');
         }
         $niet_ids = \array_map(
             static fn($v) => (int)\filter_var($v, \FILTER_VALIDATE_INT),
-            $this->request->niet_ids,
+            $this->request['niet_ids'],
         );
         $i_niet_ids = \implode(',', $niet_ids);
         $c_niet_ids = \count($niet_ids) === 0 ? '' : "AND n.id NOT IN ({$i_niet_ids})";
@@ -1212,7 +1196,7 @@ class Ajax
         ORDER BY n.id
         LIMIT 50
         SQL;
-        $nummers = $this->factory->select_objecten(Nummer::class, $query);
+        $nummers = iterator_to_array($this->factory->select_objecten(Nummer::class, $query));
         if (\count($nummers) === 0) {
             return [];
         }
@@ -1221,10 +1205,10 @@ class Ajax
 
         return \array_map(
             static fn($nummer) => [
-                'id' => $nummer->get_id(),
+                'id' => $nummer->id,
                 'artiest' => $nummer->get_artiest(),
                 'titel' => $nummer->get_titel(),
-                'ai_suggestie' => $ai_suggesties[$nummer->get_id()],
+                'ai_suggestie' => $ai_suggesties[$nummer->id],
             ],
             $nummers,
         );
@@ -1238,11 +1222,11 @@ class Ajax
         $this->login();
         $this->db->disableAutocommit();
 
-        $nummer_id = (int)\filter_var($this->request->id, \FILTER_VALIDATE_INT);
-        $artiest = \trim((string)\filter_var($this->request->artiest));
-        $titel = \trim((string)\filter_var($this->request->titel));
-        $db = (bool)\filter_var($this->request->db, \FILTER_VALIDATE_BOOL);
-        $lijst_id = (int)\filter_var($this->request->lijst_id, \FILTER_VALIDATE_INT);
+        $nummer_id = (int)\filter_var($this->request['id'] ?? null, \FILTER_VALIDATE_INT);
+        $artiest = \trim((string)\filter_var($this->request['artiest']));
+        $titel = \trim((string)\filter_var($this->request['titel']));
+        $db = (bool)\filter_var($this->request['db'], \FILTER_VALIDATE_BOOL);
+        $lijst_id = (int)\filter_var($this->request['lijst_id'] ?? null, \FILTER_VALIDATE_INT);
 
         // Nieuwe titel en artiest kan duplicaten opleveren.
         // Checken en samenvoegen.
@@ -1260,7 +1244,7 @@ class Ajax
             AND vgl_artiest = "{$e_artiest}"
         ORDER BY id
         SQL;
-        $duplicaten_ids = array_map(\intval(...), $this->db->selectSingleColumn($duplicaten_query));
+        $duplicaten_ids = $this->db->selectSingleColumnInt($duplicaten_query);
         $ids = [
             $nummer_id,
             ...$duplicaten_ids,
@@ -1304,12 +1288,12 @@ class Ajax
         $this->db->disableAutocommit();
 
         // $nummer = $this->factory->create_nummer_uit_request($this->request);
-        $nummer_id = (int)\filter_var($this->request->nummer, \FILTER_VALIDATE_INT);
+        $nummer_id = (int)\filter_var($this->request['nummer'] ?? null, \FILTER_VALIDATE_INT);
         $query = <<<SQL
         DELETE FROM nummers
         WHERE id = {$nummer_id}
         SQL;
-        $this->db->query($query);
+        $this->db->execute($query);
         $this->db->verwijder_stemmers_zonder_stemmen();
 
         $this->db->commit();

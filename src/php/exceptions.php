@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;

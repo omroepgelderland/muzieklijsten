@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
@@ -9,31 +11,28 @@ use gldstdlib\exception\SQLDupEntryException;
 use function gldstdlib\ns;
 use function gldstdlib\send_mail;
 
+/**
+ * @phpstan-type StemmerData array{
+ *     lijst: Lijst,
+ *     ip: string,
+ *     tijdstip: \DateTimeImmutable,
+ *     is_geanonimiseerd: bool,
+ * }
+ */
 class Stemmer
 {
-    private int $id;
-    private Lijst $lijst;
-    private string $ip;
-    private \DateTimeImmutable $tijdstip;
-    private bool $is_geanonimiseerd;
-    private bool $db_props_set;
+    /** @var ?StemmerData */
+    private ?array $data = null;
 
     /**
-     * @param $id ID van het object.
-     * @param ?array<string, string|null> $data Metadata uit de databasevelden (optioneel).
+     * @param $id ID van de stemmer.
      */
     public function __construct(
         private DB $db,
         private Config $config,
         private Factory $factory,
-        int|string $id,
-        ?array $data = null,
+        public readonly int $id,
     ) {
-        $this->id = (int)$id;
-        $this->db_props_set = false;
-        if (isset($data)) {
-            $this->set_data($data);
-        }
     }
 
     /**
@@ -41,70 +40,59 @@ class Stemmer
      */
     public function get_lijst(): Lijst
     {
-        $this->set_db_properties();
-        return $this->lijst;
+        return $this->get_data()['lijst'];
     }
 
     public function is_geanonimiseerd(): bool
     {
-        $this->set_db_properties();
-        return $this->is_geanonimiseerd;
-    }
-
-    public function get_id(): int
-    {
-        return $this->id;
-    }
-
-    /**
-     * Geeft aan of twee stemmers dezelfde zijn. Wanneer $obj geen Stemmer is wordt false gegeven.
-     *
-     * @param $obj Object om deze instantie mee te vergelijken
-     *
-     * @return bool Of $obj dezelfde stemmer is als deze instantie
-     */
-    public function equals(mixed $obj): bool
-    {
-        return ( $obj instanceof Stemmer && $obj->get_id() == $this->id );
+        return $this->get_data()['is_geanonimiseerd'];
     }
 
     public function get_ip(): string
     {
-        $this->set_db_properties();
-        return $this->ip;
+        return $this->get_data()['ip'];
     }
 
     public function get_tijdstip(): \DateTimeImmutable
     {
-        $this->set_db_properties();
-        return $this->tijdstip;
+        return $this->get_data()['tijdstip'];
     }
 
     /**
-     * Vul het object met velden uit de database.
+     * @return StemmerData
      */
-    private function set_db_properties(): void
+    private function get_data(): array
     {
-        if (!$this->db_props_set) {
-            $this->set_data($this->db->selectSingleRow(\sprintf(
-                'SELECT * FROM stemmers WHERE id = %d',
-                $this->get_id(),
-            )));
-        }
+        return $this->data ?? $this->set_db_data(
+            $this->db->selectSingleRow(<<<SQL
+            SELECT *
+            FROM stemmers
+            WHERE id = {$this->id}
+            SQL),
+        );
     }
 
     /**
-     * Plaatst metadata in het object
+     * @param StemmerData $data De nieuwe data voor de stemmer.
+     */
+    public function set_data(array $data): void
+    {
+        $this->data = $data;
+    }
+
+    /**
+     * @param array<string, string|null> $raw_db_data
      *
-     * @param array<string,string|null> $data Data.
+     * @return StemmerData
      */
-    private function set_data(array $data): void
+    public function set_db_data(array $raw_db_data): array
     {
-        $this->lijst = $this->factory->create_lijst((int)$data['lijst_id']);
-        $this->ip = $data['ip'];
-        $this->tijdstip = dbDateTimeToDateTimeImmutable($data['timestamp']);
-        $this->is_geanonimiseerd = (bool)$data['is_geanonimiseerd'];
-        $this->db_props_set = true;
+        return $this->data = [
+            'lijst' => $this->factory->create_lijst((int)$raw_db_data['lijst_id']),
+            'ip' => ns($raw_db_data['ip']),
+            'tijdstip' => dbDateTimeToDateTimeImmutable(ns($raw_db_data['timestamp'])),
+            'is_geanonimiseerd' => (bool)$raw_db_data['is_geanonimiseerd'],
+        ];
     }
 
     /**
@@ -117,8 +105,8 @@ class Stemmer
     ): StemmerNummer {
         try {
             $this->db->insertMulti('stemmers_nummers', [
-                'nummer_id' => $nummer->get_id(),
-                'stemmer_id' => $this->get_id(),
+                'nummer_id' => $nummer->id,
+                'stemmer_id' => $this->id,
                 'toelichting' => $toelichting,
                 'is_vrijekeuze' => $is_vrijekeuze,
             ]);
@@ -139,8 +127,8 @@ class Stemmer
      */
     public function verwijderen(): void
     {
-        $this->db->query("DELETE FROM stemmers WHERE id = {$this->get_id()}");
-        $this->db_props_set = false;
+        $this->db->execute("DELETE FROM stemmers WHERE id = {$this->id}");
+        $this->data = null;
     }
 
     /**
@@ -285,15 +273,15 @@ class Stemmer
         $dom = new \DOMDocument();
         $dom->loadHTML($html_body);
 
-        $e_onderwerp = $dom->getElementById('onderwerp');
+        $e_onderwerp = ns($dom->getElementById('onderwerp'));
         $e_onderwerp->appendChild($dom->createTextNode($onderwerp));
         $e_onderwerp->removeAttribute('id');
 
-        $dom->getElementById('stemmernaam')->replaceWith($dom->createTextNode($naam));
+        ns($dom->getElementById('stemmernaam'))->replaceWith($dom->createTextNode($naam));
 
-        $dom->getElementById('lijstnaam')->replaceWith($dom->createTextNode($lijst->get_naam()));
+        ns($dom->getElementById('lijstnaam'))->replaceWith($dom->createTextNode($lijst->get_naam()));
 
-        $e_keuzes = $dom->getElementById('keuzes');
+        $e_keuzes = ns($dom->getElementById('keuzes'));
         $e_keuzes->removeAttribute('id');
         foreach ($this->get_stemmen() as $stem) {
             $e_strong = $e_keuzes->appendChild($dom->createElement('strong'));
@@ -330,15 +318,16 @@ class Stemmer
         SELECT *
         FROM stemmers_nummers
         WHERE
-            stemmer_id = {$this->get_id()}
+            stemmer_id = {$this->id}
         SQL;
         $stemmen = [];
         foreach ($this->db->query($query) as $entry) {
-            $stemmen[] = $this->factory->create_stemmer_nummer(
+            $stem = $this->factory->create_stemmer_nummer(
                 $this->factory->create_nummer((int)$entry['nummer_id']),
                 $this,
-                $entry,
             );
+            $stem->set_db_data($entry);
+            $stemmen[] = $stem;
         }
         return $stemmen;
     }
@@ -351,9 +340,9 @@ class Stemmer
         $query = <<<SQL
         DELETE FROM stemmers_nummers
         WHERE
-            stemmer_id = {$this->get_id()}
+            stemmer_id = {$this->id}
         SQL;
-        $this->db->query($query);
+        $this->db->execute($query);
         $this->db->verwijder_ongekoppelde_vrije_keuze_nummers();
     }
 
@@ -365,9 +354,9 @@ class Stemmer
         $query = <<<SQL
         DELETE FROM stemmers_velden
         WHERE
-            stemmer_id = {$this->get_id()}
+            stemmer_id = {$this->id}
         SQL;
-        $this->db->query($query);
+        $this->db->execute($query);
     }
 
     /**
@@ -383,7 +372,7 @@ class Stemmer
             ],
             "id = {$this->id}",
         );
-        $this->db_props_set = false;
+        $this->data = null;
         $this->anonimiseer_toelichtingen();
         $this->anonimiseer_velden();
     }
@@ -446,7 +435,7 @@ class Stemmer
         SELECT is_vrijekeuze, COUNT(nummer_id) AS aantal
         FROM stemmers_nummers
         WHERE
-            stemmer_id = {$this->get_id()}
+            stemmer_id = {$this->id}
         GROUP BY is_vrijekeuze
         SQL;
         $aantal_vrije_keuzes = 0;
@@ -472,12 +461,12 @@ class Stemmer
             DELETE
             FROM stemmers_nummers
             WHERE
-                stemmer_id = {$this->get_id()}
+                stemmer_id = {$this->id}
                 AND is_vrijekeuze = 0
             ORDER BY RAND()
             LIMIT {$overschot_niet_vrije_keuzes}
             SQL;
-            $this->db->query($query);
+            $this->db->execute($query);
         }
         // Verwijder overschot aan vrije keuzes
         if ($overschot_vrije_keuzes > 0) {
@@ -485,12 +474,12 @@ class Stemmer
             DELETE
             FROM stemmers_nummers
             WHERE
-                stemmer_id = {$this->get_id()}
+                stemmer_id = {$this->id}
                 AND is_vrijekeuze = 1
             ORDER BY RAND()
             LIMIT {$overschot_vrije_keuzes}
             SQL;
-            $this->db->query($query);
+            $this->db->execute($query);
         }
     }
 
@@ -515,14 +504,14 @@ class Stemmer
         INNER JOIN nummers n ON
             n.id = sn.nummer_id
         WHERE
-            sn.stemmer_id = {$this->get_id()}
+            sn.stemmer_id = {$this->id}
         GROUP BY n.artiest
         HAVING
             COUNT(n.id) > 1
         SQL;
         $verwijder_stemmen_nummer_ids = [];
         foreach ($this->db->selectSingleColumn($query) as $idlijst) {
-            $ids = \array_map(static fn($id) => (int)$id, \explode(',', (string)$idlijst));
+            $ids = \array_map(static fn($id) => (int)$id, \explode(',', $idlijst ?? ''));
             \shuffle($ids);
             \array_shift($ids); // Behoud random nummer
             $verwijder_stemmen_nummer_ids = \array_merge($verwijder_stemmen_nummer_ids, $ids);
@@ -533,10 +522,10 @@ class Stemmer
             DELETE
             FROM stemmers_nummers
             WHERE
-                stemmer_id = {$this->get_id()}
+                stemmer_id = {$this->id}
                 AND nummer_id IN ({$i_ids})
             SQL;
-            $this->db->query($query);
+            $this->db->execute($query);
         }
     }
 }

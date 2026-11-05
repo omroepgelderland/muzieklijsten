@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
-use gldstdlib\exception\IndexException;
 use gldstdlib\exception\SQLException;
 
 use function gldstdlib\readline_met_default;
@@ -49,7 +50,7 @@ class PowergoldImporter
         if ($res === false) {
             throw new GLDException("Ongeldige integer: {$string}");
         }
-        return $res;
+        return (int)$res;
     }
 
     /**
@@ -114,17 +115,15 @@ class PowergoldImporter
         bool $null_als_leeg,
     ): string|int|null {
         $keys = $this->get_kolomtitels();
-        try {
-            if ($type === 'string') {
-                return self::filter_cell_string($rij[$keys[$key]], $null_als_leeg);
-            } elseif ($type === 'int') {
-                return self::filter_cell_int($rij[$keys[$key]]);
-            }
-        } catch (IndexException) {
+        if (($rij[$keys[$key]] ?? null) === null) {
             return $null_als_leeg
                 ? null
                 : '';
         }
+        if ($type === 'int') {
+            return self::filter_cell_int($rij[$keys[$key]]);
+        }
+        return self::filter_cell_string($rij[$keys[$key]], $null_als_leeg);
     }
 
     public function import(): void
@@ -170,7 +169,7 @@ class PowergoldImporter
                 'n',
             );
             if (\strtolower(\trim($ans)) === 'j') {
-                $this->db->query(<<<SQL
+                $this->db->execute(<<<SQL
                 DELETE FROM `nummers`
                 WHERE
                     `muziek_id` IS NOT NULL
@@ -337,7 +336,7 @@ class PowergoldImporter
             ORDER BY id
             SQL;
 
-            $nummer_ids = \array_map(\intval(...), $this->db->selectSingleColumn($query));
+            $nummer_ids = iterator_to_array($this->db->selectSingleColumnInt($query));
             $nummer_id = \array_shift($nummer_ids);
             if ($nummer_id === null) {
                 // Nummer bestaat nog niet, dus toevoegen.

@@ -18,23 +18,21 @@
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
-use gldstdlib\exception\UndefinedPropertyException;
 
 class SSP
 {
-    private object $request;
-    private array $kolommen;
     private Lijst $lijst;
     private ?int $is_vrijekeuze;
 
+    /**
+     * @param array<string, mixed> $request
+     */
     public function __construct(
-        private Factory $factory,
-        private DB $db,
-        object $request,
-        array $kolommen
+        private readonly Factory $factory,
+        private readonly DB $db,
+        private array $request,
+        private array $kolommen,
     ) {
-        $this->request = $request;
-        $this->kolommen = $kolommen;
     }
 
     /**
@@ -66,8 +64,8 @@ class SSP
      */
     protected function limit()
     {
-        $start = filter_var($this->request->start, \FILTER_VALIDATE_INT);
-        $length = filter_var($this->request->length, \FILTER_VALIDATE_INT);
+        $start = filter_var($this->request['start'], \FILTER_VALIDATE_INT);
+        $length = filter_var($this->request['length'], \FILTER_VALIDATE_INT);
         if ($start !== false && $start !== null && $length !== -1) {
             return "LIMIT {$start}, {$length}";
         } else {
@@ -90,22 +88,22 @@ class SSP
             $is_random_volgorde = false;
         }
         if ($is_random_volgorde) {
-            return "ORDER BY RAND({$this->request->random_seed})";
-        } elseif (isset($this->request->order) && count($this->request->order) > 0) {
+            return "ORDER BY RAND({$this->request['random_seed']})";
+        } elseif (isset($this->request['order']) && count($this->request['order']) > 0) {
             $orderBy = [];
             $dtColumns = self::pluck($this->kolommen, 'dt');
 
-            foreach ($this->request->order as $kolom_order) {
+            foreach ($this->request['order'] as $kolom_order) {
             // for ( $i=0, $ien=count($order_request) ; $i<$ien ; $i++ ) {
                 // Convert the column index into the column data property
-                $columnIdx = filter_var($kolom_order->column, \FILTER_VALIDATE_INT);
-                $requestColumn = $this->request->columns[$columnIdx];
+                $columnIdx = filter_var($kolom_order['column'], \FILTER_VALIDATE_INT);
+                $requestColumn = $this->request['columns'][$columnIdx];
 
-                $columnIdx = array_search($requestColumn->data, $dtColumns);
+                $columnIdx = array_search($requestColumn['data'], $dtColumns);
                 $column = $this->kolommen[$columnIdx];
 
-                if (filter_var($requestColumn->orderable, \FILTER_VALIDATE_BOOLEAN)) {
-                    $dir = $kolom_order->dir === 'asc' ?
+                if (filter_var($requestColumn['orderable'], \FILTER_VALIDATE_BOOLEAN)) {
+                    $dir = $kolom_order['dir'] === 'asc' ?
                         'ASC' :
                         'DESC';
 
@@ -136,7 +134,7 @@ class SSP
      */
     protected function filter(): string
     {
-        $search_value = $this->db->escape_string($this->request->search->value);
+        $search_value = $this->db->escape_string($this->request['search']['value']);
         $globalSearch = [];
         $columnSearch = [];
         $dtColumns = self::pluck($this->kolommen, 'dt');
@@ -146,25 +144,25 @@ class SSP
             $columnSearch[] = "is_vrijekeuze = {$is_vrijekeuze}";
         }
 
-        if (isset($this->request->search) && $search_value != '') {
-            foreach ($this->request->columns as $requestColumn) {
-                $columnIdx = array_search($requestColumn->data, $dtColumns);
+        if (isset($this->request['search']) && $search_value != '') {
+            foreach ($this->request['columns'] as $requestColumn) {
+                $columnIdx = array_search($requestColumn['data'], $dtColumns);
                 $column = $this->kolommen[$columnIdx];
 
-                if ($requestColumn->searchable) {
+                if (filter_var($requestColumn['searchable'], \FILTER_VALIDATE_BOOLEAN)) {
                     $globalSearch[] = "`{$column['db']}` LIKE \"%{$search_value}%\"";
                 }
             }
         }
 
         // Individual column filtering
-        foreach ($this->request->columns as $requestColumn) {
-            $columnIdx = array_search($requestColumn->data, $dtColumns);
+        foreach ($this->request['columns'] as $requestColumn) {
+            $columnIdx = array_search($requestColumn['data'], $dtColumns);
             $column = $this->kolommen[$columnIdx];
 
-            $str = $this->db->escape_string($requestColumn->search->value);
+            $str = $this->db->escape_string($requestColumn['search']['value']);
 
-            if ($requestColumn->searchable && $str != '') {
+            if (filter_var($requestColumn['searchable'], \FILTER_VALIDATE_BOOLEAN) && $str != '') {
                 $columnSearch[] = "`{$column['db']}` LIKE \"%{$str}%\"";
             }
         }
@@ -215,7 +213,7 @@ class SSP
             FROM nummers n
             INNER JOIN lijsten_nummers l ON
                 n.id = l.nummer_id
-                AND l.lijst_id = {$lijst->get_id()}
+                AND l.lijst_id = {$lijst->id}
             SQL;
             // Resultaten
             $query = <<<SQL
@@ -261,7 +259,7 @@ class SSP
 
         // Output
         return [
-            'draw'            => filter_var($this->request->draw, \FILTER_VALIDATE_INT),
+            'draw'            => filter_var($this->request['draw'], \FILTER_VALIDATE_INT),
             'recordsTotal'    => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'data'            => $this->data_output($data),
@@ -305,13 +303,6 @@ class SSP
      */
     private function is_vrijekeuze(): int | null
     {
-        if (!isset($this->is_vrijekeuze)) {
-            try {
-                $this->is_vrijekeuze = $this->request->is_vrijekeuze;
-            } catch (UndefinedPropertyException) {
-                $this->is_vrijekeuze = null;
-            }
-        }
-        return $this->is_vrijekeuze;
+        return $this->is_vrijekeuze ??= $this->request['is_vrijekeuze'] ?? null;
     }
 }

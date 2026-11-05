@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 use gldstdlib\EmailAddress;
 use gldstdlib\exception\GLDException;
+
+use function gldstdlib\fs;
 
 /**
  * Hiermee kunnen instellingen worden opgehaald uit de serverconfiguratie.
@@ -51,7 +55,7 @@ class Config
         if (!isset($this->data)) {
             try {
                 $pad = __DIR__ . '/../../config/config.json';
-                $this->data = json_decode(file_get_contents($pad), true);
+                return $this->data = fs(json_decode(fs(file_get_contents($pad)), true));
             } catch (\Throwable $e) {
                 throw new GLDException('Kan config.json niet laden.', 0, $e);
             }

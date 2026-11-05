@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
+
+use function gldstdlib\ns;
 
 /**
  * Class voor het maken van stukjes HTML5 zonder volledige pagina.
@@ -28,7 +32,7 @@ class HTMLTemplate
         HTML;
         $this->doc = new \DOMDocument();
         $this->doc->loadHTML($template, $options);
-        $this->body = $this->doc->getElementsByTagName('body')->item(0);
+        $this->body = ns($this->doc->getElementsByTagName('body')->item(0));
     }
 
     /**

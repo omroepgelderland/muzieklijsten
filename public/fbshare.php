@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace muzieklijsten;
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -7,12 +9,12 @@ require_once __DIR__ . '/../vendor/autoload.php';
 set_env();
 $container = get_di_container();
 /**
- * @var object{
+ * @var array{
  *     jaar: string,
  *     nummers_html_str: string,
  *     nummers_meta_str: string,
  *     og_image: string,
- *     og_url: string
+ *     og_url: string,
  * } $data
  */
 $data = $container->call(get_fbshare_data(...));
@@ -27,11 +29,11 @@ $data = $container->call(get_fbshare_data(...));
         <title>Delen op Facebook</title>
         <meta property="og:type" content="website">
         <meta property="fb:app_id" content="1269120393132176">
-        <meta property="og:url" content="<?php echo $data->og_url; ?>">
+        <meta property="og:url" content="<?php echo $data['og_url']; ?>">
         <meta property="og:locale" content="nl_NL">
-        <meta property="og:image" content="<?php echo $data->og_image; ?>">
-        <meta property="og:title" content="Dit is mijn keuze voor de Gelderse Top 100 <?php echo $data->jaar; ?>">
-        <meta property="og:description" content="<?php echo $data->nummers_meta_str; ?>">
+        <meta property="og:image" content="<?php echo $data['og_image']; ?>">
+        <meta property="og:title" content="Dit is mijn keuze voor de Gelderse Top 100 <?php echo $data['jaar']; ?>">
+        <meta property="og:description" content="<?php echo $data['nummers_meta_str']; ?>">
         <title>Mijn keuzes</title>
         <!-- Scripts prod en dev -->
         <script src="js/runtime.js" defer></script>
@@ -71,9 +73,9 @@ $data = $container->call(get_fbshare_data(...));
     <body>
         <div class="container">
             <img src="afbeeldingen/fbshare_top100.jpg" class="img-responsive headerimage">
-            <h2>Dit is mijn keuze voor de Gelderse Top 100 <?php echo $data->jaar; ?>:</h2>
+            <h2>Dit is mijn keuze voor de Gelderse Top 100 <?php echo $data['jaar']; ?>:</h2>
             <ol>
-                <?php echo $data->nummers_html_str; ?>
+                <?php echo $data['nummers_html_str']; ?>
             </ol>
             <p>Ook meedoen? <a href="https://www.gld.nl/de-gelderse-top-100">Klik hier!</a></p>
         </div>

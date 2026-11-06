@@ -29,6 +29,18 @@ interface Config {
   heeft_recaptcha_key: boolean;
 }
 
+interface Stem {
+        ip: string;
+        is_behandeld: boolean;
+        stemmer_id: number;
+        timestamp: string;
+        toelichting: string;
+        velden: {
+          type: string;
+          waarde: string;
+        }[];
+      }
+
 interface AjaxMap {
   get_stemlijst_frontend_data: {
     request: {
@@ -184,17 +196,7 @@ interface AjaxMap {
         titel: string;
         duur: number | null;
       };
-      stemmen: {
-        ip: string;
-        is_behandeld: boolean;
-        stemmer_id: number;
-        timestamp: string;
-        toelichting: string;
-        velden: {
-          type: string;
-          waarde: string;
-        }[];
-      }[];
+      stemmen: Stem[];
     }[];
   };
   get_lijst_metadata: {
@@ -281,4 +283,4 @@ interface AjaxMap {
   };
 }
 
-export type { AjaxMap, Config, ModVrijeKeuzeNummer, ModVrijeKeuzeOpslaanData };
+export type { AjaxMap, Config, ModVrijeKeuzeNummer, ModVrijeKeuzeOpslaanData, Stem };

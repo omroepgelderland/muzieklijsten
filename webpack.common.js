@@ -16,7 +16,7 @@ const html_plugin_conf = require("./webpack.html_plugin_conf.js");
 
 module.exports = {
   entry: {
-    admin: path.resolve(__dirname, "src/frontend/pages/admin/index.js"),
+    admin: path.resolve(__dirname, "src/frontend/pages/admin/index.ts"),
     fbshare: path.resolve(__dirname, "src/frontend/pages/fbshare/index.js"),
     los_toevoegen: path.resolve(
       __dirname,

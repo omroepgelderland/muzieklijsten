@@ -14,7 +14,7 @@ import html_template from "./resultaten-nummer.html";
  * Een nummer in de lijst met resultaten met uitklapbare lijst met stemmen op dat nummer.
  */
 class ResultatenNummer {
-  /** @type {ResultatenModal} @private */
+  /** @type {ResultatenModal} @public */
   resultaten_modal;
   /** @type {HTMLTableSectionElement} */
   e_container;

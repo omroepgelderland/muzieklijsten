@@ -8,62 +8,40 @@ import { TypedEvent } from "gld-ts-lib";
 
 // HTML
 import html_template from "./resultaten-stem.html";
+import type { ResultatenNummer } from "./ResultatenNummer";
+import type { Stem } from "@muzieklijsten/api/types";
 
 /**
  * Stem per nummer
  */
 class ResultatenStem {
-  /** @type {ResultatenNummer} */
-  resultaten_nummer;
-  /** @type {HTMLTableRowElement} */
-  e_tr;
-  /** @type {HTMLInputElement} */
-  e_behandeld_input;
-  /** @type {boolean} */
-  is_behandeld;
-  /** @type {number} */
-  stemmer_id;
-  /** @type {string[]} */
-  metadata_voor_filter;
-  /** @type {Date} */
-  timestamp;
-  /** @type {TypedEvent<boolean>} */
-  on_change_is_behandeld;
-  /** @type {TypedEvent<void>} */
-  on_verwijderd;
-  /** @type {boolean} */
-  is_zichtbaar;
+  private readonly e_tr: HTMLTableRowElement;
+  private readonly e_behandeld_input: HTMLInputElement;
+  private readonly metadata_voor_filter: string[];
+  public on_change_is_behandeld: TypedEvent<boolean>;
+  public on_verwijderd: TypedEvent<void>;
 
-  /**
-   *
-   * @param {ResultatenNummer} resultaten_nummer
-   * @param {HTMLElement} e_container
-   * @param {any} param3
-   */
   constructor(
-    resultaten_nummer,
-    e_container,
-    { stemmer_id, ip, is_behandeld, toelichting, timestamp, velden },
+    private readonly resultaten_nummer: ResultatenNummer,
+    e_container: HTMLElement,
+    private readonly stem: Stem,
   ) {
     this.on_change_is_behandeld = new TypedEvent();
     this.on_verwijderd = new TypedEvent();
     this.resultaten_nummer = resultaten_nummer;
-    this.stemmer_id = stemmer_id;
     this.metadata_voor_filter = [];
-    this.timestamp = new Date(timestamp);
-    this.is_behandeld = is_behandeld;
-    this.is_zichtbaar = true;
-    this.e_tr = resultaten_stem_template.querySelector("tr").cloneNode(true);
-    this.e_tr.setAttribute("data-stemmer-id", this.stemmer_id);
-    this.e_behandeld_input = this.e_tr.getElementsByTagName("input").item(0);
-    this.e_behandeld_input.checked = this.is_behandeld;
+    const timestamp = new Date(stem.timestamp);
+    this.e_tr = gld.querySelectorTagName("tr", undefined, resultaten_stem_template).cloneNode(true) as HTMLTableRowElement;
+    this.e_tr.setAttribute("data-stemmer-id", String(this.stem.stemmer_id));
+    this.e_behandeld_input = gld.querySelectorTagName("input", undefined, this.e_tr);
+    this.e_behandeld_input.checked = this.stem.is_behandeld;
     this.update_behandeld();
     for (const e_timestamp of this.e_tr.getElementsByClassName(
       "stemmer-timestamp",
     )) {
       e_timestamp.appendChild(
         document.createTextNode(
-          this.timestamp.toLocaleString("nl-NL", {
+          timestamp.toLocaleString("nl-NL", {
             dateStyle: "short",
             timeStyle: "short",
           }),
@@ -73,17 +51,21 @@ class ResultatenStem {
     for (const e_toelichting of this.e_tr.getElementsByClassName(
       "stem-toelichting",
     )) {
-      e_toelichting.appendChild(document.createTextNode(toelichting));
+      e_toelichting.appendChild(document.createTextNode(this.stem.toelichting));
     }
-    this.maak_velden(velden);
-    this.e_tr.firstChild.setAttribute("title", ip);
+    this.maak_velden();
+    const e_cell0 = this.e_tr.firstChild;
+    if (! (e_cell0 instanceof HTMLElement)) {
+      throw new Error("First cell of the row is not an HTMLElement");
+    }
+    e_cell0.setAttribute("title", this.stem.ip);
 
     e_container.appendChild(this.e_tr);
   }
 
-  maak_velden(velden) {
+  private maak_velden() {
     const e_insert_before = this.e_tr.firstChild;
-    for (const item of velden) {
+    for (const item of this.stem.velden) {
       this.metadata_voor_filter.push(item.waarde);
       const e_td = document.createElement("td");
       if (item.waarde !== null && item.waarde !== "") {
@@ -120,35 +102,35 @@ class ResultatenStem {
     }
   }
 
-  async behandeld_handler() {
+  public async behandeld_handler() {
     try {
       await api.post("stem_set_behandeld", {
         nummer: this.resultaten_nummer.nummer_id,
         lijst: this.resultaten_nummer.resultaten_modal.lijst_id,
-        stemmer: this.stemmer_id,
+        stemmer: this.stem.stemmer_id,
         waarde: this.e_behandeld_input.checked,
       });
-      this.is_behandeld = this.e_behandeld_input.checked;
-      this.on_change_is_behandeld.emit(this.is_behandeld);
+      this.stem.is_behandeld = this.e_behandeld_input.checked;
+      this.on_change_is_behandeld.emit(this.stem.is_behandeld);
       this.update_behandeld();
-    } catch (e) {
+    } catch {
       this.e_behandeld_input.checked = !this.e_behandeld_input.checked;
     }
   }
 
-  update_behandeld() {
-    if (this.is_behandeld) {
+  private update_behandeld() {
+    if (this.stem.is_behandeld) {
       this.e_tr.classList.add("table-success");
     } else {
       this.e_tr.classList.remove("table-success");
     }
   }
 
-  async verwijderen() {
+  public async verwijderen() {
     await api.post("verwijder_stem", {
       nummer: this.resultaten_nummer.nummer_id,
       lijst: this.resultaten_nummer.resultaten_modal.lijst_id,
-      stemmer: this.stemmer_id,
+      stemmer: this.stem.stemmer_id,
     });
     this.e_tr.remove();
     this.on_verwijderd.emit();
@@ -156,7 +138,7 @@ class ResultatenStem {
 }
 
 /** @type {HTMLTableElement} */
-const resultaten_stem_template =
+const resultaten_stem_template: HTMLTableElement =
   functies.get_html_template_enkel(html_template);
 
 export { ResultatenStem };

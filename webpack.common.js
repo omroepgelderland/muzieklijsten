@@ -1,3 +1,13 @@
+function htmlPage(name, filename) {
+  filename ??= name;
+  return new HtmlWebpackPlugin({
+    ...html_plugin_conf,
+    filename: `${filename}.html`,
+    chunks: [name],
+    template: path.resolve(__dirname, `src/frontend/pages/${name}/index.html`),
+  });
+}
+
 const path = require("path");
 const fs = require("fs");
 var webpack = require("webpack");
@@ -6,11 +16,20 @@ const html_plugin_conf = require("./webpack.html_plugin_conf.js");
 
 module.exports = {
   entry: {
-    admin: path.resolve(__dirname, "src/js/admin.js"),
-    fbshare: path.resolve(__dirname, "src/js/fbshare.js"),
-    los_toevoegen: path.resolve(__dirname, "src/js/los_toevoegen.js"),
-    "mod-vrijekeuzes": path.resolve(__dirname, "src/js/mod-vrijekeuzes.ts"),
-    muzieklijst: path.resolve(__dirname, "src/js/muzieklijst.js"),
+    admin: path.resolve(__dirname, "src/frontend/pages/admin/index.js"),
+    fbshare: path.resolve(__dirname, "src/frontend/pages/fbshare/index.js"),
+    los_toevoegen: path.resolve(
+      __dirname,
+      "src/frontend/pages/los_toevoegen/index.js",
+    ),
+    "mod-vrijekeuzes": path.resolve(
+      __dirname,
+      "src/frontend/pages/mod-vrijekeuzes/index.ts",
+    ),
+    muzieklijst: path.resolve(
+      __dirname,
+      "src/frontend/pages/muzieklijst/index.js",
+    ),
   },
   output: {
     path: path.resolve(__dirname, "public"),
@@ -44,30 +63,10 @@ module.exports = {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      ...html_plugin_conf,
-      filename: "admin.html",
-      chunks: ["admin"],
-      template: path.resolve(__dirname, "src", "html", "admin.html"),
-    }),
-    new HtmlWebpackPlugin({
-      ...html_plugin_conf,
-      filename: "los_toevoegen.html",
-      chunks: ["los_toevoegen"],
-      template: path.resolve(__dirname, "src", "html", "los_toevoegen.html"),
-    }),
-    new HtmlWebpackPlugin({
-      ...html_plugin_conf,
-      filename: "mod-vrijekeuzes.html",
-      chunks: ["mod-vrijekeuzes"],
-      template: path.resolve(__dirname, "src", "html", "mod-vrijekeuzes.html"),
-    }),
-    new HtmlWebpackPlugin({
-      ...html_plugin_conf,
-      filename: "index.html",
-      chunks: ["muzieklijst"],
-      template: path.resolve(__dirname, "src", "html", "muzieklijst.html"),
-    }),
+    htmlPage("admin"),
+    htmlPage("los_toevoegen"),
+    htmlPage("mod-vrijekeuzes"),
+    htmlPage("muzieklijst", "index"),
   ],
   optimization: {
     runtimeChunk: "single",
@@ -79,9 +78,10 @@ module.exports = {
     },
   },
   resolve: {
-    extensions: [".ts", ".js"],
+    extensions: [".ts", ".tsc", "..."],
     alias: {
-      "@muzieklijsten": path.resolve(__dirname, "src/js/lib"),
+      "@muzieklijsten": path.resolve(__dirname, "src/frontend/shared"),
+      "@styles": path.resolve(__dirname, "src/frontend/styles"),
     },
   },
   performance: {

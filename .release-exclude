@@ -13,9 +13,7 @@ package-lock.json
 package.json
 phpcs.xml.dist
 phpstan.dist.neon
-src/html
-src/js
-src/scss
+src/frontend
 tar_exclude.txt
 test
 tsconfig*.json

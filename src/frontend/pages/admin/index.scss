@@ -1,0 +1,52 @@
+// Project
+@use "@styles/algemeen";
+
+// Libraries
+@import url("datatables.net-bs5");
+@import url("datatables.net-select-bs5");
+
+body:not(.lijst-geselecteerd) .lijst-geselecteerd,
+#nieuw .beheer-bestaand {
+  display: none;
+}
+
+body {
+  padding-top: 130px;
+}
+
+nav .container-fluid {
+  padding-top: 10px;
+}
+
+#beschikbare-nummers-length {
+  select {
+    width: 80px;
+    display: inline;
+  }
+  input {
+    width: 200px;
+    display: inline;
+  }
+}
+
+.beschikbaar hr,
+#result hr {
+  border: 1px solid #333;
+}
+
+#modal-embed {
+  input {
+    min-width: 75%;
+  }
+  h5 {
+    font-weight: bold;
+  }
+}
+
+.hidden-row .bs-callout {
+  margin: 0;
+}
+
+.nobreak {
+  white-space: nowrap;
+}

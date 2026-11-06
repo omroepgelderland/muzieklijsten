@@ -1,4 +1,5 @@
-import * as server from "@muzieklijsten/server";
+import * as api from "@muzieklijsten/api";
+import type { Config } from "@muzieklijsten/api/types";
 
 /**
  * Maakt DOM-elementen van een door html-loader geïmporteerd template.
@@ -73,8 +74,8 @@ export function format_duur(duur: number | null): string {
  *
  * @returns De opgehaalde configuratie.
  */
-export async function set_config_classes(): Promise<server.Config> {
-  const config = await server.post("get_config", {});
+export async function set_config_classes(): Promise<Config> {
+  const config = await api.post("get_config", {});
   if (config.heeft_openai_key) {
     document.body.classList.add("config-heeft-openai-key");
   }

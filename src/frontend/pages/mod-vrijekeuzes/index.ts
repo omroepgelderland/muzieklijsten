@@ -4,11 +4,12 @@ import * as gld from "gld-ts-lib/functions";
 
 // Project js
 import * as functies from "@muzieklijsten/functies";
-import * as server from "@muzieklijsten/server";
+import * as api from "@muzieklijsten/api";
+import type { ModVrijeKeuzeNummer as Nummer } from "@muzieklijsten/api/types";
 
 // css
-import "/src/scss/mod-vrijekeuzes.scss";
-import TypedEvent from "@muzieklijsten/TypedEvent";
+import "./index.scss";
+import { TypedEvent } from "gld-ts-lib";
 
 interface IDMap {
   "vrijekeuze-item": HTMLTemplateElement;
@@ -17,32 +18,6 @@ interface IDMap {
   errormsg: HTMLElement;
   "lijstselect-form": HTMLFormElement;
   lijstselect: HTMLSelectElement;
-}
-
-interface AISuggestieType {
-  is_correct: boolean;
-  suggestie?: {
-    artiest: string;
-    titel: string;
-  };
-}
-
-interface Nummer {
-  id: number;
-  artiest: string;
-  titel: string;
-  ai_suggestie: AISuggestieType;
-}
-
-interface VrijeKeuzeItemWaardes {
-  artiest: string;
-  titel: string;
-  db: boolean;
-}
-
-interface OpslaanData extends VrijeKeuzeItemWaardes {
-  id: number;
-  lijst_id: number;
 }
 
 class Main {
@@ -84,7 +59,7 @@ class Main {
    * Vult de selector met alle muzieklijsten
    */
   private async vul_lijsten(): Promise<void> {
-    const { lijsten } = await server.post("get_metadata", {});
+    const { lijsten } = await api.post("get_metadata", {});
 
     const url = new URL(window.location.href);
     const url_lijst_id = Number.parseInt(url.searchParams.get("lijst") ?? "0");
@@ -108,7 +83,7 @@ class Main {
     this.view.set_meer_laden_bezig(true);
     let nummers;
     try {
-      nummers = await server.post("mod_vrijekeuze_get_nummers", {
+      nummers = await api.post("mod_vrijekeuze_get_nummers", {
         lijst_id: this.geselecteerde_lijst_id,
         niet_ids: Array.from(this.item_controllers.keys()),
       });
@@ -211,7 +186,7 @@ class ItemController {
         throw new Error("De titel mag niet leeg zijn.");
       }
       try {
-        await server.post("mod_vrijekeuze_nummer_opslaan", data);
+        await api.post("mod_vrijekeuze_nummer_opslaan", data);
       } catch {
         throw new Error("Opslaan mislukt");
       }
@@ -229,7 +204,7 @@ class ItemController {
   public async verwijderen(): Promise<void> {
     this.view.set_bezig(true);
     try {
-      await server.post("mod_vrijekeuze_nummer_verwijderen", {
+      await api.post("mod_vrijekeuze_nummer_verwijderen", {
         nummer: this.nummer.id,
       });
       this.verwijder_view();
@@ -575,8 +550,3 @@ function getElementById<I extends keyof IDMap>(elementId: I): IDMap[I] {
 }
 
 new Main();
-
-export type {
-  Nummer as ModVrijeKeuzeNummer,
-  OpslaanData as ModVrijeKeuzeOpslaanData,
-};

@@ -5,7 +5,7 @@ import "datatables.net-select-bs5";
 import * as gld from "gld-ts-lib/functions";
 
 // Project js
-import * as server from "@muzieklijsten/server";
+import * as api from "@muzieklijsten/api";
 import * as functies from "@muzieklijsten/functies";
 
 // css
@@ -198,7 +198,7 @@ class StemView {
         data.lijst = this.lijst_id;
         data.is_vrijekeuze = 0;
         data.random_seed = this.random_seed;
-        const respons = await server.post("vul_datatables", data);
+        const respons = await api.post("vul_datatables", data);
         if (respons.recordsTotal === 0) {
           this.verberg_lijst();
         }
@@ -353,7 +353,7 @@ class StemView {
    */
   async get_serverdata() {
     try {
-      return (this.serverdata_promise ??= server.post(
+      return (this.serverdata_promise ??= api.post(
         "get_stemlijst_frontend_data",
         {
           lijst: this.lijst_id,
@@ -439,7 +439,7 @@ class StemView {
     const fd = new FormData(this.e_stemmerformulier);
     fd.append("lijst", this.lijst_id);
     try {
-      const data = await server.post("stem", fd);
+      const data = await api.post("stem", fd);
       const hoogte = document.getElementById("stemsegment").offsetHeight - 100;
       document.getElementById("stemsegment-placeholder").style.height =
         `${hoogte}px`;

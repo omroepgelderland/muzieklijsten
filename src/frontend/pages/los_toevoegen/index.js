@@ -4,11 +4,11 @@ import "angular";
 import "angular-route";
 
 // Project js
-import * as server from "@muzieklijsten/server";
+import * as api from "@muzieklijsten/api";
 // import * as functies from '@muzieklijsten/functies';
 
 // css
-import "/src/scss/los_toevoegen.scss";
+import "./index.scss";
 
 class Nummer {
   artiest;
@@ -41,7 +41,7 @@ class Lijst {
 }
 
 async function get_lijsten() {
-  const data = await server.post("get_lijsten", {});
+  const data = await api.post("get_lijsten", {});
   const lijsten = [];
   for (const item of data) {
     lijsten.push(new Lijst(item.id, item.naam));
@@ -62,7 +62,7 @@ app.controller("MainCtrl", [
     $scope.inlog_error = false;
     $scope.inlog_ok = false;
 
-    server.post("login", {}).then(
+    api.post("login", {}).then(
       () => {
         $scope.inlog_ok = true;
         $scope.$apply();
@@ -105,7 +105,7 @@ app.controller("MainCtrl", [
           geselecteerde_lijsten_ids.push(lijst.id);
         }
       }
-      server
+      api
         .post("losse_nummers_toevoegen", {
           nummers: $scope.nummers,
           lijsten: geselecteerde_lijsten_ids,

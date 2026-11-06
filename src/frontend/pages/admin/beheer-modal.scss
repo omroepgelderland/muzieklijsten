@@ -1,0 +1,6 @@
+.beheer-modal {
+  &:not(.is-nieuw) .is-nieuw,
+  &.is-nieuw .not-is-nieuw {
+    display: none;
+  }
+}

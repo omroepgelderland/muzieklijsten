@@ -2,11 +2,11 @@
 import "bootstrap";
 
 // Project js
-// import * as server from '@muzieklijsten/server';
+// import * as api from '@muzieklijsten/api';
 // import * as functies from '@muzieklijsten/functies';
 
 // css
-import "/src/scss/fbshare.scss";
+import "./index.scss";
 
 import "/assets/afbeeldingen/fbshare_top100.jpg";
 

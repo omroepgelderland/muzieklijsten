@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
     "paths": {
-      "@muzieklijsten/*": ["./src/js/lib/*"]
+      "@muzieklijsten/*": ["./src/frontend/shared/*"]
     },
     "noEmit": true,
     "lib": ["DOM", "DOM.Iterable", "es2022"],
     "module": "esnext",
     "target": "es2022",
     "allowJs": true,
+    "checkJs": false,
     "moduleResolution": "bundler",
     "sourceMap": true,
     "strict": true,
@@ -17,5 +18,5 @@
     "noUnusedLocals": true,
     "types": []
   },
-  "include": ["./src/js/"]
+  "include": ["./src/frontend/**/*"]
 }

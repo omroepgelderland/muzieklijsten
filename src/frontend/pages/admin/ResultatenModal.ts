@@ -14,59 +14,59 @@ import "./resultaten-modal.scss";
 import html_template from "./resultaten-modal.html";
 
 class ResultatenModal {
-  /** @type {number} */
-  lijst_id;
-  /** @type {HTMLDivElement} */
-  e_modal;
-  /** @type {Modal} */
-  modal;
-  /** @type {HTMLSpanElement} */
-  e_totaal_aantal_stemmen;
-  /** @type {HTMLSpanElement} */
-  e_totaal_aantal_stemmers;
-  /** @type {HTMLFormElement} */
-  e_filters_form;
-  /** @type {HTMLButtonElement} */
-  e_exportknop;
-  /** @type {HTMLTableSectionElement} */
-  e_resultaten_tabel;
-  /** @type {{[key: number]: ResultatenNummer}} */
-  resultaten_nummers;
-  /** @type {number} */
-  totaal_aantal_stemmen;
+  public readonly lijst_id: number;
+  private readonly e_modal: HTMLDivElement;
+  private readonly modal: Modal;
+  private readonly e_totaal_aantal_stemmen: HTMLSpanElement;
+  private readonly e_totaal_aantal_stemmers: HTMLSpanElement;
+  private readonly e_filter_van: HTMLInputElement;
+  private readonly e_filter_tot: HTMLInputElement;
+  private readonly e_filters_form: HTMLFormElement;
+  private readonly e_exportknop: HTMLButtonElement;
+  private readonly e_resultaten_tabel: HTMLTableSectionElement;
+  private readonly resultaten_nummers: Record<number, ResultatenNummer>;
+  private totaal_aantal_stemmen: number;
 
-  /**
-   *
-   * @param {number} lijst_id
-   * @param {string} lijst_naam
-   */
-  constructor(lijst_id, lijst_naam) {
+  constructor(lijst_id: number, lijst_naam: string) {
     this.lijst_id = lijst_id;
     this.resultaten_nummers = {};
     this.totaal_aantal_stemmen = 0;
 
-    this.e_modal = modal_template.cloneNode(true);
-    this.e_totaal_aantal_stemmen = this.e_modal
-      .getElementsByClassName("totaal-aantal-stemmen")
-      .item(0);
-    this.e_totaal_aantal_stemmers = this.e_modal
-      .getElementsByClassName("totaal-aantal-stemmers")
-      .item(0);
-    this.e_filters_form = this.e_modal.querySelector("form.filters");
+    this.e_modal = modal_template.cloneNode(true) as HTMLDivElement;
+    this.e_totaal_aantal_stemmen = gld.querySelector(
+      ".totaal-aantal-stemmen",
+      this.e_modal,
+    );
+    this.e_totaal_aantal_stemmers = gld.querySelector(
+      ".totaal-aantal-stemmers",
+      this.e_modal,
+    );
+    this.e_filters_form = gld.querySelector("form.filters", this.e_modal);
     this.e_filters_form.addEventListener("submit", this.filter.bind(this));
     this.e_filters_form.addEventListener("reset", this.filter_reset.bind(this));
-    this.e_exportknop = this.e_modal.querySelector("#export-resultaten");
-    this.e_resultaten_tabel = this.e_modal.querySelector(".resultaten-tabel");
+    this.e_filter_van = gld.querySelector<HTMLInputElement>(
+      "#filter-van",
+      this.e_modal,
+    );
+    this.e_filter_tot = gld.querySelector<HTMLInputElement>(
+      "#filter-tot",
+      this.e_modal,
+    );
+    this.e_exportknop = gld.querySelector("#export-resultaten", this.e_modal);
+    this.e_resultaten_tabel = gld.querySelector(
+      ".resultaten-tabel",
+      this.e_modal,
+    );
     this.e_resultaten_tabel.id = functies.get_random_string(12);
 
-    this.set_totaal_aantal_stemmers();
-    this.maak_resultaten_tabel();
+    this.set_totaal_aantal_stemmers().catch(this.error_handler.bind(this));
+    this.maak_resultaten_tabel().catch(this.error_handler.bind(this));
 
     for (const e_lijst_naam of this.e_modal.querySelectorAll(".lijst-naam")) {
       e_lijst_naam.textContent = lijst_naam;
     }
 
-    document.getElementsByTagName("body").item(0).appendChild(this.e_modal);
+    gld.querySelectorTagName("body").appendChild(this.e_modal);
     this.modal = new Modal(this.e_modal, {
       backdrop: true,
       focus: true,
@@ -76,13 +76,25 @@ class ResultatenModal {
       this.e_modal.remove();
     });
 
-    this.e_modal.addEventListener("click", this.click_handler.bind(this));
-    this.e_modal.addEventListener("change", this.change_handler.bind(this));
+    this.e_modal.addEventListener("click", (event) => {
+      this.click_handler(event).catch(this.error_handler.bind(this));
+    });
+    this.e_modal.addEventListener("change", (event) => {
+      this.change_handler(event).catch(this.error_handler.bind(this));
+    });
 
     this.modal.show();
   }
 
-  async maak_resultaten_tabel() {
+  private error_handler(e: unknown) {
+    if (e instanceof Error) {
+      console.error(e.message);
+    } else {
+      console.error(e);
+    }
+  }
+
+  private async maak_resultaten_tabel() {
     const labels_promise = api.post("get_resultaten_labels", {
       lijst: this.lijst_id,
     });
@@ -98,27 +110,25 @@ class ResultatenModal {
         nummer_stemmen.stemmen,
         nummer_stemmen.nummer,
       );
-      resultaten_nummer.on_stem_verwijderd.on(
-        this.stem_verwijderd_handler.bind(this),
-      );
-      resultaten_nummer.on_verwijderd.on(
-        this.nummer_verwijderd_handler.bind(this),
-      );
+      resultaten_nummer.on_stem_verwijderd.on(() => {
+        this.stem_verwijderd_handler().catch(this.error_handler.bind(this));
+      });
+      resultaten_nummer.on_verwijderd.on((aantal_stemmen) => {
+        this.nummer_verwijderd_handler(aantal_stemmen).catch(
+          this.error_handler.bind(this),
+        );
+      });
       this.resultaten_nummers[nummer_stemmen.nummer.id] = resultaten_nummer;
       this.add_totaal_aantal_stemmen(nummer_stemmen.stemmen.length);
     }
   }
 
-  /**
-   *
-   * @param {number} aantal
-   */
-  add_totaal_aantal_stemmen(aantal) {
+  private add_totaal_aantal_stemmen(aantal: number) {
     this.totaal_aantal_stemmen += aantal;
-    this.e_totaal_aantal_stemmen.innerText = this.totaal_aantal_stemmen;
+    this.e_totaal_aantal_stemmen.innerText = String(this.totaal_aantal_stemmen);
   }
 
-  async set_totaal_aantal_stemmers() {
+  private async set_totaal_aantal_stemmers() {
     // const van = this.get_van();
     // const tot = this.get_tot();
     const request = { lijst: this.lijst_id };
@@ -128,45 +138,34 @@ class ResultatenModal {
     // if ( tot != null ) {
     //   request.tot = tot.toISOString();
     // }
-    this.e_totaal_aantal_stemmers.innerText = await api.post(
-      "get_totaal_aantal_stemmers",
-      request,
+    this.e_totaal_aantal_stemmers.innerText = String(
+      await api.post("get_totaal_aantal_stemmers", request),
     );
   }
 
-  stem_verwijderd_handler() {
+  private async stem_verwijderd_handler() {
     this.add_totaal_aantal_stemmen(-1);
-    this.set_totaal_aantal_stemmers();
+    await this.set_totaal_aantal_stemmers();
   }
 
-  /**
-   *
-   * @param {number} aantal_stemmen
-   */
-  nummer_verwijderd_handler(aantal_stemmen) {
+  private async nummer_verwijderd_handler(aantal_stemmen: number) {
     this.add_totaal_aantal_stemmen(-aantal_stemmen);
-    this.set_totaal_aantal_stemmers();
+    await this.set_totaal_aantal_stemmers();
   }
 
-  /**
-   *
-   * @param {Event} event
-   */
-  async filter(event) {
+  private filter(event: Event) {
     event.preventDefault();
-    let nummers_tekst =
-      this.e_filters_form.elements["filter-nummers"].value.toLowerCase();
-    let stemmers_tekst =
-      this.e_filters_form.elements["filter-stemmers"].value.toLowerCase();
+    let nummers_tekst = this.e_filter_van.value.toLowerCase();
+    let stemmers_tekst = this.e_filter_tot.value.toLowerCase();
     if (nummers_tekst.length < 3) {
       nummers_tekst = "";
-      this.e_filters_form.elements["filter-nummers"].value = "";
+      this.e_filter_van.value = "";
     }
     if (stemmers_tekst.length < 3) {
       stemmers_tekst = "";
-      this.e_filters_form.elements["filter-stemmers"].value = "";
+      this.e_filter_tot.value = "";
     }
-    for (const [nummer_id, resultaten_nummer] of Object.entries(
+    for (const [_nummer_id, resultaten_nummer] of Object.entries(
       this.resultaten_nummers,
     )) {
       resultaten_nummer.filter(
@@ -179,102 +178,104 @@ class ResultatenModal {
     // await this.set_totaal_aantal_stemmers();
   }
 
-  /**
-   *
-   * @param {Event} event
-   */
-  filter_reset(event) {
-    for (const element of this.e_filters_form.elements) {
-      if (element.type === "text" || element.type === "date") {
-        element.value = "";
-      }
-    }
+  private filter_reset(event: Event) {
+    this.e_filter_van.value = "";
+    this.e_filter_tot.value = "";
     this.filter(event);
   }
 
   /**
    * Handler voor alle kliks in het modal.
-   * @param {Event} event
    */
-  click_handler(event) {
+  private async click_handler(event: Event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
       return;
     }
     if (target.closest("#export-resultaten")) {
-      this.exporteer_resultaten_handler();
+      await this.exporteer_resultaten_handler();
       return;
     }
-    if (target.closest(".stem-verwijderen")) {
-      this.stem_verwijderen_handler(target.closest(".stem-verwijderen"));
+    const stem_verwijderen = target.closest(".stem-verwijderen");
+    if (stem_verwijderen instanceof HTMLInputElement) {
+      await this.stem_verwijderen_handler(stem_verwijderen);
     }
     // In- en uitklappen van stemmen op een nummer.
-    if (target.closest(".nummer")) {
-      this.toggle_nummer_stemmen_handler(target.closest(".nummer"));
+
+    const nummer = target.closest(".nummer");
+    if (nummer instanceof HTMLElement) {
+      await this.toggle_nummer_stemmen_handler(nummer);
     }
   }
 
   /**
    * Handler voor alle change events in het modal.
-   * @param {Event} event
    */
-  change_handler(event) {
+  private async change_handler(event: Event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
       return;
     }
-    if (target.closest(".behandeld-check")) {
-      this.check_behandeld_handler(target.closest(".behandeld-check"));
+    const behandeld_check = target.closest(".behandeld-check");
+    if (behandeld_check instanceof HTMLInputElement) {
+      await this.check_behandeld_handler(behandeld_check);
     }
   }
 
   /**
    * In- en uitklappen van de stemmen op een nummer.
-   *
-   * @private
-   * @param {HTMLElement} elem
    */
-  toggle_nummer_stemmen_handler(elem) {
-    const nummer_id = Number.parseInt(elem.getAttribute("data-nummer-id"));
+  private async toggle_nummer_stemmen_handler(elem: HTMLElement) {
+    const nummer_id = Number.parseInt(
+      elem.getAttribute("data-nummer-id") ?? "",
+    );
     const resultaten_nummer = this.resultaten_nummers[nummer_id];
-    resultaten_nummer.toggle();
+    await resultaten_nummer.toggle();
   }
 
   /**
    * Handler voor een klik op het kruisje om een stem te verwijderen.
-   * @param {HTMLInputElement} elem - Knop waarop geklikt is.
+   * @param elem - Knop waarop geklikt is.
    */
-  async stem_verwijderen_handler(elem) {
+  private async stem_verwijderen_handler(elem: HTMLInputElement) {
     const stemmer_id = Number.parseInt(
-      elem.closest("[data-stemmer-id]").getAttribute("data-stemmer-id"),
+      elem.closest("[data-stemmer-id]")?.getAttribute("data-stemmer-id") ?? "",
     );
     const nummer_id = Number.parseInt(
-      elem.closest("[data-nummer-id]").getAttribute("data-nummer-id"),
+      elem.closest("[data-nummer-id]")?.getAttribute("data-nummer-id") ?? "",
     );
     /** @type {ResultatenNummer} */
-    const resultaten_nummer = this.resultaten_nummers[nummer_id];
+    const resultaten_nummer: ResultatenNummer =
+      this.resultaten_nummers[nummer_id];
     const resultaten_stem = resultaten_nummer.get_stem(stemmer_id);
+    if (resultaten_stem == null) {
+      throw new Error("Geen stem");
+    }
     await resultaten_stem.verwijderen();
   }
 
   /**
    * Change event op een vinkhokje is_behandeld.
-   * @param {HTMLInputElement} elem - Vinkhokje dat veranderd is.
+   * @param elem - Vinkhokje dat veranderd is.
    */
-  async check_behandeld_handler(elem) {
+  private async check_behandeld_handler(elem: HTMLInputElement) {
     const stemmer_id = Number.parseInt(
-      elem.closest("[data-stemmer-id]").getAttribute("data-stemmer-id"),
+      elem.closest("[data-stemmer-id]")?.getAttribute("data-stemmer-id") ?? "",
     );
     const nummer_id = Number.parseInt(
-      elem.closest("[data-nummer-id]").getAttribute("data-nummer-id"),
+      elem.closest("[data-nummer-id]")?.getAttribute("data-nummer-id") ?? "",
     );
     /** @type {ResultatenNummer} */
-    const resultaten_nummer = this.resultaten_nummers[nummer_id];
+    const resultaten_nummer: ResultatenNummer =
+      this.resultaten_nummers[nummer_id];
     const resultaten_stem = resultaten_nummer.get_stem(stemmer_id);
+    if (resultaten_stem == null) {
+      throw new Error("Geen stem");
+    }
     await resultaten_stem.behandeld_handler();
   }
 
-  async exporteer_resultaten_handler() {
+  private async exporteer_resultaten_handler() {
     if (!(this.e_exportknop instanceof HTMLButtonElement)) {
       return;
     }
@@ -337,12 +338,9 @@ class ResultatenModal {
     }
   }
 
-  /**
-   * @returns {Date|null}
-   */
-  get_van() {
-    const van = new Date(this.e_filters_form.elements.van.value);
-    if (isNaN(van)) {
+  private get_van(): Date | null {
+    const van = new Date(this.e_filter_van.value);
+    if (isNaN(van.getTime())) {
       return null;
     } else {
       van.setHours(0);
@@ -353,12 +351,9 @@ class ResultatenModal {
     }
   }
 
-  /**
-   * @returns {Date|null}
-   */
-  get_tot() {
-    const tot = new Date(this.e_filters_form.elements.tot.value);
-    if (isNaN(tot)) {
+  private get_tot(): Date | null {
+    const tot = new Date(this.e_filter_tot.value);
+    if (isNaN(tot.getTime())) {
       return null;
     } else {
       tot.setDate(tot.getDate() + 1);
@@ -372,6 +367,7 @@ class ResultatenModal {
 }
 
 /** @type {HTMLElement} */
-const modal_template = functies.get_html_template_enkel(html_template);
+const modal_template: HTMLElement =
+  functies.get_html_template_enkel(html_template);
 
 export { ResultatenModal };

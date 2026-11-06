@@ -31,9 +31,15 @@ class ResultatenStem {
     this.resultaten_nummer = resultaten_nummer;
     this.metadata_voor_filter = [];
     const timestamp = new Date(stem.timestamp);
-    this.e_tr = gld.querySelectorTagName("tr", undefined, resultaten_stem_template).cloneNode(true) as HTMLTableRowElement;
+    this.e_tr = gld
+      .querySelectorTagName("tr", undefined, resultaten_stem_template)
+      .cloneNode(true) as HTMLTableRowElement;
     this.e_tr.setAttribute("data-stemmer-id", String(this.stem.stemmer_id));
-    this.e_behandeld_input = gld.querySelectorTagName("input", undefined, this.e_tr);
+    this.e_behandeld_input = gld.querySelectorTagName(
+      "input",
+      undefined,
+      this.e_tr,
+    );
     this.e_behandeld_input.checked = this.stem.is_behandeld;
     this.update_behandeld();
     for (const e_timestamp of this.e_tr.getElementsByClassName(
@@ -55,7 +61,7 @@ class ResultatenStem {
     }
     this.maak_velden();
     const e_cell0 = this.e_tr.firstChild;
-    if (! (e_cell0 instanceof HTMLElement)) {
+    if (!(e_cell0 instanceof HTMLElement)) {
       throw new Error("First cell of the row is not an HTMLElement");
     }
     e_cell0.setAttribute("title", this.stem.ip);
@@ -105,7 +111,7 @@ class ResultatenStem {
   public async behandeld_handler() {
     try {
       await api.post("stem_set_behandeld", {
-        nummer: this.resultaten_nummer.nummer_id,
+        nummer: this.resultaten_nummer.nummer.id,
         lijst: this.resultaten_nummer.resultaten_modal.lijst_id,
         stemmer: this.stem.stemmer_id,
         waarde: this.e_behandeld_input.checked,
@@ -128,7 +134,7 @@ class ResultatenStem {
 
   public async verwijderen() {
     await api.post("verwijder_stem", {
-      nummer: this.resultaten_nummer.nummer_id,
+      nummer: this.resultaten_nummer.nummer.id,
       lijst: this.resultaten_nummer.resultaten_modal.lijst_id,
       stemmer: this.stem.stemmer_id,
     });

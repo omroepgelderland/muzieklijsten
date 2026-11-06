@@ -30,16 +30,24 @@ interface Config {
 }
 
 interface Stem {
-        ip: string;
-        is_behandeld: boolean;
-        stemmer_id: number;
-        timestamp: string;
-        toelichting: string;
-        velden: {
-          type: string;
-          waarde: string;
-        }[];
-      }
+  ip: string;
+  is_behandeld: boolean;
+  stemmer_id: number;
+  timestamp: string;
+  toelichting: string;
+  velden: {
+    type: string;
+    waarde: string;
+  }[];
+}
+
+interface Nummer {
+  artiest: string;
+  id: number;
+  is_vrijekeuze: boolean;
+  titel: string;
+  duur: number | null;
+}
 
 interface AjaxMap {
   get_stemlijst_frontend_data: {
@@ -77,11 +85,11 @@ interface AjaxMap {
     request: {
       lijst: number;
     };
-    response: void;
+    response: undefined;
   };
   lijst_opslaan: {
     request: FormData;
-    response: void;
+    response: undefined;
   };
   lijst_maken: {
     request: FormData;
@@ -115,7 +123,7 @@ interface AjaxMap {
       stemmer: number;
       waarde: boolean;
     };
-    response: void;
+    response: undefined;
   };
   verwijder_stem: {
     request: {
@@ -123,14 +131,14 @@ interface AjaxMap {
       lijst: number;
       stemmer: number;
     };
-    response: void;
+    response: undefined;
   };
   verwijder_nummer: {
     request: {
       lijst: number;
       nummer: number;
     };
-    response: void;
+    response: undefined;
   };
   get_totaal_aantal_stemmers: {
     request: {
@@ -149,14 +157,14 @@ interface AjaxMap {
       lijst: number;
       nummer: number;
     };
-    response: void;
+    response: undefined;
   };
   lijst_nummer_verwijderen: {
     request: {
       lijst: number;
       nummer: number;
     };
-    response: void;
+    response: undefined;
   };
   get_geselecteerde_nummers: {
     request: {
@@ -189,13 +197,7 @@ interface AjaxMap {
       lijst: number;
     };
     response: {
-      nummer: {
-        artiest: string;
-        id: number;
-        is_vrijekeuze: boolean;
-        titel: string;
-        duur: number | null;
-      };
+      nummer: Nummer;
       stemmen: Stem[];
     }[];
   };
@@ -258,7 +260,7 @@ interface AjaxMap {
   };
   login: {
     request: {};
-    response: void;
+    response: undefined;
   };
   mod_vrijekeuze_get_nummers: {
     request: {
@@ -283,4 +285,11 @@ interface AjaxMap {
   };
 }
 
-export type { AjaxMap, Config, ModVrijeKeuzeNummer, ModVrijeKeuzeOpslaanData, Stem };
+export type {
+  AjaxMap,
+  Config,
+  ModVrijeKeuzeNummer,
+  ModVrijeKeuzeOpslaanData,
+  Nummer,
+  Stem,
+};

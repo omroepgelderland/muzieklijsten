@@ -169,7 +169,7 @@ class StemView {
   random_seed;
 
   constructor() {
-    this.lijst_id = new URLSearchParams(window.location.search).get("lijst");
+    this.lijst_id = functies.get_query_param_id("lijst");
     this.e_body = document.getElementsByTagName("body").item(0);
     this.e_keuzeformulier = document.getElementById("keuzeformulier");
     this.e_stemmerformulier = document.getElementById("stemmerformulier");
@@ -323,7 +323,7 @@ class StemView {
       this.e_body.classList.add("is-nog-niet-actief");
     }
 
-    this.e_keuzeformulier.elements.lijst.value = this.lijst_id;
+    this.e_keuzeformulier.elements.lijst.value = String(this.lijst_id);
     for (const velddata of serverdata.velden) {
       new Invoerveld(velddata);
     }

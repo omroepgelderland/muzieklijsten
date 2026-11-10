@@ -1,3 +1,4 @@
+import * as gld from "gld-ts-lib/functions";
 import * as api from "@muzieklijsten/api";
 import type { Config } from "@muzieklijsten/api/types";
 
@@ -193,3 +194,43 @@ export function get_datetime_local_value(value?: string): Date | null {
   }
   return dt;
 }
+
+/**
+ * Haalt de waarde van een query parameter op. Dit moet een positief geheel getal zijn.
+ */
+export function get_query_param_id(key: string): number | null {
+      const params = new URLSearchParams(document.location.search);
+      const str = params.get(key);
+      if (str == null) {
+        return null;
+      }
+      const id = Number.parseInt(str);
+      if (Number.isNaN(id) || id <= 0) {
+        return null;
+      }
+      return id;
+}
+
+/**
+ * Stelt de query parameter "lijst" in. Werkt ook alle navigatielinks bij zodat andere pagina’s met dezelfde lijst
+ * worden geopend.
+ */
+export function set_lijst_query_param(lijst_id: number | null): void {
+    const url = new URL(window.location.href);
+    if (lijst_id !== null) {
+      url.searchParams.set("lijst", String(lijst_id));
+    } else {
+      url.searchParams.delete("lijst");
+    }
+    window.history.replaceState({}, "", url);
+
+    for (const nav_link of gld.querySelectorAllTagName("a", ".nav-link")) {
+      const nav_url = new URL(nav_link.href);
+      if (lijst_id !== null) {
+        nav_url.searchParams.set("lijst", String(lijst_id));
+      } else {
+        nav_url.searchParams.delete("lijst");
+      }
+      nav_link.href = nav_url.toString();
+    }
+  }

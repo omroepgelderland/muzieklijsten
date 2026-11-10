@@ -61,18 +61,7 @@ class Main {
   private async vul_lijsten(): Promise<void> {
     const { lijsten } = await api.post("get_metadata", {});
 
-    const url = new URL(window.location.href);
-    const url_lijst_id = Number.parseInt(url.searchParams.get("lijst") ?? "0");
-    let init_lijst_id;
-    if (lijsten.some((lijst) => lijst.id === url_lijst_id)) {
-      init_lijst_id = url_lijst_id;
-    }
-
-    this.view.vul_lijsten(lijsten, init_lijst_id);
-
-    if (init_lijst_id !== undefined) {
-      this.lijstselect_handler(init_lijst_id);
-    }
+    this.view.vul_lijsten(lijsten, functies.get_query_param_id("lijst"));
   }
 
   private async meer_laden() {
@@ -131,15 +120,8 @@ class Main {
     this.geselecteerde_lijst_id = lijst_id;
 
     // Queryparameters
-    const url = new URL(window.location.href);
-    url.searchParams.set("lijst", String(lijst_id));
-    window.history.replaceState({}, "", url);
+    functies.set_lijst_query_param(lijst_id);
     this.view.set_lijst_geselecteerd();
-    for (const nav_link of gld.querySelectorAllTagName("a", ".nav-link")) {
-      const url = new URL(nav_link.href);
-      url.searchParams.set("lijst", String(lijst_id));
-      nav_link.href = url.toString();
-    }
   }
 
   private set_error(error: unknown): void {
@@ -394,15 +376,19 @@ class View {
    * Vul de selector met de gegeven lijsten.
    *
    * @param lijsten De lijsten die in de selector moeten worden weergegeven.
-   * @param init_lijst_id Optioneel. Het ID van de lijst die standaard geselecteerd moet zijn.
+   * @param init_lijst_id Optioneel. Het ID van de lijst die standaard geselecteerd moet zijn. Er wordt een
+   * "on_lijstselect" event uitgezonden als deze lijst wordt geselecteerd.
    */
   public vul_lijsten(
     lijsten: { id: number; naam: string }[],
-    init_lijst_id?: number,
+    init_lijst_id?: number | null,
   ): void {
     for (const { id, naam } of lijsten) {
       const selected = id === init_lijst_id;
       this.lijstselect.add(new Option(naam, String(id), selected, selected));
+      if (selected) {
+        this.on_lijstselect.emit(id);
+      }
     }
   }
 

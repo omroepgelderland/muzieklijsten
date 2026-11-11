@@ -34,7 +34,7 @@
       media="(prefers-color-scheme: dark)"
     />
   </head>
-  <body ng-app="losseNummers" ng-controller="MainCtrl">
+  <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
@@ -75,27 +75,19 @@
         </div>
       </div>
     </nav>
-    <div class="container" ng-show="inlog_error">
-      <div class="alert alert-danger">{{inlog_error_msg}}</div>
+    <div class="container" id="login-error-container" hidden>
+      <div class="alert alert-danger" id="login-error-message"></div>
     </div>
-    <div class="container" ng-show="inlog_ok">
+    <div class="container" id="losse-nummers-content" hidden>
       <h1>Losse nummers toevoegen</h1>
-      <div class="alert alert-danger" ng-show="error">{{error_msg}}</div>
-      <form ng-submit="toevoegen()">
+      <div class="alert alert-danger" id="error-alert" hidden>
+        <span id="error-message"></span>
+      </div>
+      <form id="losse-nummers-form">
         <div class="mb-3 row">
           <hr />
           <h2>Toevoegen aan lijsten</h2>
-          <div
-            class="col-12 col-sm-6 col-lg-4 lijst-item"
-            ng-repeat="lijst in lijsten"
-          >
-            <label
-              ><input
-                type="checkbox"
-                ng-model="lijst.geselecteerd"
-              />&nbsp;{{lijst.naam}}</label
-            >
-          </div>
+          <div id="lijst-container" class="row g-3"></div>
         </div>
         <div>
           <hr />
@@ -109,71 +101,20 @@
                 <th class="kolom-smal">Lengte</th>
               </tr>
             </thead>
-            <tbody>
-              <tr ng-repeat="nummer in nummers">
-                <td>
-                  <div>
-                    <input
-                      type="text"
-                      class="form-control"
-                      placeholder="Artiest"
-                      autocapitalize="on"
-                      ng-model="nummer.artiest"
-                      ng-change="inputChangeHandler(nummer)"
-                    />
-                  </div>
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    class="form-control"
-                    placeholder="Titel"
-                    autocapitalize="on"
-                    ng-model="nummer.titel"
-                    ng-change="inputChangeHandler(nummer)"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    class="form-control"
-                    placeholder="Jaartal"
-                    ng-model="nummer.jaar"
-                    ng-change="inputChangeHandler(nummer)"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    class="form-control"
-                    placeholder="Lengte (in minuten:seconden)"
-                    ng-model="nummer.duur"
-                    ng-change="inputChangeHandler(nummer)"
-                  />
-                </td>
-              </tr>
-            </tbody>
+            <tbody id="nummer-rows"></tbody>
           </table>
         </div>
         <p>
-          <span ng-show="een_toegevoegd"
-            >Er is één nummer toegevoegd aan de database.</span
-          >
-          <span ng-show="meerdere_toegevoegd"
-            >Er zijn {{toegevoegde_nummers}} nummers toegevoegd aan de
-            database.</span
-          >
-          <span ng-show="een_dubbel"> één nummer stond al in de database.</span>
-          <span ng-show="meerdere_dubbel">
-            {{dubbele_nummers}} nummers stonden al in de database.</span
-          >
-          <span ng-show="een_lijst_toegevoegd"
-            >Één nummer is aan een stemlijst toegevoegd.</span
-          >
-          <span ng-show="meerdere_lijst_toegevoegd"
-            >{{lijsten_nummers}} nummers zijn aan een stemlijst
-            toegevoegd.</span
-          >
+          <span id="een-toegevoegd" hidden>
+            Er is één nummer toegevoegd aan de database.
+          </span>
+          <span id="meerdere-toegevoegd" hidden></span>
+          <span id="een-dubbel" hidden>één nummer stond al in de database.</span>
+          <span id="meerdere-dubbel" hidden></span>
+          <span id="een-lijst-toegevoegd" hidden>
+            Één nummer is aan een stemlijst toegevoegd.
+          </span>
+          <span id="meerdere-lijst-toegevoegd" hidden></span>
         </p>
         <button type="submit" class="btn btn-primary">Toevoegen</button>
       </form>

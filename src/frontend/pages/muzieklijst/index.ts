@@ -744,7 +744,12 @@ class Main {
 const keuze_rij_template: HTMLTableElement =
   functies.get_html_template_enkel(html_keuze_rij);
 
-document.addEventListener("DOMContentLoaded", () => {
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    const m = new Main();
+    m.init().catch(m.error_handler.bind(m));
+  });
+} else {
   const m = new Main();
   m.init().catch(m.error_handler.bind(m));
-});
+}

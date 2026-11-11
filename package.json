@@ -32,8 +32,6 @@
     "@types/bootstrap": "^5.2.11",
     "@types/node": "^26.5.1",
     "@types/webpack-env": "^1.18.5",
-    "angular": "1.5",
-    "angular-route": "1.5",
     "babel-loader": "^10.1.1",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",

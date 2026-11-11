@@ -143,7 +143,6 @@ class ResultatenStem {
   }
 }
 
-/** @type {HTMLTableElement} */
 const resultaten_stem_template: HTMLTableElement =
   functies.get_html_template_enkel(html_template);
 

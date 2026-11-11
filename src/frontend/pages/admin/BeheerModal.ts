@@ -349,7 +349,6 @@ class BeheerModal {
   }
 }
 
-/** @type {HTMLElement} */
 const beheer_modal_template: HTMLElement =
   functies.get_html_template_enkel(html_beheer_modal);
 

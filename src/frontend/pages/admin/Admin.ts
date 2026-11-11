@@ -1,7 +1,11 @@
 // Libraries js
-import DataTable from "datatables.net-bs5";
+import DataTable, {
+  type Api,
+  type ApiRowMethods,
+  type Context,
+} from "datatables.net-bs5";
 import * as gld from "gld-ts-lib/functions";
-
+import type { DataTableRow } from "@muzieklijsten/types";
 // Project js
 import * as api from "@muzieklijsten/api";
 import type { AjaxMap } from "@muzieklijsten/api/types";
@@ -15,12 +19,6 @@ interface LijstData {
   naam: string;
 }
 
-interface DataTableRow {
-  data: () => unknown[];
-  deselect: () => void;
-  select: () => void;
-}
-
 type LijstMetadata = AjaxMap["get_lijst_metadata"]["response"];
 
 class Admin {
@@ -31,8 +29,8 @@ class Admin {
   private readonly e_geselecteerd_lijst: HTMLTableSectionElement;
   private readonly e_aantal_geselecteerde_nummers: HTMLSpanElement;
   private readonly e_beschikbare_nummers: HTMLTableElement;
-  private geselecteerde_nummers: number[];
-  private readonly tabel: InstanceType<typeof DataTable>;
+  private readonly geselecteerde_nummers;
+  private readonly tabel;
   private readonly config_promise: Promise<AjaxMap["get_config"]["response"]>;
 
   constructor() {
@@ -51,23 +49,18 @@ class Admin {
       "#beschikbare-nummers",
     );
     this.lijst_id = null;
-    this.geselecteerde_nummers = [];
+    this.geselecteerde_nummers = new Set<number>();
     this.config_promise = functies.set_config_classes();
 
     this.vul_metadata().catch(this.error_handler.bind(this));
 
-    this.tabel = new DataTable(this.e_beschikbare_nummers, {
+    this.tabel = new DataTable<DataTableRow>(this.e_beschikbare_nummers, {
       processing: true,
       serverSide: true,
       ajax: (data, callback, _settings) => {
-        void (async () => {
-          const request_data = data as Record<string, unknown> & {
-            is_vrijekeuze?: number;
-          };
-          request_data.is_vrijekeuze = 0;
-          const respons = await api.post("vul_datatables", request_data);
-          callback(respons);
-        })();
+        this.datatables_ajax_handler(data, callback, _settings).catch(
+          this.error_handler.bind(this),
+        );
       },
       columnDefs: [
         {
@@ -103,7 +96,10 @@ class Admin {
     this.tabel.on("select", this.select_handler.bind(this));
     this.tabel.on("deselect", this.deselect_handler.bind(this));
 
-    this.e_lijst_select.addEventListener("change",this.lijst_select_handler.bind(this));
+    this.e_lijst_select.addEventListener(
+      "change",
+      this.lijst_select_handler.bind(this),
+    );
 
     // Bestaande lijst wijzigen
     gld
@@ -119,8 +115,23 @@ class Admin {
     gld
       .querySelectorTagName("button", "#resultatenknop")
       .addEventListener("click", (event) => {
-        this.resultaten_knop_handler(event).catch(this.error_handler.bind(this));
+        this.resultaten_knop_handler(event).catch(
+          this.error_handler.bind(this),
+        );
       });
+  }
+
+  private async datatables_ajax_handler(
+    data: object,
+    callback: (data: unknown) => void,
+    _settings: Context,
+  ): Promise<void> {
+    const request_data = {
+      ...data,
+      is_vrijekeuze: 0,
+    };
+    const respons = await api.post("vul_datatables", request_data);
+    callback(respons);
   }
 
   private error_handler(e: unknown) {
@@ -174,13 +185,13 @@ class Admin {
     }
   }
 
-  private async vul_lijst_metadata(): Promise<
-    LijstMetadata
-  > {
+  private async vul_lijst_metadata(): Promise<LijstMetadata> {
     const data = await api.post("get_lijst_metadata", {
       lijst: this.lijst_id ?? 0,
     });
-    for (const e_naam of document.querySelectorAll<HTMLElement>(".lijst-naam")) {
+    for (const e_naam of document.querySelectorAll<HTMLElement>(
+      ".lijst-naam",
+    )) {
       e_naam.textContent = data.naam;
     }
     gld.querySelectorTagName("title").textContent =
@@ -195,7 +206,10 @@ class Admin {
     )) {
       e_iframe_code.value = `<iframe src="${data.iframe_url}" frameborder="0" height="3000" style="width: 100%; height: 3000px; border: none;">`;
     }
-    this.geselecteerde_nummers = [...data.nummer_ids];
+    this.geselecteerde_nummers.clear();
+    for (const id of data.nummer_ids) {
+      this.geselecteerde_nummers.add(id);
+    }
     // Vult de tabel met geselecteerde nummers.
     await this.vul_lijst_geselecteerde_nummers();
     const e_form_controls = document.querySelectorAll(
@@ -212,13 +226,13 @@ class Admin {
    * Wordt aangeroepen nadat de rij al visueel geselecteerd is.
    */
   private select_handler(
-    _event: Event,
-    _dt: unknown,
-    _type: string,
+    event: Event,
+    dt: Api<DataTableRow>,
+    type: string,
     indexes: number[],
   ): void {
     for (const index of indexes) {
-      const row = this.tabel.row(index) as unknown as DataTableRow;
+      const row = this.tabel.row(index);
       this.nummer_selecteren(row).catch(this.error_handler.bind(this));
     }
   }
@@ -228,22 +242,24 @@ class Admin {
    * Wordt aangeroepen nadat de rij al visueel gedeselecteerd is.
    */
   private deselect_handler(
-    _event: Event,
-    _dt: unknown,
-    _type: string,
+    event: Event,
+    dt: Api<DataTableRow>,
+    type: string,
     indexes: number[],
   ): void {
     for (const index of indexes) {
-      const row = this.tabel.row(index) as unknown as DataTableRow;
+      const row = this.tabel.row(index);
       this.nummer_deselecteren(row).catch(this.error_handler.bind(this));
     }
   }
 
-  private async nummer_selecteren(row: DataTableRow): Promise<void> {
+  private async nummer_selecteren(
+    row: ApiRowMethods<DataTableRow>,
+  ): Promise<void> {
     const [id_waarde] = row.data();
     const nummer_id = Number.parseInt(String(id_waarde), 10);
 
-    if (this.geselecteerde_nummers.includes(nummer_id)) {
+    if (this.geselecteerde_nummers.has(nummer_id)) {
       // Nummer is al geselecteerd.
       // Functie is aangeroepen bij initialisatie van de tabel of als annulering van een deselect.
       return;
@@ -251,7 +267,7 @@ class Admin {
 
     try {
       await this.nummer_toevoegen(nummer_id);
-      this.geselecteerde_nummers.push(nummer_id);
+      this.geselecteerde_nummers.add(nummer_id);
     } catch (msg) {
       row.deselect();
       alert(String(msg));
@@ -262,19 +278,20 @@ class Admin {
   /**
    * Deseleceert een nummer en verwijdert de koppeling van de server.
    */
-  private async nummer_deselecteren(row: DataTableRow): Promise<void> {
+  private async nummer_deselecteren(
+    row: ApiRowMethods<DataTableRow>,
+  ): Promise<void> {
     const [id_waarde] = row.data();
     const nummer_id = Number.parseInt(String(id_waarde), 10);
 
-    if (!this.geselecteerde_nummers.includes(nummer_id)) {
+    if (!this.geselecteerde_nummers.has(nummer_id)) {
       // Nummer is niet geselecteerd.
       // Functie is aangeroepen als annulering van een select.
       return;
     }
     try {
       await this.nummer_verwijderen(nummer_id);
-      const index = this.geselecteerde_nummers.indexOf(nummer_id);
-      this.geselecteerde_nummers.splice(index, 1);
+      this.geselecteerde_nummers.delete(nummer_id);
     } catch (msg) {
       row.select();
       alert(String(msg));
@@ -282,10 +299,10 @@ class Admin {
     await this.vul_lijst_geselecteerde_nummers();
   }
 
-/**
+  /**
    * Gebruiker kiest een lijst in de dropdown.
    */
-    private lijst_select_handler(event: Event): void {
+  private lijst_select_handler(event: Event): void {
     const target = event.target;
     if (!(target instanceof HTMLSelectElement)) {
       return;
@@ -302,14 +319,14 @@ class Admin {
    */
   private toon_geselecteerd(
     _tr: HTMLTableRowElement,
-    row: object | unknown[],
+    raw_data: unknown,
     dataIndex: number,
-    _cells: Node[],
+    _cells: HTMLTableCellElement[],
   ): void {
-    const [nummer_id_waarde] = row as unknown[];
-    const nummer_id = Number.parseInt(String(nummer_id_waarde), 10);
-    if (this.geselecteerde_nummers.includes(nummer_id)) {
-      const row_data = this.tabel.row(dataIndex) as unknown as DataTableRow;
+    const [nummer_id_waarde] = functies.validate_datatable_row(raw_data);
+    const nummer_id = Number.parseInt(nummer_id_waarde);
+    if (this.geselecteerde_nummers.has(nummer_id)) {
+      const row_data = this.tabel.row(dataIndex);
       row_data.select();
     }
   }
@@ -343,7 +360,9 @@ class Admin {
       lijst: this.lijst_id ?? 0,
     });
     while (this.e_geselecteerd_lijst.lastChild != null) {
-      this.e_geselecteerd_lijst.removeChild(this.e_geselecteerd_lijst.lastChild);
+      this.e_geselecteerd_lijst.removeChild(
+        this.e_geselecteerd_lijst.lastChild,
+      );
     }
     this.e_aantal_geselecteerde_nummers.textContent = String(nummers.length);
     for (const nummer of nummers) {
@@ -369,7 +388,7 @@ class Admin {
     if (this.lijst_id == null || this.lijst_data_promise == null) {
       return;
     }
-    new ResultatenModal(this.lijst_id, await this.lijst_data_promise.naam);
+    new ResultatenModal(this.lijst_id, (await this.lijst_data_promise).naam);
   }
 
   private nieuw_knop_handler(event: Event): void {
@@ -390,12 +409,16 @@ class Admin {
   }
 
   private lijst_toegevoegd(data: LijstData): void {
-    this.e_lijst_select.add(new Option(data.naam, String(data.id), false, true));
+    this.e_lijst_select.add(
+      new Option(data.naam, String(data.id), false, true),
+    );
     this.set_lijst(data.id);
   }
 
   private lijst_veranderd(data: LijstData): void {
-    const e_option = this.e_lijst_select.item(this.e_lijst_select.selectedIndex);
+    const e_option = this.e_lijst_select.item(
+      this.e_lijst_select.selectedIndex,
+    );
     if (e_option == null) {
       return;
     }
@@ -417,7 +440,7 @@ class Admin {
     this.e_body.classList.remove("lijst-geselecteerd");
 
     gld.querySelectorTagName("title").textContent = "Muzieklijsten beheer";
-    this.geselecteerde_nummers = [];
+    this.geselecteerde_nummers.clear();
     await this.vul_lijst_geselecteerde_nummers();
   }
 }

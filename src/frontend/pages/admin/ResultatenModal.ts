@@ -235,6 +235,7 @@ class ResultatenModal {
 
   /**
    * Handler voor een klik op het kruisje om een stem te verwijderen.
+   *
    * @param elem - Knop waarop geklikt is.
    */
   private async stem_verwijderen_handler(elem: HTMLInputElement) {
@@ -244,7 +245,6 @@ class ResultatenModal {
     const nummer_id = Number.parseInt(
       elem.closest("[data-nummer-id]")?.getAttribute("data-nummer-id") ?? "",
     );
-    /** @type {ResultatenNummer} */
     const resultaten_nummer: ResultatenNummer =
       this.resultaten_nummers[nummer_id];
     const resultaten_stem = resultaten_nummer.get_stem(stemmer_id);
@@ -256,6 +256,7 @@ class ResultatenModal {
 
   /**
    * Change event op een vinkhokje is_behandeld.
+   *
    * @param elem - Vinkhokje dat veranderd is.
    */
   private async check_behandeld_handler(elem: HTMLInputElement) {
@@ -265,7 +266,6 @@ class ResultatenModal {
     const nummer_id = Number.parseInt(
       elem.closest("[data-nummer-id]")?.getAttribute("data-nummer-id") ?? "",
     );
-    /** @type {ResultatenNummer} */
     const resultaten_nummer: ResultatenNummer =
       this.resultaten_nummers[nummer_id];
     const resultaten_stem = resultaten_nummer.get_stem(stemmer_id);
@@ -366,7 +366,6 @@ class ResultatenModal {
   }
 }
 
-/** @type {HTMLElement} */
 const modal_template: HTMLElement =
   functies.get_html_template_enkel(html_template);
 

@@ -8,15 +8,14 @@ import "bootstrap";
 // css
 import "./index.scss";
 
-import "/assets/afbeeldingen/fbshare_top100.jpg";
-
 (function (d, s, id) {
-  var js,
-    fjs = d.getElementsByTagName(s)[0];
+  const fjs = d.getElementsByTagName(s)[0];
   if (d.getElementById(id)) return;
-  js = d.createElement(s);
+  const js = d.createElement(s) as HTMLScriptElement;
   js.id = id;
   js.src =
     "https://connect.facebook.net/nl_NL/sdk.js#xfbml=1&version=v2.10&appId=1269120393132176";
-  fjs.parentNode.insertBefore(js, fjs);
+  if (fjs && fjs.parentNode) {
+    fjs.parentNode.insertBefore(js, fjs);
+  }
 })(document, "script", "facebook-jssdk");

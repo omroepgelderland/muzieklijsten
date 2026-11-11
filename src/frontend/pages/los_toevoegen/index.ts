@@ -11,29 +11,25 @@ import * as api from "@muzieklijsten/api";
 import "./index.scss";
 
 class Nummer {
-  artiest;
-  titel;
-  jaar;
-  duur;
+  private readonly artiest: string;
+  private readonly titel: string;
 
-  constructor(artiest, titel, jaar, duur) {
-    this.artiest = artiest ?? "";
-    this.titel = titel ?? "";
-    this.jaar = jaar ?? "";
-    this.duur = duur ?? "";
+  constructor(artiest = "", titel = "") {
+    this.artiest = artiest;
+    this.titel = titel;
   }
 
-  isLeeg() {
+  public isLeeg(): boolean {
     return this.artiest === "" || this.titel === "";
   }
 }
 
 class Lijst {
-  id;
-  naam;
-  geselecteerd;
+  public id: string | number;
+  public naam: string;
+  public geselecteerd: boolean;
 
-  constructor(id, naam) {
+  constructor(id: string | number, naam: string) {
     this.id = id;
     this.naam = naam;
     this.geselecteerd = false;
@@ -49,12 +45,12 @@ async function get_lijsten() {
   return lijsten;
 }
 
-var app = angular.module("losseNummers", []);
+const app = (window as any).angular.module("losseNummers", []);
 
 app.controller("MainCtrl", [
   "$scope",
   "$http",
-  ($scope, $http) => {
+  ($scope: any, $http: any) => {
     $scope.nummers = [new Nummer()];
     $scope.een_toegevoegd = false;
     $scope.meerdere_toegevoegd = false;
@@ -89,7 +85,7 @@ app.controller("MainCtrl", [
       },
     );
 
-    $scope.inputChangeHandler = (ch_nummer) => {
+    $scope.inputChangeHandler = (ch_nummer: any) => {
       if ($scope.nummers.indexOf(ch_nummer) == $scope.nummers.length - 1) {
         // Laatste item is aangepast
         if (!ch_nummer.isLeeg()) {

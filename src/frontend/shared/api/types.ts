@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 interface AISuggestieType {
   is_correct: boolean;
   suggestie?: {
@@ -49,37 +50,41 @@ interface Nummer {
   duur: number | null;
 }
 
+interface LijstFrontendData {
+  minkeuzes: number;
+  maxkeuzes: number;
+  vrijekeuzes: number;
+  is_artiest_eenmalig: boolean;
+  organisatie: string;
+  lijst_naam: string;
+  heeft_gebruik_recaptcha: boolean;
+  starttijd: string | null;
+  eindtijd: string | null;
+  velden: FrontendVeld[];
+  recaptcha_sitekey: string | null;
+  privacy_url: string;
+  random_volgorde: boolean;
+}
+
+interface FrontendVeld {
+  id: number;
+  label: string;
+  leeg_feedback: string;
+  type: string;
+  verplicht: boolean;
+  max?: number;
+  maxlength?: number;
+  min?: number;
+  minlength?: number;
+  placeholder?: string;
+}
+
 interface AjaxMap {
   get_stemlijst_frontend_data: {
     request: {
       lijst: number;
     };
-    response: {
-      minkeuzes: number;
-      maxkeuzes: number;
-      vrijekeuzes: number;
-      is_artiest_eenmalig: boolean;
-      organisatie: string;
-      lijst_naam: string;
-      heeft_gebruik_recaptcha: boolean;
-      starttijd: string | null;
-      eindtijd: string | null;
-      velden: {
-        id: number;
-        label: string;
-        leeg_feedback: string;
-        type: string;
-        verplicht: boolean;
-        max?: number;
-        maxlength?: number;
-        min?: number;
-        minlength?: number;
-        placeholder?: string;
-      }[];
-      recaptcha_sitekey: string | null;
-      privacy_url: string;
-      random_volgorde: boolean;
-    };
+    response: LijstFrontendData;
   };
   verwijder_lijst: {
     request: {
@@ -178,7 +183,7 @@ interface AjaxMap {
     }[];
   };
   vul_datatables: {
-    request: Record<string, any>;
+    request: Record<string, unknown>;
     response: {
       draw: number;
       recordsTotal: number;
@@ -288,6 +293,8 @@ interface AjaxMap {
 export type {
   AjaxMap,
   Config,
+  FrontendVeld,
+  LijstFrontendData,
   ModVrijeKeuzeNummer,
   ModVrijeKeuzeOpslaanData,
   Nummer,

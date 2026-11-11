@@ -17,10 +17,10 @@ const html_plugin_conf = require("./webpack.html_plugin_conf.js");
 module.exports = {
   entry: {
     admin: path.resolve(__dirname, "src/frontend/pages/admin/index.ts"),
-    fbshare: path.resolve(__dirname, "src/frontend/pages/fbshare/index.js"),
+    fbshare: path.resolve(__dirname, "src/frontend/pages/fbshare/index.ts"),
     los_toevoegen: path.resolve(
       __dirname,
-      "src/frontend/pages/los_toevoegen/index.js",
+      "src/frontend/pages/los_toevoegen/index.ts",
     ),
     "mod-vrijekeuzes": path.resolve(
       __dirname,
@@ -28,7 +28,7 @@ module.exports = {
     ),
     muzieklijst: path.resolve(
       __dirname,
-      "src/frontend/pages/muzieklijst/index.js",
+      "src/frontend/pages/muzieklijst/index.ts",
     ),
   },
   output: {

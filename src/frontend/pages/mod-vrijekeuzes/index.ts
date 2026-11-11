@@ -33,7 +33,9 @@ class Main {
 
     // Events
     this.view.on_lijstselect.on(this.lijstselect_handler.bind(this));
-    this.view.on_meer_laden.on(this.meer_laden.bind(this));
+    this.view.on_meer_laden.on(() => {
+      this.meer_laden().catch(this.set_error.bind(this));
+    });
 
     // Events binnen items
     this.view.on_nummer_bewerken.on((id) => {
@@ -103,7 +105,7 @@ class Main {
    * Stelt de geselecteerde lijst in.
    * De lijst met items wordt gereset.
    *
-   * @param lijst_id ID van de stemlijst.
+   * @param lijst_id - ID van de stemlijst.
    */
   private lijstselect_handler(lijst_id: number): void {
     if (this.geselecteerde_lijst_id === lijst_id) {
@@ -218,8 +220,8 @@ class ItemController {
   /**
    * Slaat een nummer op. Dit kan een ongewijzigd nummer zijn, een AI-suggestie of handmatig bewerkte data.
    *
-   * @param lijst_id Het ID van de muzieklijst die nu geselecteerd is.
-   * @param db Geeft aan of het nummer ook aan de database moet worden toegevoegd.
+   * @param lijst_id - Het ID van de muzieklijst die nu geselecteerd is.
+   * @param db - Geeft aan of het nummer ook aan de database moet worden toegevoegd.
    */
   public async opslaan(lijst_id: number, db: boolean): Promise<void> {
     const data = this.view.get_data();
@@ -375,8 +377,8 @@ class View {
   /**
    * Vul de selector met de gegeven lijsten.
    *
-   * @param lijsten De lijsten die in de selector moeten worden weergegeven.
-   * @param init_lijst_id Optioneel. Het ID van de lijst die standaard geselecteerd moet zijn. Er wordt een
+   * @param lijsten - De lijsten die in de selector moeten worden weergegeven.
+   * @param init_lijst_id - Optioneel. Het ID van de lijst die standaard geselecteerd moet zijn. Er wordt een
    * "on_lijstselect" event uitgezonden als deze lijst wordt geselecteerd.
    */
   public vul_lijsten(

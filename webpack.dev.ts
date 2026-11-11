@@ -1,8 +1,10 @@
-const { merge } = require("webpack-merge");
-const common = require("./webpack.common.js");
-const sass = require("sass");
+import * as webpack from "webpack";
+import { merge } from "webpack-merge";
+import * as sass from "sass";
 
-module.exports = merge(common, {
+import webpack_common from "./webpack.common.ts";
+
+const dev_config: webpack.Configuration = {
   mode: "development",
   devtool: "inline-source-map",
   module: {
@@ -48,4 +50,6 @@ module.exports = merge(common, {
       },
     ],
   },
-});
+};
+
+export default merge(webpack_common, dev_config);

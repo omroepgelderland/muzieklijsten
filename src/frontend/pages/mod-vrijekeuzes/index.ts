@@ -1,6 +1,7 @@
 // Libraries js
 import "bootstrap";
 import * as gld from "gld-ts-lib/functions";
+import { TypedEvent } from "gld-ts-lib";
 
 // Project js
 import * as functies from "@muzieklijsten/functies";
@@ -9,7 +10,6 @@ import type { ModVrijeKeuzeNummer as Nummer } from "@muzieklijsten/api/types";
 
 // css
 import "./index.scss";
-import { TypedEvent } from "gld-ts-lib";
 
 interface IDMap {
   "vrijekeuze-item": HTMLTemplateElement;

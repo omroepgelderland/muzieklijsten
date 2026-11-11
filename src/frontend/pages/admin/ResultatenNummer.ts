@@ -1,16 +1,17 @@
 // Libraries js
 import * as gld from "gld-ts-lib/functions";
+import { TypedEvent } from "gld-ts-lib";
 
 // Project js
 import * as functies from "@muzieklijsten/functies";
 // import * as api from "@muzieklijsten/api";
-import { TypedEvent } from "gld-ts-lib";
-import type { ResultatenModal } from "./ResultatenModal";
+import type { Nummer, Stem } from "@muzieklijsten/api/types";
+
 import { ResultatenStem } from "./ResultatenStem";
+import type { ResultatenModal } from "./ResultatenModal";
 
 // HTML
 import html_template from "./resultaten-nummer.html";
-import type { Nummer, Stem } from "@muzieklijsten/api/types";
 
 /**
  * Een nummer in de lijst met resultaten met uitklapbare lijst met stemmen op dat nummer.

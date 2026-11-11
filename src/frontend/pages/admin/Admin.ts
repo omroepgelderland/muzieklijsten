@@ -1,15 +1,13 @@
 // Libraries js
-import DataTable, {
-  type Api,
-  type ApiRowMethods,
-  type Context,
-} from "datatables.net-bs5";
+import DataTable from "datatables.net-bs5";
 import * as gld from "gld-ts-lib/functions";
+import type { Api, ApiRowMethods, Context } from "datatables.net-bs5";
 import type { DataTableRow } from "@muzieklijsten/types";
+
 // Project js
 import * as api from "@muzieklijsten/api";
-import type { AjaxMap } from "@muzieklijsten/api/types";
 import * as functies from "@muzieklijsten/functies";
+import type { AjaxMap } from "@muzieklijsten/api/types";
 
 import { BeheerModal } from "./BeheerModal";
 import { ResultatenModal } from "./ResultatenModal";

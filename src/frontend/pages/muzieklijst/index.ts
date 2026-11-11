@@ -1,21 +1,22 @@
 // Libraries js
 import "bootstrap";
-import DataTable, { type Context, type Api } from "datatables.net-bs5";
+import DataTable from "datatables.net-bs5";
 import "datatables.net-select-bs5";
 import * as gld from "gld-ts-lib/functions";
+import { TypedEvent } from "gld-ts-lib";
+import type { Context, Api } from "datatables.net-bs5";
 
 // Project js
 import * as api from "@muzieklijsten/api";
 import * as functies from "@muzieklijsten/functies";
+import type { FrontendVeld, LijstFrontendData } from "@muzieklijsten/api/types";
+import type { DataTableRow } from "@muzieklijsten/types";
 
 // css
 import "./index.scss";
 
 // HTML
 import html_keuze_rij from "./keuze-rij.html";
-import { FrontendVeld, LijstFrontendData } from "@muzieklijsten/api/types";
-import { TypedEvent } from "gld-ts-lib";
-import type { DataTableRow } from "@muzieklijsten/types";
 
 // Afbeeldingen
 // import '/assets/afbeeldingen/fbshare_top100.jpg';

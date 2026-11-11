@@ -3,11 +3,11 @@ import "bootstrap";
 import { Modal } from "bootstrap";
 import "datatables.net-select-bs5";
 import * as gld from "gld-ts-lib/functions";
+import { TypedEvent } from "gld-ts-lib";
 
 // Project js
 import * as functies from "@muzieklijsten/functies";
 import * as api from "@muzieklijsten/api";
-import { TypedEvent } from "gld-ts-lib";
 import type { AjaxMap } from "@muzieklijsten/api/types";
 
 // css

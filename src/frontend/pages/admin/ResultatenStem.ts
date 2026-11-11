@@ -1,15 +1,16 @@
 // Libraries js
 import * as gld from "gld-ts-lib/functions";
+import { TypedEvent } from "gld-ts-lib";
 
 // Project js
 import * as functies from "@muzieklijsten/functies";
 import * as api from "@muzieklijsten/api";
-import { TypedEvent } from "gld-ts-lib";
+import type { Stem } from "@muzieklijsten/api/types";
+
+import type { ResultatenNummer } from "./ResultatenNummer";
 
 // HTML
 import html_template from "./resultaten-stem.html";
-import type { ResultatenNummer } from "./ResultatenNummer";
-import type { Stem } from "@muzieklijsten/api/types";
 
 /**
  * Stem per nummer

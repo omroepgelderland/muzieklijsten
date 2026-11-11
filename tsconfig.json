@@ -16,7 +16,8 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "noUnusedLocals": true,
-    "types": []
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
   },
-  "include": ["./src/frontend/**/*"]
+  "include": ["./src/frontend/**/*", "./*.ts", "./eslint.config.js"]
 }

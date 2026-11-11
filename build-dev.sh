@@ -80,13 +80,13 @@ if [[ "$watch_mode" == true ]]; then
     npx tsc-watch --noEmit --noClear &
     pids+=($!)
 
-    npx webpack --watch --config "webpack.dev.js" &
+    npx webpack --watch --config "webpack.dev.ts" &
     pids+=($!)
 
     wait -n "${pids[@]}"
 else
     npx tsc --noEmit
-    npx webpack --config "webpack.dev.js"
+    npx webpack --config "webpack.dev.ts"
 fi
 
 php bin/deploy.php

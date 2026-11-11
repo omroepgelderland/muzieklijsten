@@ -1,7 +1,7 @@
 {
   "name": "muzieklijsten",
   "description": "Stemmodule voor radioredacties",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -30,8 +30,8 @@
     "@eslint/js": "^10.0.1",
     "@omroepgelderland/bootstrap-theme": "^1.1.0",
     "@types/bootstrap": "^5.2.11",
-    "@types/node": "^26.5.1",
-    "@types/webpack-env": "^1.18.5",
+    "@types/node": "^26.6.6",
+    "@types/webpack": "^5.28.5",
     "babel-loader": "^10.1.1",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
@@ -49,6 +49,7 @@
     "sass-loader": "^17.0.0",
     "semver": "^7.7.1",
     "style-loader": "^4.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.31.1",
     "update-browserslist-db": "latest",

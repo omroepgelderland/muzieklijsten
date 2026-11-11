@@ -1,4 +1,14 @@
-function htmlPage(name, filename) {
+import * as webpack from "webpack";
+import * as path from "path";
+import * as url from "url";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+
+import html_plugin_conf from "./webpack.html_plugin_conf.ts";
+
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function htmlPage(name: string, filename?: string) {
   filename ??= name;
   return new HtmlWebpackPlugin({
     ...html_plugin_conf,
@@ -8,13 +18,7 @@ function htmlPage(name, filename) {
   });
 }
 
-const path = require("path");
-const fs = require("fs");
-var webpack = require("webpack");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const html_plugin_conf = require("./webpack.html_plugin_conf.js");
-
-module.exports = {
+const config: webpack.Configuration = {
   entry: {
     admin: path.resolve(__dirname, "src/frontend/pages/admin/index.ts"),
     fbshare: path.resolve(__dirname, "src/frontend/pages/fbshare/index.ts"),
@@ -72,7 +76,7 @@ module.exports = {
     runtimeChunk: "single",
     splitChunks: {
       chunks: "all",
-      name: (module, chunks, cacheGroupKey) => {
+      name: (module, chunks) => {
         return chunks.map((chunk) => chunk.name).join("-");
       },
     },
@@ -89,3 +93,5 @@ module.exports = {
     maxAssetSize: 512000,
   },
 };
+
+export default config;

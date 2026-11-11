@@ -1,10 +1,12 @@
-const { merge } = require("webpack-merge");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-const common = require("./webpack.common.js");
-const sass = require("sass");
+import * as webpack from "webpack";
+import { merge } from "webpack-merge";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
+import * as sass from "sass";
 
-module.exports = merge(common, {
+import webpack_common from "./webpack.common.ts";
+
+const prod_config: webpack.Configuration = {
   mode: "production",
   module: {
     rules: [
@@ -62,4 +64,6 @@ module.exports = merge(common, {
   optimization: {
     minimizer: ["...", new CssMinimizerPlugin()],
   },
-});
+};
+
+export default merge(webpack_common, prod_config);

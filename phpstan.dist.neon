@@ -8,7 +8,6 @@ parameters:
 		- node_modules/
 		- src/php/OLERead.php
 		- src/php/PhpExcelReader.php
-		- src/php/SSP.php
 		- test/
 		- vendor/
 	exceptions:

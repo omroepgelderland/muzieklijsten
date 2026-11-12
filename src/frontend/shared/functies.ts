@@ -241,13 +241,30 @@ export function set_lijst_query_param(lijst_id: number | null): void {
 }
 
 export function validate_datatable_row(data: unknown): DataTableRow {
-  if (!Array.isArray(data) || data.length !== 4) {
-    throw new Error("Invalid data table row");
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    throw new TypeError("Datatable-rij moet een object zijn.");
   }
-  return [
-    String(data[0]),
-    String(data[1]),
-    String(data[2]),
-    data[3] == null ? null : String(data[3]),
-  ];
+
+  const row = data as Record<string, unknown>;
+
+  if (!Object.hasOwn(row, "DT_RowId")) {
+    throw new TypeError("Datatable-rij mist 'DT_RowId'.");
+  }
+  if (!Object.hasOwn(row, "titel")) {
+    throw new TypeError("Datatable-rij mist 'titel'.");
+  }
+  if (!Object.hasOwn(row, "artiest")) {
+    throw new TypeError("Datatable-rij mist 'artiest'.");
+  }
+  let jaar = null;
+  if (Object.hasOwn(row, "jaar")) {
+    jaar = row.jaar;
+  }
+
+  return {
+    DT_RowId: Number(row.DT_RowId),
+    titel: String(row.titel),
+    artiest: String(row.artiest),
+    jaar: jaar == null ? null : Number(jaar),
+  };
 }

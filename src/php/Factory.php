@@ -16,6 +16,7 @@ use Psr\Container\ContainerInterface;
  * @phpstan-import-type StemmerData from \muzieklijsten\Stemmer
  * @phpstan-import-type StemmerNummerData from \muzieklijsten\StemmerNummer
  * @phpstan-import-type VeldData from \muzieklijsten\Veld
+ * @phpstan-import-type SearchType from \muzieklijsten\SSP
  */
 class Factory
 {
@@ -358,18 +359,45 @@ class Factory
     }
 
     /**
-     * @param array<string, mixed> $request
-     * @param array<mixed> $kolommen
+     * @param SearchType $search
+     * @param array<int, array{
+     *     column: int,
+     *     dir: string,
+     *     name: string,
+     * }> $order
+     * @param array<int, array{
+     *     data: string,
+     *     name: string,
+     *     searchable: bool,
+     *     orderable: bool,
+     *     search: SearchType,
+     * }> $columns
      */
     public function create_ssp(
-        array $request,
-        array $kolommen,
+        int $draw,
+        int $start,
+        int $length,
+        array $search,
+        array $order,
+        array $columns,
+        ?Lijst $lijst,
+        bool $random_volgorde = false,
+        ?bool $is_vrijekeuze = null,
+        ?int $random_seed = null,
     ): SSP {
         return $this->factory->make(
             SSP::class,
             [
-                'request' => $request,
-                'kolommen' => $kolommen,
+                'lijst' => $lijst,
+                'draw' => $draw,
+                'start' => $start,
+                'length' => $length,
+                'search' => $search,
+                'order' => $order,
+                'columns' => $columns,
+                'random_volgorde' => $random_volgorde,
+                'is_vrijekeuze' => $is_vrijekeuze,
+                'random_seed' => $random_seed,
             ],
         );
     }

@@ -1,38 +1,86 @@
 <?php
 
-/**
- * Helper functions for building a DataTables server-side processing SQL query
- *
- * The static functions in this class are just helper functions to help build
- * the SQL used in the DataTables demo server-side processing scripts. These
- * functions obviously do not represent all that can be done with server-side
- * processing, they are intentionally simple to show how it works. More complex
- * server-side processing operations will likely require a custom script.
- *
- * See http://datatables.net/usage/server-side for full details on the server-
- * side processing requirements of DataTables.
- *
- * @license MIT - http://datatables.net/license_mit
- */
+declare(strict_types=1);
 
 namespace muzieklijsten;
 
 use gldstdlib\exception\GLDException;
 
-class SSP
+/**
+ * Serverside processing voor DataTables.
+ *
+ * Alleen voor queries op de tabel nummers.
+ *
+ * @see http://datatables.net/usage/server-side for full details on the server-
+ * side processing requirements of DataTables.
+ *
+ * @phpstan-type SearchType array{
+ *     value: string,
+ *     regex: bool,
+ * }
+ */
+final class SSP
 {
-    private Lijst $lijst;
-    private ?int $is_vrijekeuze;
+    /**
+     * Kolommen die opgevraagd mogen worden.
+     */
+    private const COLUMN_FILTER = [
+        'muziek_id',
+        'titel',
+        'artiest',
+        'jaar',
+        'categorie',
+        'map',
+        'opener',
+        'dir',
+        'is_vrijekeuze',
+    ];
 
     /**
-     * @param array<string, mixed> $request
+     * Invoer moet van tevoren getypecast zijn. SQL string-escape gebeurt hier.
+     *
+     * @param SearchType $search
+     * @param array<int, array{
+     *     column: int,
+     *     dir: string,
+     *     name: string,
+     * }> $order
+     * @param array<int, array{
+     *     data: string,
+     *     name: string,
+     *     searchable: bool,
+     *     orderable: bool,
+     *     search: SearchType,
+     * }> $columns
      */
     public function __construct(
-        private readonly Factory $factory,
         private readonly DB $db,
-        private array $request,
-        private array $kolommen,
+        private readonly int $draw,
+        private readonly int $start,
+        private readonly int $length,
+        private array $search,
+        private array $order,
+        private array $columns,
+        private readonly ?Lijst $lijst = null,
+        private readonly bool $random_volgorde = false,
+        private readonly ?bool $is_vrijekeuze = null,
+        private readonly ?int $random_seed = null,
     ) {
+        $this->search['value'] = $this->db->escape_like($this->search['value']);
+        foreach ($this->columns as $i => $column) {
+            if (!\in_array($column['data'], self::COLUMN_FILTER, true)) {
+                throw new GLDException("Invalid column: {$column['data']}");
+            }
+            $this->columns[$i]['data'] = "n.`{$column['data']}`";
+            $this->columns[$i]['search']['value'] = $this->db->escape_like($column['search']['value']);
+        }
+        if ($this->random_volgorde) {
+            $this->order = [];
+        } else {
+            foreach ($this->order as $i => $orderItem) {
+                $this->order[$i]['name'] = "n.`{$this->db->escape_string($orderItem['name'])}`";
+            }
+        }
     }
 
     /**
@@ -40,21 +88,23 @@ class SSP
      *
      * @param $data Data from the SQL get
      *
-     * @return array Formatted data in a row based format
+     * @return array<array<string, string>> Formatted data in a row based format
      */
-    protected function data_output(\mysqli_result $data): array
+    private function data_output(\mysqli_result $data): array
     {
-        $out = [];
+        return array_values(iterator_to_array($data));
+    }
 
-        foreach ($data as $entry) {
-            $row = [];
-            foreach ($this->kolommen as $kolom) {
-                $row[$kolom['dt']] = $entry[$kolom['db']];
-            }
-            $out[] = $row;
-        }
-
-        return $out;
+    /**
+     * Construct the SELECT clause.
+     */
+    private function select(): string
+    {
+        $columnNames = [
+            'n.`id` AS DT_RowId',
+            ...array_map(static fn($col) => $col['data'], $this->columns),
+        ];
+        return 'SELECT ' . implode(', ', $columnNames);
     }
 
     /**
@@ -62,15 +112,12 @@ class SSP
      *
      * Construct the LIMIT clause for server-side processing SQL query
      */
-    protected function limit()
+    private function limit(): string
     {
-        $start = filter_var($this->request['start'], \FILTER_VALIDATE_INT);
-        $length = filter_var($this->request['length'], \FILTER_VALIDATE_INT);
-        if ($start !== false && $start !== null && $length !== -1) {
-            return "LIMIT {$start}, {$length}";
-        } else {
+        if ($this->length === -1) {
             return '';
         }
+        return "LIMIT {$this->start}, {$this->length}";
     }
 
     /**
@@ -78,47 +125,31 @@ class SSP
      *
      * Construct the ORDER BY clause for server-side processing SQL query
      *
-     *  @return string SQL order by clause
+     * @return string SQL order by clause
      */
-    protected function order()
+    private function order(): string
     {
-        try {
-            $is_random_volgorde = $this->get_lijst()->is_random_volgorde();
-        } catch (GeenLijstException) {
-            $is_random_volgorde = false;
+        if ($this->random_volgorde) {
+            $seed = $this->random_seed === null ? "" : (string)$this->random_seed;
+            return "ORDER BY RAND({$seed})";
         }
-        if ($is_random_volgorde) {
-            return "ORDER BY RAND({$this->request['random_seed']})";
-        } elseif (isset($this->request['order']) && count($this->request['order']) > 0) {
-            $orderBy = [];
-            $dtColumns = self::pluck($this->kolommen, 'dt');
 
-            foreach ($this->request['order'] as $kolom_order) {
-            // for ( $i=0, $ien=count($order_request) ; $i<$ien ; $i++ ) {
-                // Convert the column index into the column data property
-                $columnIdx = filter_var($kolom_order['column'], \FILTER_VALIDATE_INT);
-                $requestColumn = $this->request['columns'][$columnIdx];
+        $orderBy = [];
+        foreach ($this->order as $order) {
+            $column = $this->columns[$order['column']];
 
-                $columnIdx = array_search($requestColumn['data'], $dtColumns);
-                $column = $this->kolommen[$columnIdx];
-
-                if (filter_var($requestColumn['orderable'], \FILTER_VALIDATE_BOOLEAN)) {
-                    $dir = $kolom_order['dir'] === 'asc' ?
-                        'ASC' :
-                        'DESC';
-
-                    $orderBy[] = '`' . $column['db'] . '` ' . $dir;
-                }
+            if (!\in_array($order['dir'], ['asc', 'desc'], true)) {
+                throw new GLDException("Invalid order direction: {$order['dir']}");
             }
+            $dir = $order['dir'] === 'asc' ? 'ASC' : 'DESC';
 
-            if (count($orderBy) > 0) {
-                return 'ORDER BY ' . implode(', ', $orderBy);
-            } else {
-                return '';
-            }
-        } else {
+            $orderBy[] = "{$column['data']} {$dir}";
+        }
+
+        if (\count($orderBy) === 0) {
             return '';
         }
+        return 'ORDER BY ' . implode(', ', $orderBy);
     }
 
     /**
@@ -126,129 +157,92 @@ class SSP
      *
      * Construct the WHERE clause for server-side processing SQL query.
      *
-     * NOTE this does not match the built-in DataTables filtering which does it
-     * word by word on any field. It's possible to do here performance on large
-     * databases would be very poor
-     *
-     *  @return string SQL where clause
+     * @return string SQL where clause
      */
-    protected function filter(): string
+    private function filter(): string
     {
-        $search_value = $this->db->escape_string($this->request['search']['value']);
+        $search_value = $this->db->escape_string($this->search['value']);
         $globalSearch = [];
         $columnSearch = [];
-        $dtColumns = self::pluck($this->kolommen, 'dt');
 
-        if ($this->is_vrijekeuze() !== null) {
-            $is_vrijekeuze = $this->is_vrijekeuze();
-            $columnSearch[] = "is_vrijekeuze = {$is_vrijekeuze}";
+        if ($this->is_vrijekeuze !== null) {
+            $columnSearch[] = \sprintf(
+                'n.is_vrijekeuze = %d',
+                $this->is_vrijekeuze,
+            );
         }
 
-        if (isset($this->request['search']) && $search_value != '') {
-            foreach ($this->request['columns'] as $requestColumn) {
-                $columnIdx = array_search($requestColumn['data'], $dtColumns);
-                $column = $this->kolommen[$columnIdx];
+        foreach ($this->columns as $column) {
+            $column_search_value = $column['search']['value'];
 
-                if (filter_var($requestColumn['searchable'], \FILTER_VALIDATE_BOOLEAN)) {
-                    $globalSearch[] = "`{$column['db']}` LIKE \"%{$search_value}%\"";
-                }
+            // Global search filtering
+            if ($column['searchable'] && $search_value != '') {
+                $globalSearch[] = "{$column['data']} LIKE \"%{$search_value}%\"";
             }
-        }
-
-        // Individual column filtering
-        foreach ($this->request['columns'] as $requestColumn) {
-            $columnIdx = array_search($requestColumn['data'], $dtColumns);
-            $column = $this->kolommen[$columnIdx];
-
-            $str = $this->db->escape_string($requestColumn['search']['value']);
-
-            if (filter_var($requestColumn['searchable'], \FILTER_VALIDATE_BOOLEAN) && $str != '') {
-                $columnSearch[] = "`{$column['db']}` LIKE \"%{$str}%\"";
+            // Individual column filtering
+            if ($column['searchable'] && $column_search_value != '') {
+                $columnSearch[] = "{$column['data']} LIKE \"%{$column_search_value}%\"";
             }
         }
 
         // Combine the filters into a single string
-        $where = '';
+        $whereArray = [];
 
-        if (count($globalSearch) > 0) {
-            $where = '(' . implode(' OR ', $globalSearch) . ')';
+        if (\count($globalSearch) > 0) {
+            $whereArray[] = '(' . implode(' OR ', $globalSearch) . ')';
         }
 
-        if (count($columnSearch) > 0) {
-            $where = $where === '' ?
-                implode(' AND ', $columnSearch) :
-                $where . ' AND ' . implode(' AND ', $columnSearch);
+        if (\count($columnSearch) > 0) {
+            $whereArray = array_merge($whereArray, $columnSearch);
         }
 
-        if ($where !== '') {
-            $where = 'WHERE ' . $where;
+        if (\count($whereArray) > 0) {
+            return 'WHERE ' . implode(' AND ', $whereArray);
+        } else {
+            return '';
         }
-
-        return $where;
     }
 
     /**
-     * Perform the SQL queries needed for an server-side processing requested,
-     * utilising the helper functions of this class, limit(), order() and
-     * filter() among others. The returned array is ready to be encoded as JSON
-     * in response to an SSP request, or can be modified if needed before
-     * sending back to the client.
+     * Perform the SQL queries needed for a server-side processing request.
      *
-     * @return array          Server-side processing response array
+     * @return array{
+     *     draw: int,
+     *     recordsTotal: int,
+     *     recordsFiltered: int,
+     *     data: array<array<string, string|null>>,
+     * } Server-side processing response array
      *
      * @throws GeenLijstException
      */
-    public function simple(): array
+    public function get(): array
     {
-        $db = $this->db->getDB();
-
         // Build the SQL query string from the request
+        $select = $this->select();
         $limit = $this->limit();
         $order = $this->order();
         $where = $this->filter();
 
-        try {
-            $lijst = $this->get_lijst();
-            $basis_query = <<<SQL
-            FROM nummers n
+        $basis_query = "FROM nummers n\n";
+        if ($this->lijst !== null) {
+            $basis_query .= <<<SQL
             INNER JOIN lijsten_nummers l ON
                 n.id = l.nummer_id
-                AND l.lijst_id = {$lijst->id}
-            SQL;
-            // Resultaten
-            $query = <<<SQL
-            SELECT n.id, n.titel, n.artiest, n.jaar 
-            {$basis_query} {$where} {$order} {$limit}
-            SQL;
-            // Aantal resultaten
-            $count_query = <<<SQL
-            SELECT COUNT(n.id)
-            {$basis_query} {$where}
-            SQL;
-            // Total data set length
-            $total_length_query = <<<SQL
-            SELECT COUNT(n.id) 
-            {$basis_query}
-            SQL;
-        } catch (GLDException $e) {
-            $select = implode("`, `", self::pluck($this->kolommen, 'db'));
-            $basis_query = "FROM nummers";
-            // Resultaten
-            $query = <<<SQL
-            SELECT `{$select}`
-            {$basis_query} {$where} {$order} {$limit}
-            SQL;
-            // Aantal resultaten
-            $count_query = <<<SQL
-            SELECT COUNT(id)
-            {$basis_query} {$where}
-            SQL;
-            // Total data set length
-            $total_length_query = <<<SQL
-            SELECT COUNT(id)
-            FROM nummers
+                AND l.lijst_id = {$this->lijst->id}
             SQL;
         }
+        // Resultaten
+        $query = \implode(' ', [$select, $basis_query, $where, $order, $limit]);
+        // Aantal resultaten
+        $count_query = <<<SQL
+        SELECT COUNT(n.id)
+        {$basis_query} {$where}
+        SQL;
+        // Total data set length
+        $total_length_query = <<<SQL
+        SELECT COUNT(n.id) 
+        {$basis_query}
+        SQL;
         $data = $this->db->query($query);
 
         // Data set length after filtering
@@ -259,50 +253,10 @@ class SSP
 
         // Output
         return [
-            'draw'            => filter_var($this->request['draw'], \FILTER_VALIDATE_INT),
-            'recordsTotal'    => $recordsTotal,
+            'draw' => $this->draw,
+            'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
-            'data'            => $this->data_output($data),
+            'data' => $this->data_output($data),
         ];
-    }
-
-    /**
-     * Pull a particular property from each assoc. array in a numeric array,
-     * returning and array of the property values from each item.
-     *
-     * @param $a    Array to get data from
-     * @param $prop Property to read
-     *
-     * @return array        Array of property values
-     */
-    protected static function pluck(array $a, string $prop): array
-    {
-        $out = [];
-
-        for ($i = 0, $len = count($a); $i < $len; $i++) {
-            $out[] = $a[$i][$prop];
-        }
-
-        return $out;
-    }
-
-    /**
-     * @throws GeenLijstException
-     */
-    private function get_lijst(): Lijst
-    {
-        $this->lijst ??= $this->factory->create_lijst_uit_request($this->request);
-        return $this->lijst;
-    }
-
-    /**
-     * Geeft aan of vrije keuzenummers mogen voorkomen in het resultaat.
-     *
-     * @return int | null True is alleen vrije keuzes, False is geen vrije keuzes,
-     * null is geen filter.
-     */
-    private function is_vrijekeuze(): int | null
-    {
-        return $this->is_vrijekeuze ??= $this->request['is_vrijekeuze'] ?? null;
     }
 }

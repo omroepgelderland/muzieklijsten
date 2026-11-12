@@ -1,7 +1,12 @@
 // Libraries js
 import DataTable from "datatables.net-bs5";
 import * as gld from "gld-ts-lib/functions";
-import type { Api, ApiRowMethods, Context } from "datatables.net-bs5";
+import type {
+  AjaxData as DTAjaxData,
+  Api,
+  ApiRowMethods,
+  Context,
+} from "datatables.net-bs5";
 import type { DataTableRow } from "@muzieklijsten/types";
 
 // Project js
@@ -60,15 +65,25 @@ class Admin {
           this.error_handler.bind(this),
         );
       },
-      columnDefs: [
+      columns: [
         {
-          targets: 0,
-          visible: false,
-          searchable: false,
-          orderable: false,
+          data: "titel",
+          name: "titel",
+        },
+        {
+          data: "artiest",
+          name: "artiest",
+        },
+        {
+          data: "jaar",
+          name: "jaar",
+          type: "num",
         },
       ],
-      order: [1, "asc"],
+      order: [
+        { name: "titel", dir: "asc" },
+        { name: "artiest", dir: "asc" },
+      ],
       createdRow: this.toon_geselecteerd.bind(this),
       language: {
         lengthMenu: "_MENU_ nummers per pagina",
@@ -120,13 +135,17 @@ class Admin {
   }
 
   private async datatables_ajax_handler(
-    data: object,
+    data: DTAjaxData,
     callback: (data: unknown) => void,
     _settings: Context,
   ): Promise<void> {
+    if (this.lijst_id == null) {
+      return;
+    }
     const request_data = {
       ...data,
-      is_vrijekeuze: 0,
+      random_volgorde: false,
+      is_vrijekeuze: false,
     };
     const respons = await api.post("vul_datatables", request_data);
     callback(respons);
@@ -254,7 +273,7 @@ class Admin {
   private async nummer_selecteren(
     row: ApiRowMethods<DataTableRow>,
   ): Promise<void> {
-    const [id_waarde] = row.data();
+    const { DT_RowId: id_waarde } = row.data();
     const nummer_id = Number.parseInt(String(id_waarde), 10);
 
     if (this.geselecteerde_nummers.has(nummer_id)) {
@@ -279,7 +298,7 @@ class Admin {
   private async nummer_deselecteren(
     row: ApiRowMethods<DataTableRow>,
   ): Promise<void> {
-    const [id_waarde] = row.data();
+    const { DT_RowId: id_waarde } = row.data();
     const nummer_id = Number.parseInt(String(id_waarde), 10);
 
     if (!this.geselecteerde_nummers.has(nummer_id)) {
@@ -321,8 +340,7 @@ class Admin {
     dataIndex: number,
     _cells: HTMLTableCellElement[],
   ): void {
-    const [nummer_id_waarde] = functies.validate_datatable_row(raw_data);
-    const nummer_id = Number.parseInt(nummer_id_waarde);
+    const { DT_RowId: nummer_id } = functies.validate_datatable_row(raw_data);
     if (this.geselecteerde_nummers.has(nummer_id)) {
       const row_data = this.tabel.row(dataIndex);
       row_data.select();

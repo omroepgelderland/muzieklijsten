@@ -14,7 +14,6 @@
     <!-- Legacy includes die een keer weg moeten -->
     <exclude-pattern>*/src/php/OLERead\.php$</exclude-pattern>
     <exclude-pattern>*/src/php/PhpExcelReader\.php$</exclude-pattern>
-    <exclude-pattern>*/src/php/SSP\.php$</exclude-pattern>
 
     <rule ref="OmroepGelderland" />
 

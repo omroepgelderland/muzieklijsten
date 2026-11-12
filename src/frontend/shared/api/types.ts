@@ -1,3 +1,5 @@
+import { AjaxData as DTAjaxData } from "datatables.net-bs5";
+
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 interface AISuggestieType {
   is_correct: boolean;
@@ -183,7 +185,12 @@ interface AjaxMap {
     }[];
   };
   vul_datatables: {
-    request: Record<string, unknown>;
+    request: DTAjaxData & {
+      random_volgorde?: boolean;
+      lijst?: number;
+      is_vrijekeuze: boolean;
+      random_seed?: number;
+    };
     response: {
       draw: number;
       recordsTotal: number;

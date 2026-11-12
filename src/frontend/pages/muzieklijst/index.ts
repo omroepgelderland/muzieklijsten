@@ -174,9 +174,8 @@ class StemView {
     this.datatable = new DataTable<DataTableRow>(e_datatable, {
       processing: true,
       serverSide: true,
-      createdRow: (row, raw_data) => {
-        const data = functies.validate_datatable_row(raw_data);
-        row.id = `nummer-${data[0]}`;
+      createdRow: (row) => {
+        row.id = `nummer-${row.id}`;
       },
       ajax: (data, callback, _settings) => {
         this.datatables_ajax_handler(data, callback, _settings).catch(
@@ -185,17 +184,24 @@ class StemView {
       },
       lengthChange: false,
       pageLength: 50,
-      columnDefs: [
+      columns: [
         {
-          targets: 0,
-          visible: false,
-          searchable: false,
-          orderable: false,
+          data: "titel",
+          name: "titel",
+        },
+        {
+          data: "artiest",
+          name: "artiest",
+        },
+        {
+          data: "jaar",
+          name: "jaar",
+          type: "num",
         },
       ],
       order: [
-        [1, "asc"],
-        [2, "asc"],
+        { name: "titel", dir: "asc" },
+        { name: "artiest", dir: "asc" },
       ],
       ordering: !this.data.random_volgorde,
       language: {
@@ -335,7 +341,7 @@ class StemView {
     const request_data = {
       ...data,
       lijst: this.lijst_id,
-      is_vrijekeuze: 0,
+      is_vrijekeuze: false,
       random_seed: this.random_seed,
     };
     const respons = await api.post("vul_datatables", request_data);
@@ -485,9 +491,7 @@ class StemView {
   /**
    * Geeft aan of het nummer geselecteerd mag worden.
    */
-  private mag_nummer_geselecteerd_worden(data: DataTableRow): boolean {
-    const artiest = data[2];
-
+  private mag_nummer_geselecteerd_worden({ artiest }: DataTableRow): boolean {
     if (this.geselecteerde_nummers.size >= this.data.maxkeuzes) {
       alert(`U kunt maximaal ${this.data.maxkeuzes} nummers selecteren.`);
       return false;
@@ -510,8 +514,8 @@ class StemView {
   ) {
     const rows = this.datatable.rows(indexes).data().toArray();
     for (const row of rows) {
-      const [id_str, _titel, artiest] = row;
-      this.nummer_selecteren(Number.parseInt(id_str), _titel, artiest);
+      const { DT_RowId, titel, artiest } = functies.validate_datatable_row(row);
+      this.nummer_selecteren(DT_RowId, titel, artiest);
     }
   }
 
@@ -523,8 +527,8 @@ class StemView {
   ) {
     const rows = this.datatable.rows(indexes).data().toArray();
     for (const row of rows) {
-      const [id_str, _titel, artiest] = row;
-      this.nummer_deselecteren(Number.parseInt(id_str), artiest);
+      const { DT_RowId, artiest } = functies.validate_datatable_row(row);
+      this.nummer_deselecteren(DT_RowId, artiest);
     }
   }
 

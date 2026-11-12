@@ -114,6 +114,18 @@ class DB
         return $this->getDB()->escape_string($str);
     }
 
+    public function escape_like(string $str): string
+    {
+        return strtr(
+            $this->escape_string($str),
+            [
+                '%' => '\%',
+                '_' => '\_',
+                '\\' => '\\\\',
+            ],
+        );
+    }
+
     /**
      * Voer een MySQLi commit uit.
      *

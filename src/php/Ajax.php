@@ -640,40 +640,70 @@ class Ajax
      *     draw: int,
      *     recordsTotal: int,
      *     recordsFiltered: int,
-     *     data: list<list<string>>,
-     * }
+     *     data: array<array<string, string|null>>,
+     * } Server-side processing response array
      *
      * @throws GeenLijstException
      */
     public function vul_datatables(): array
     {
-        $ssp = $this->factory->create_ssp(
-            $this->request,
-            [
-                [
-                    'db' => 'id',
-                    'dt' => 0,
-                ], [
-                    'db' => 'titel',
-                    'dt' => 1,
-                ], [
-                    'db' => 'artiest',
-                    'dt' => 2,
-                ], [
-                    'db' => 'jaar',
-                    'dt' => 3,
+        $draw = (int)fs(filter_var($this->request['draw'] ?? null, \FILTER_VALIDATE_INT));
+        $start = (int)fs(filter_var($this->request['start'] ?? null, \FILTER_VALIDATE_INT));
+        $length = (int)fs(filter_var($this->request['length'] ?? null, \FILTER_VALIDATE_INT));
+        $raw_search = fs(filter_var($this->request['search'] ?? [], \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY));
+        $search = [
+            'value' => fs(filter_var($raw_search['value'] ?? null)),
+            'regex' => (bool)filter_var($raw_search['regex'] ?? null, \FILTER_VALIDATE_BOOLEAN),
+        ];
+        $raw_order = fs(filter_var($this->request['order'] ?? [], \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY));
+        $order = \array_map(
+            static fn($v) => [
+                'column' => (int)fs(filter_var($v['column'] ?? null, \FILTER_VALIDATE_INT)),
+                'dir' => fs(filter_var($v['dir'] ?? null)),
+                'name' => fs(filter_var($v['name'] ?? null)),
+            ],
+            $raw_order,
+        );
+        $raw_columns = fs(filter_var($this->request['columns'] ?? [], \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY));
+        $columns = \array_map(
+            static fn($v) => [
+                'data' => fs(filter_var($v['data'] ?? null)),
+                'name' => fs(filter_var($v['name'] ?? null)),
+                'searchable' => (bool)filter_var($v['searchable'] ?? null, \FILTER_VALIDATE_BOOLEAN),
+                'orderable' => (bool)filter_var($v['orderable'] ?? null, \FILTER_VALIDATE_BOOLEAN),
+                'search' => [
+                    'value' => fs(filter_var($v['search']['value'] ?? null)),
+                    'regex' => (bool)filter_var($v['search']['regex'] ?? null, \FILTER_VALIDATE_BOOLEAN),
                 ],
             ],
+            $raw_columns,
         );
-        /** @var array{
-         *     draw: int,
-         *     recordsTotal: int,
-         *     recordsFiltered: int,
-         *     data: list<list<string>>,
-         * } $res
-         */
-        $res = $ssp->simple();
-        return $res;
+
+        try {
+            $lijst = $this->factory->create_lijst_uit_request($this->request);
+        } catch (GeenLijstException) {
+            $lijst = null;
+        }
+        $raw_random_volgorde = $this->request['random_volgorde'] ?? ($lijst?->is_random_volgorde() ?? false);
+        $random_volgorde = (bool)filter_var($raw_random_volgorde, \FILTER_VALIDATE_BOOLEAN);
+        $is_vrijekeuze = (bool)filter_var($this->request['is_vrijekeuze'] ?? null, \FILTER_VALIDATE_BOOLEAN);
+        $random_seed_raw = $this->request['random_seed'] ?? null;
+        $random_seed = $random_seed_raw === null
+            ? null
+            : (int)fs(filter_var($random_seed_raw, \FILTER_VALIDATE_INT));
+        $ssp = $this->factory->create_ssp(
+            $draw,
+            $start,
+            $length,
+            $search,
+            $order,
+            $columns,
+            $lijst,
+            $random_volgorde,
+            $is_vrijekeuze,
+            $random_seed,
+        );
+        return $ssp->get();
     }
 
     /**

@@ -9,14 +9,14 @@ function exit_handler() {
 }
 
 function php_codesniffer() {
-    local options="--standard=phpcs.xml.dist -n --colors --report-width=auto"
-    if ! phpcs $options; then
+    local options=(--standard=phpcs.xml.dist -n --colors --report-width=auto)
+    if ! phpcs "${options[@]}"; then
         echo "Fixen met phpcbf? (j/n)"
         read -r ans
         if [[ $ans != "j" ]]; then
-            exit 1
+            return 1
         else
-            phpcbf $options
+            phpcbf "${options[@]}" || return $?
         fi
     fi
 }
@@ -26,10 +26,9 @@ function _eslint() {
         echo "Fixen met eslint? (j/n)"
         read -r ans
         if [[ $ans != "j" ]]; then
-            exit 1
+            return 1
         else
-            npx eslint --fix || :
-            npx eslint
+            npx eslint --fix || return $?
         fi
     fi
 }
@@ -68,7 +67,7 @@ php_codesniffer
 npm ci
 
 # webpack compilen
-# _eslint
+_eslint
 npx prettier --write .
 npx prettier --write --ignore-path .prettierignore config/config.json
 

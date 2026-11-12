@@ -116,6 +116,21 @@ interface AjaxMap {
       lijsten_nummers: number;
     };
   };
+  powergold_importeren: {
+    request: FormData;
+    response: {
+      toegevoegd: number;
+      bijgewerkt: number;
+      heeft_verwijder_bevestiging_nodig: boolean;
+      te_verwijderen: number;
+    };
+  };
+  powergold_import_verwijderen_bevestigen: {
+    request: {};
+    response: {
+      verwijderd: number;
+    };
+  };
   get_lijsten: {
     request: {};
     response: {

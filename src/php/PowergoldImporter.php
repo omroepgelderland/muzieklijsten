@@ -4,192 +4,179 @@ declare(strict_types=1);
 
 namespace muzieklijsten;
 
-use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLException;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-use function gldstdlib\readline_met_default;
-
-/**
- * @phpstan-type KolomKeysType 'muziek_id'|'titel'|'artiest'|'jaar'|'categorie'|'map'|'opener'|'duur'
- * @phpstan-type KeysType array<KolomKeysType, int>
- */
 class PowergoldImporter
 {
-    private readonly PhpExcelReader $excel;
-    /** @var KeysType */
-    private ?array $kolomtitels;
+    private const HEADERS = [
+        'muziek_id' => 'Miscellaneous',
+        'titel' => 'Title',
+        'artiest' => 'Artist(s)',
+        'jaar' => 'Year',
+        'categorie' => 'Category',
+        'map' => 'Folder',
+        'opener' => 'Opener',
+        'duur' => 'Run Time',
+    ];
+    private const VERPLICHTE_HEADERS = [
+        'muziek_id',
+        'titel',
+        'artiest',
+        'jaar',
+        'duur',
+    ];
+
+    private readonly Worksheet $worksheet;
 
     public function __construct(
         private DB $db,
         string $filename,
     ) {
-        $this->excel = new PhpExcelReader();
-        $this->excel->read($filename);
-        $this->kolomtitels = null;
+        $spreadsheet = IOFactory::load($filename);
+        $this->worksheet = $spreadsheet->getSheet(0);
     }
 
     /**
-     * Converteert een waarde uit Excel
-     *
-     * @param $waarde
-     * @param $null_als_leeg Geef null terug als de string leeg is.
+     * @return array{
+     *     toegevoegd: int<0, max>,
+     *     bijgewerkt: int<0, max>,
+     * }
      */
-    private static function filter_cell_string(string $waarde, bool $null_als_leeg): ?string
+    public function import(): array
     {
-        $res = trim(mb_convert_encoding($waarde, 'utf-8', 'windows-1252'));
-        if ($null_als_leeg && $waarde === '') {
-            $res = null;
-        }
-        return $res;
-    }
+        $header_data = $this->vind_kolommen();
+        $kolommen = $header_data['kolommen'];
+        $vanaf_rij = $header_data['vanaf_rij'];
 
-    private static function filter_cell_int(string $waarde): int
-    {
-        $string = self::filter_cell_string($waarde, false);
-        $res = filter_var($string, \FILTER_VALIDATE_INT);
-        if ($res === false) {
-            throw new GLDException("Ongeldige integer: {$string}");
-        }
-        return (int)$res;
+        $this->db->disableAutocommit();
+        $import_res = $this->toevoegen_of_bijwerken($kolommen, $vanaf_rij);
+        $this->db->commit();
+        return [
+            'toegevoegd' => $import_res['toegevoegd'],
+            'bijgewerkt' => $import_res['bijgewerkt'],
+        ];
     }
 
     /**
-     * Geeft per kolom key in welke kolom de data staat.
-     *
-     * @return KeysType Key is de naam van de kolom, waarde is de index van de kolom (A=1, B=2 etc.).
+     * @return list<int>
      */
-    private function get_kolomtitels(): array
+    public function get_verwijderbare_nummer_ids(): array
     {
-        if ($this->kolomtitels === null) {
-            $this->kolomtitels = [];
-            /** @var list<string> $rij */
-            $rij = $this->excel->sheets[0]['cells'][7];
-            foreach ($rij as $i => $cel) {
-                $waarde = self::filter_cell_string($cel, true);
-                if ($waarde === 'Miscellaneous') {
-                    $this->kolomtitels['muziek_id'] = $i;
-                } elseif ($waarde === 'Title') {
-                    $this->kolomtitels['titel'] = $i;
-                } elseif ($waarde === 'Artist(s)') {
-                    $this->kolomtitels['artiest'] = $i;
-                } elseif ($waarde === 'Year') {
-                    $this->kolomtitels['jaar'] = $i;
-                } elseif ($waarde === 'Category') {
-                    $this->kolomtitels['categorie'] = $i;
-                } elseif ($waarde === 'Folder') {
-                    $this->kolomtitels['map'] = $i;
-                } elseif ($waarde === 'Opener') {
-                    $this->kolomtitels['opener'] = $i;
-                } elseif ($waarde === 'Run Time') {
-                    $this->kolomtitels['duur'] = $i;
+        $header_data = $this->vind_kolommen();
+        $kolommen = $header_data['kolommen'];
+        $vanaf_rij = $header_data['vanaf_rij'];
+        return $this->get_verwijderbare_nummer_ids_op_basis_van_import($kolommen['muziek_id'], $vanaf_rij);
+    }
+
+    /**
+     * @return array{
+     *     kolommen: array<string, int>,
+     *     vanaf_rij: int
+     * }
+     */
+    private function vind_kolommen(): array
+    {
+        $hoogste_kolom = $this->worksheet->getHighestDataColumn();
+        $hoogste_kolom_index = Coordinate::columnIndexFromString($hoogste_kolom);
+        $hoogste_rij = $this->worksheet->getHighestDataRow();
+        $scan_tot_rij = $hoogste_rij;
+
+        for ($rij = 1; $rij <= $scan_tot_rij; $rij++) {
+            $kolommen = [];
+            for ($kolom = 1; $kolom <= $hoogste_kolom_index; $kolom++) {
+                $waarde = $this->normaliseer_string(
+                    (string)$this->worksheet->getCell([$kolom, $rij])->getFormattedValue(),
+                );
+                if ($waarde === null) {
+                    continue;
+                }
+                foreach (self::HEADERS as $key => $header) {
+                    if ($waarde === $header) {
+                        $kolommen[$key] = $kolom;
+                    }
                 }
             }
-            $verplichte_kolommen = [
-                'muziek_id',
-                'titel',
-                'artiest',
-                'jaar',
-            ];
-            $ontbrekende_kolommen = array_diff($verplichte_kolommen, array_keys($this->kolomtitels));
-            if (\count($ontbrekende_kolommen) > 0) {
-                $ontbrekende_kolommen_str = implode(', ', $ontbrekende_kolommen);
-                throw new GLDException(
-                    "De volgende verplichte velden ontbreken in de sheet: {$ontbrekende_kolommen_str}",
-                );
+            $ontbrekende = array_diff(self::VERPLICHTE_HEADERS, array_keys($kolommen));
+            if (\count($ontbrekende) === 0) {
+                return [
+                    'kolommen' => $kolommen,
+                    'vanaf_rij' => $rij + 1,
+                ];
             }
         }
-        return $this->kolomtitels;
-    }
 
-    /**
-     * @param array<int, string> $rij
-     * @param KolomKeysType $key
-     * @param 'string'|'int' $type
-     *
-     * @return ($type is 'string' ? ($null_als_leeg is true ? ?string : string) : ($null_als_leeg is true ? ?int : int))
-     */
-    private function get_cel(
-        array $rij,
-        string $key,
-        string $type,
-        bool $null_als_leeg,
-    ): string|int|null {
-        $keys = $this->get_kolomtitels();
-        if (($rij[$keys[$key]] ?? null) === null) {
-            return $null_als_leeg
-                ? null
-                : '';
-        }
-        if ($type === 'int') {
-            return self::filter_cell_int($rij[$keys[$key]]);
-        }
-        return self::filter_cell_string($rij[$keys[$key]], $null_als_leeg);
-    }
-
-    public function import(): void
-    {
-        $this->db->disableAutocommit();
-        $this->toevoegen();
-        $this->verwijderen();
-        $this->db->commit();
-    }
-
-    /**
-     * Verwijderen van nummers in de database die niet meer in de Excel sheet
-     * staan.
-     */
-    private function verwijderen(): void
-    {
-        /** @var list<list<string>> $data */
-        $data = $this->excel->sheets[0]['cells'];
-
-        $data = \array_slice($data, 2);
-        $powergold_ids = [];
-        foreach ($data as $rij) {
-            $powergold_id = self::get_cel($rij, 'muziek_id', 'string', true);
-            if (isset($powergold_id)) {
-                $powergold_ids[] = $this->db->escape_string($powergold_id);
-            }
-        }
-        $i_powergold_ids = \implode(
-            '","',
-            $powergold_ids,
+        throw new GebruikersException(
+            'De verplichte kolommen ontbreken. Vereist zijn: '
+            . implode(', ', array_map(
+                static fn(string $key): string => self::HEADERS[$key],
+                self::VERPLICHTE_HEADERS,
+            )),
         );
-        $aantal = (int)$this->db->selectSingle(<<<SQL
-        SELECT COUNT(id)
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function get_verwijderbare_nummer_ids_op_basis_van_import(int $kolom_muziek_id, int $vanaf_rij): array
+    {
+        $powergold_ids = $this->get_powergold_ids($kolom_muziek_id, $vanaf_rij);
+        $niet_in_import_query = $this->get_niet_in_import_query($powergold_ids);
+        return array_values(iterator_to_array($this->db->selectSingleColumnInt(<<<SQL
+        SELECT id
         FROM `nummers`
         WHERE
             `muziek_id` IS NOT NULL
-            AND `muziek_id` NOT IN ("{$i_powergold_ids}");
-        SQL);
-        if ($aantal > 0) {
-            $ans = readline_met_default(
-                "{$aantal} nummers staan wel in de database, maar niet in de "
-                . "het importbestand. Wilt u deze verwijderen? (j/n)",
-                'n',
-            );
-            if (\strtolower(\trim($ans)) === 'j') {
-                $this->db->execute(<<<SQL
-                DELETE FROM `nummers`
-                WHERE
-                    `muziek_id` IS NOT NULL
-                    AND `muziek_id` NOT IN ("{$i_powergold_ids}");
-                SQL);
-                echo "{$aantal} nummers verwijderd.\n";
-            }
-        }
+            {$niet_in_import_query}
+        SQL)));
     }
 
     /**
-     * Toevoegen en updaten van nummers.
+     * @return list<string>
      */
-    private function toevoegen(): void
+    private function get_powergold_ids(int $kolom_muziek_id, int $vanaf_rij): array
     {
-        /** @var list<list<string>> $data */
-        $data = $this->excel->sheets[0]['cells'];
+        $powergold_ids = [];
+        $hoogste_rij = $this->worksheet->getHighestDataRow();
+        for ($rij = $vanaf_rij; $rij <= $hoogste_rij; $rij++) {
+            $powergold_id = $this->normaliseer_string(
+                (string)$this->worksheet->getCell([$kolom_muziek_id, $rij])->getFormattedValue(),
+            );
+            if ($powergold_id !== null) {
+                $powergold_ids[] = $powergold_id;
+            }
+        }
+        return $powergold_ids;
+    }
 
-        $data = \array_slice($data, 2);
+    /**
+     * @param list<string> $powergold_ids
+     */
+    private function get_niet_in_import_query(array $powergold_ids): string
+    {
+        if (\count($powergold_ids) === 0) {
+            return '';
+        }
+        $escaped_powergold_ids = array_map(
+            fn(string $id): string => $this->db->escape_string($id),
+            $powergold_ids,
+        );
+        $powergold_ids_str = implode('","', $escaped_powergold_ids);
+        return "AND `muziek_id` NOT IN (\"{$powergold_ids_str}\")";
+    }
 
+    /**
+     * @param array<string, int> $kolommen
+     *
+     * @return array{
+     *     toegevoegd: int<0, max>,
+     *     bijgewerkt: int<0, max>,
+     * }
+     */
+    private function toevoegen_of_bijwerken(array $kolommen, int $vanaf_rij): array
+    {
         $db = $this->db->getDB();
         $insert_query = <<<'SQL'
         INSERT INTO `nummers` (
@@ -276,43 +263,33 @@ class PowergoldImporter
         }
         $aantal_toegevoegd = 0;
         $aantal_bijgewerkt = 0;
-        foreach ($data as $rij) {
-            $titel = self::get_cel($rij, 'titel', 'string', true);
-            if ($titel === 'Title' || $titel === null) {
+        $hoogste_rij = $this->worksheet->getHighestDataRow();
+        for ($rij = $vanaf_rij; $rij <= $hoogste_rij; $rij++) {
+            $titel = $this->get_string($kolommen, 'titel', $rij, true);
+            if ($titel === null || $titel === self::HEADERS['titel']) {
                 // Rij zonder nummer of herhaalde kolomtitels.
                 continue;
             }
             $vgl_titel = get_vgl_string($titel, false);
-            $powergold_id = self::get_cel($rij, 'muziek_id', 'string', true);
+            $powergold_id = $this->get_string($kolommen, 'muziek_id', $rij, true);
             if ($powergold_id !== null && preg_match('~[^0-9a-zA-Z\-]~', $powergold_id) === 1) {
                 // Ongeldige ID's
                 $powergold_id = null;
             }
             if ($powergold_id === null) {
-                echo "Ongeldig of ontbrekend Powergold-ID bij {$artiest} – {$titel}";
                 continue;
             }
-            $artiest = self::get_cel($rij, 'artiest', 'string', false);
+            $artiest = $this->get_string($kolommen, 'artiest', $rij, false) ?? '';
             $vgl_artiest = get_vgl_string($artiest, true);
-            $jaar = self::get_cel($rij, 'jaar', 'int', true);
+            $jaar = $this->get_year($kolommen, 'jaar', $rij);
             if ($jaar === 0) {
                 $jaar = null;
             }
-            $categorie = self::get_cel($rij, 'categorie', 'string', true);
-            $map = self::get_cel($rij, 'map', 'string', true);
-            $opener_str = self::get_cel($rij, 'opener', 'string', false);
+            $categorie = $this->get_string($kolommen, 'categorie', $rij, true);
+            $map = $this->get_string($kolommen, 'map', $rij, true);
+            $opener_str = $this->get_string($kolommen, 'opener', $rij, false) ?? '';
             $opener = strtolower($opener_str) === 'yes';
-            $duur_str = self::get_cel($rij, 'duur', 'string', false);
-            $duur_array = \explode(':', $duur_str);
-            if (\count($duur_array) === 2) {
-                // Duur in minuten en seconden
-                $duur = (int)$duur_array[0] * 60 + (int)$duur_array[1];
-            } elseif (\count($duur_array) === 1 && $duur_array[0] !== '') {
-                // Duur in seconden
-                $duur = (int)$duur_array[0];
-            } else {
-                $duur = null;
-            }
+            $duur = $this->get_duur($kolommen, 'duur', $rij);
 
             // Query samenstellen om te kijken of het nummer al bestaat.
             $e_titel = $this->db->escape_string($vgl_titel);
@@ -356,11 +333,95 @@ class PowergoldImporter
                 if ($res === false) {
                     throw new SQLException('Query mislukt: ' . $update->error, $update->errno);
                 }
-                $aantal_bijgewerkt += $db->affected_rows;
+                $aantal_bijgewerkt += (int)$db->affected_rows;
             }
         }
         $insert->close();
         $update->close();
-        echo "{$aantal_toegevoegd} nummers geïmporteerd en {$aantal_bijgewerkt} bijgewerkt.\n";
+        $aantal_bijgewerkt = max(0, $aantal_bijgewerkt);
+        return [
+            'toegevoegd' => $aantal_toegevoegd,
+            'bijgewerkt' => $aantal_bijgewerkt,
+        ];
+    }
+
+    private function normaliseer_string(string $waarde): ?string
+    {
+        $res = trim($waarde);
+        return $res === '' ? null : $res;
+    }
+
+    /**
+     * @param array<string, int> $kolommen
+     */
+    private function get_string(
+        array $kolommen,
+        string $key,
+        int $rij,
+        bool $null_als_leeg,
+    ): ?string {
+        if (!isset($kolommen[$key])) {
+            return $null_als_leeg ? null : '';
+        }
+        $waarde = $this->normaliseer_string(
+            (string)$this->worksheet->getCell([$kolommen[$key], $rij])->getFormattedValue(),
+        );
+        if ($waarde === null && !$null_als_leeg) {
+            return '';
+        }
+        return $waarde;
+    }
+
+    /**
+     * @param array<string, int> $kolommen
+     */
+    private function get_year(array $kolommen, string $key, int $rij): ?int
+    {
+        $string = $this->get_string($kolommen, $key, $rij, true);
+        if ($string === null) {
+            return null;
+        }
+        $res = filter_var($string, \FILTER_VALIDATE_INT);
+        if ($res === false) {
+            throw new GebruikersException("Ongeldig jaartal op rij {$rij}: {$string}");
+        }
+        return (int)$res;
+    }
+
+    /**
+     * @param array<string, int> $kolommen
+     */
+    private function get_duur(array $kolommen, string $key, int $rij): ?int
+    {
+        if (!isset($kolommen[$key])) {
+            return null;
+        }
+        $cel = $this->worksheet->getCell([$kolommen[$key], $rij]);
+        $raw = $cel->getValue();
+        if (\is_float($raw) || \is_int($raw)) {
+            $duur = (float)$raw;
+            if ($duur > 0 && $duur < 1) {
+                return (int)round($duur * 86400);
+            }
+            if ($duur >= 1) {
+                return (int)round($duur);
+            }
+            return null;
+        }
+        $duur_string = $this->normaliseer_string((string)$cel->getFormattedValue());
+        if ($duur_string === null) {
+            return null;
+        }
+        if (preg_match('/^([0-9]{1,2}):([0-5][0-9])(?::([0-5][0-9]))?$/', $duur_string, $m) === 1) {
+            if (isset($m[3])) {
+                return ((int)$m[1] * 3600) + ((int)$m[2] * 60) + (int)$m[3];
+            }
+            return ((int)$m[1] * 60) + (int)$m[2];
+        }
+        $res = filter_var($duur_string, \FILTER_VALIDATE_INT);
+        if ($res !== false) {
+            return (int)$res;
+        }
+        throw new GebruikersException("Ongeldige duur op rij {$rij}: {$duur_string}");
     }
 }

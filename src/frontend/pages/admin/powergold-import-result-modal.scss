@@ -1,0 +1,6 @@
+.powergold-import-result-modal {
+  &:not(.toon-verwijder-bevestiging) .toon-verwijder-bevestiging,
+  &.toon-verwijder-bevestiging .not-toon-verwijder-bevestiging {
+    display: none;
+  }
+}

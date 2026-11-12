@@ -37,18 +37,6 @@ Importeer nummers.
 
 <del>Haal de nieuwste versie van github binnen door `./update.sh` in de projectroot uit te voeren.</del>
 
-## Nummers invoeren
-
-### Uit powergold
-
-Exporteer de database uit Powergold in Excel (xls) formaat.  
-Roep aan vanaf de commandline:
-`php [projectdir]/import_powergold.php [pad naar excelsheet]`
-
-### Handmatig
-
-Beheerders kunnen losse nummers toevoegen op de pagina los_toevoegen.html
-
 ### Toevoegen in MySQL
 
 Nieuwe nummers kunnen worden ingevoerd in de tabel nummers.

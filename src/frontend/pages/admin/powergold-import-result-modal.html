@@ -1,0 +1,47 @@
+<div class="modal fade powergold-import-result-modal" role="dialog">
+  <div class="modal-dialog modal-lg modal-fullscreen-md-down">
+    <div class="modal-content">
+      <div class="modal-header modal-top">
+        <h4 class="modal-title">Powergold import voltooid</h4>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-success mb-0">
+          <p class="mb-2">
+            <strong class="aantal-toegevoegd"></strong> nummers toegevoegd.
+          </p>
+          <p class="mb-2">
+            <strong class="aantal-bijgewerkt"></strong> nummers bijgewerkt.
+          </p>
+          <p class="mb-0 aantal-verwijderd-regel d-none">
+            <strong class="aantal-verwijderd"></strong> nummers verwijderd.
+          </p>
+        </div>
+        <div class="alert alert-warning mt-3 mb-0 toon-verwijder-bevestiging">
+          <p class="mb-2">
+            Als u doorgaat worden <strong class="te-verwijderen"></strong>
+            nummers verwijderd.
+          </p>
+          <p class="mb-0 verwijder-foutmelding d-none"></p>
+        </div>
+      </div>
+      <div class="modal-footer modal-end">
+        <button
+          type="button"
+          class="btn btn-danger bevestig-verwijderen toon-verwijder-bevestiging"
+        >
+          Verwijderen uitvoeren
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <span class="not-toon-verwijder-bevestiging">Sluiten</span
+          ><span class="toon-verwijder-bevestiging">Annuleren</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

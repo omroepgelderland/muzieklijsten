@@ -11,10 +11,6 @@
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/test/*</exclude-pattern>
 
-    <!-- Legacy includes die een keer weg moeten -->
-    <exclude-pattern>*/src/php/OLERead\.php$</exclude-pattern>
-    <exclude-pattern>*/src/php/PhpExcelReader\.php$</exclude-pattern>
-
     <rule ref="OmroepGelderland" />
 
     <!-- Uitzonderingen uit de generieke standaard toch gebruiken -->

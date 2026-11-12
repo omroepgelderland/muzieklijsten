@@ -23,18 +23,17 @@ function post<F extends keyof AjaxMap>(
       reject,
     );
 
-    let send_data: FormData | string;
     if (data instanceof FormData) {
-      data.append("functie", functie);
-      send_data = data;
+      data.append("functie", String(functie));
+      xhr.send(data);
     } else {
-      send_data = JSON.stringify({
+      const send_data = JSON.stringify({
         functie: functie,
         ...data,
       });
       xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.send(send_data);
     }
-    xhr.send(send_data);
   });
 }
 

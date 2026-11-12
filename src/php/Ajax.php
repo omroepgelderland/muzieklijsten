@@ -7,6 +7,7 @@ namespace muzieklijsten;
 use gldstdlib\exception\GLDException;
 use gldstdlib\exception\SQLDupEntryException;
 use gldstdlib\exception\SQLException;
+use gldstdlib\Log;
 use gldstdlib\OpenAIClient;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -36,6 +37,7 @@ class Ajax
         private Factory $factory,
         private Config $config,
         private DB $db,
+        private readonly Log $log,
         private readonly ?OpenAIClient $openai_client,
         private array $request,
     ) {
@@ -357,6 +359,107 @@ class Ajax
             }
         }
         return $json;
+    }
+
+    /**
+     * @return array{
+     *     toegevoegd: int<0, max>,
+     *     bijgewerkt: int<0, max>,
+     *     heeft_verwijder_bevestiging_nodig: bool,
+     *     te_verwijderen: int<0, max>
+     * }
+     */
+    public function powergold_importeren(): array
+    {
+        $this->login();
+        $this->log->set_filename('powergold_import');
+        $verwijder_ontbrekend = isset($this->request['verwijder-ontbrekend']);
+        $bestand = $_FILES['bestand'] ?? null;
+        if (!\is_array($bestand)) {
+            throw new GebruikersException('Geen importbestand ontvangen.');
+        }
+        $error = (int)($bestand['error'] ?? \UPLOAD_ERR_NO_FILE);
+        if ($error !== \UPLOAD_ERR_OK) {
+            throw new GebruikersException($this->get_upload_foutmelding($error));
+        }
+        $bestandsnaam = trim((string)($bestand['name'] ?? ''));
+        if (strtolower(pathinfo($bestandsnaam, \PATHINFO_EXTENSION)) !== 'xls') {
+            throw new GebruikersException('Alleen .xls-bestanden zijn toegestaan.');
+        }
+        $tmp_path = (string)($bestand['tmp_name'] ?? '');
+        if ($tmp_path === '' || !is_uploaded_file($tmp_path)) {
+            throw new GebruikersException('Kon het geüploade bestand niet verwerken.');
+        }
+        $importer = $this->factory->create_powergold_importer($tmp_path);
+        $resultaat = $importer->import();
+        $te_verwijderen = 0;
+        if ($verwijder_ontbrekend) {
+            $nummer_ids = $importer->get_verwijderbare_nummer_ids();
+            $_SESSION['powergold_import_verwijder_ids'] = $nummer_ids;
+            $te_verwijderen = \count($nummer_ids);
+        } else {
+            unset($_SESSION['powergold_import_verwijder_ids']);
+        }
+        $this->log->info(
+            \sprintf(
+                'Powergold import voltooid: %d toegevoegd, %d bijgewerkt',
+                $resultaat['toegevoegd'],
+                $resultaat['bijgewerkt'],
+            ),
+        );
+        return [
+            'toegevoegd' => $resultaat['toegevoegd'],
+            'bijgewerkt' => $resultaat['bijgewerkt'],
+            'heeft_verwijder_bevestiging_nodig' => $verwijder_ontbrekend && $te_verwijderen > 0,
+            'te_verwijderen' => $te_verwijderen,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     verwijderd: int<0, max>
+     * }
+     */
+    public function powergold_import_verwijderen_bevestigen(): array
+    {
+        $this->login();
+        $this->log->set_filename('powergold_import');
+        $nummer_ids = $_SESSION['powergold_import_verwijder_ids'] ?? null;
+        if (!\is_array($nummer_ids)) {
+            throw new GebruikersException('Er staat geen verwijderactie klaar.');
+        }
+        $nummer_ids = array_values(array_unique(array_map(\intval(...), $nummer_ids)));
+        unset($_SESSION['powergold_import_verwijder_ids']);
+        if (\count($nummer_ids) === 0) {
+            return ['verwijderd' => 0];
+        }
+        $ids = implode(',', $nummer_ids);
+        $this->db->execute(<<<SQL
+        DELETE FROM `nummers`
+        WHERE `id` IN ({$ids});
+        SQL);
+        $verwijderd = \count($nummer_ids);
+        $this->log->info(
+            \sprintf(
+                'Powergold import verwijdering bevestigd: %d nummers verwijderd.',
+                $verwijderd,
+            ),
+        );
+        return [
+            'verwijderd' => $verwijderd,
+        ];
+    }
+
+    private function get_upload_foutmelding(int $upload_error): string
+    {
+        return match ($upload_error) {
+            \UPLOAD_ERR_INI_SIZE, \UPLOAD_ERR_FORM_SIZE => 'Het uploadbestand is te groot.',
+            \UPLOAD_ERR_PARTIAL => 'Het uploaden is onderbroken. Probeer het opnieuw.',
+            \UPLOAD_ERR_NO_FILE => 'Selecteer een .xls-bestand om te importeren.',
+            \UPLOAD_ERR_NO_TMP_DIR, \UPLOAD_ERR_CANT_WRITE, \UPLOAD_ERR_EXTENSION =>
+                'Uploaden mislukt door een serverfout.',
+            default => 'Onbekende uploadfout.',
+        };
     }
 
     /**

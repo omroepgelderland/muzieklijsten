@@ -15,6 +15,7 @@ import * as functies from "@muzieklijsten/functies";
 import type { AjaxMap } from "@muzieklijsten/api/types";
 
 import { BeheerModal } from "./BeheerModal";
+import { PowergoldImportModal } from "./PowergoldImportModal";
 import { ResultatenModal } from "./ResultatenModal";
 
 interface LijstData {
@@ -116,21 +117,36 @@ class Admin {
 
     // Bestaande lijst wijzigen
     gld
-      .querySelectorTagName("button", "#beheerknop")
+      .querySelectorTagName("a", "#beheerknop")
       .addEventListener("click", this.beheer_knop_handler.bind(this));
 
     // Nieuwe lijst maken
     gld
-      .querySelectorTagName("button", "#nieuwknop")
+      .querySelectorTagName("a", "#nieuwknop")
       .addEventListener("click", this.nieuw_knop_handler.bind(this));
 
     // Resultaten dialoogvenster openen
     gld
-      .querySelectorTagName("button", "#resultatenknop")
+      .querySelectorTagName("a", "#resultatenknop")
       .addEventListener("click", (event) => {
         this.resultaten_knop_handler(event).catch(
           this.error_handler.bind(this),
         );
+      });
+
+    gld
+      .querySelectorTagName("a", "#powergold-importknop")
+      .addEventListener("click", (event) => {
+        event.preventDefault();
+        const p = new PowergoldImportModal();
+        const reset_lijst = () => {
+          // Reset huidige lijst en beschikbare nummers
+          if (this.lijst_id != null) {
+            this.set_lijst(this.lijst_id);
+          }
+        };
+        p.on_import.once(reset_lijst.bind(this));
+        p.on_nummers_verwijderd.once(reset_lijst.bind(this));
       });
   }
 

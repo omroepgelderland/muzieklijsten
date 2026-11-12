@@ -1,0 +1,65 @@
+<div class="modal fade powergold-import-modal" role="dialog">
+  <div class="modal-dialog modal-lg modal-fullscreen-md-down">
+    <div class="modal-content">
+      <div class="modal-header modal-top">
+        <h4 class="modal-title">Powergold import</h4>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="powergold-import-form">
+          <div class="alert d-none powergold-import-status" role="alert"></div>
+          <div class="mb-3">
+            <label class="form-label required" for="powergold-bestand">
+              Powergold-bestand (.xls)
+            </label>
+            <input
+              type="file"
+              class="form-control"
+              id="powergold-bestand"
+              name="bestand"
+              accept=".xls"
+              required
+            />
+          </div>
+          <div class="mb-3 form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="powergold-verwijder-ontbrekend"
+              name="verwijder-ontbrekend"
+            />
+            <label
+              class="form-check-label"
+              for="powergold-verwijder-ontbrekend"
+            >
+              Alle nummers uit de database verwijderen die niet in de import
+              staan
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer modal-end">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          form="powergold-import-form"
+        >
+          <span class="bi bi-upload me-1 powergold-icon-ready"></span>
+          <span
+            class="spinner-border spinner-border-sm me-1 d-none powergold-icon-loading"
+            aria-hidden="true"
+          ></span>
+          Importeren
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Annuleren
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

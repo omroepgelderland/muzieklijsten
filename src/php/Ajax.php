@@ -465,19 +465,21 @@ class Ajax
     /**
      * Geeft alle lijsten voor het toevoegen van losse nummers.
      *
-     * @return \Iterator<int, array{
+     * @return array<array{
      *     id: int,
      *     naam: string,
      * }>
      */
-    public function get_lijsten(): \Iterator
+    public function get_lijsten(): array
     {
+        $lijsten = [];
         foreach ($this->factory->get_muzieklijsten() as $lijst) {
-            yield [
+            $lijsten[] = [
                 'id' => $lijst->id,
                 'naam' => $lijst->get_naam(),
             ];
         }
+        return $lijsten;
     }
 
     /**

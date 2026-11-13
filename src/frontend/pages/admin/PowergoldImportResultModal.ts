@@ -17,11 +17,11 @@ import html_template from "./powergold-import-result-modal.html";
 class PowergoldImportResultModal {
   private readonly e_modal: HTMLDivElement;
   private readonly modal: Modal;
-  private readonly e_aantal_verwijderd_regel: HTMLParagraphElement;
-  private readonly e_aantal_verwijderd: HTMLElement;
-  private readonly e_te_verwijderen: HTMLElement;
+  private readonly e_aantal_verwijderd_regel;
+  private readonly e_aantal_verwijderd;
+  private readonly e_te_verwijderen;
   private readonly e_bevestig_verwijderen: HTMLButtonElement;
-  private readonly e_verwijder_foutmelding: HTMLParagraphElement;
+  private readonly e_verwijder_foutmelding;
   public readonly on_nummers_verwijderd: TypedEvent<void>;
 
   constructor(resultaat: AjaxMap["powergold_importeren"]["response"]) {

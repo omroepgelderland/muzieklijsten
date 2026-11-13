@@ -245,7 +245,7 @@ class StemView {
     // Titel en overige metadata
     const titel = `${this.data.organisatie} – ${this.data.lijst_naam}`;
     const titleElem = gld.querySelectorTagName("title");
-    titleElem.innerText = titel;
+    titleElem.textContent = titel;
     for (const e_organisatie of document.querySelectorAll(".organisatie")) {
       if (e_organisatie instanceof HTMLElement) {
         e_organisatie.textContent = this.data.organisatie;
@@ -738,9 +738,9 @@ class Main {
    */
   public error_handler(e: unknown) {
     if (e instanceof Error) {
-      this.e_errormsg.innerText = e.message;
+      this.e_errormsg.textContent = e.message;
     } else {
-      this.e_errormsg.innerText = String(e);
+      this.e_errormsg.textContent = String(e);
     }
     this.e_body.classList.add("error");
   }

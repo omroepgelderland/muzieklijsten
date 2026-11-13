@@ -51,7 +51,8 @@ class ResultatenNummer {
     this.e_tr_uitklap = gld
       .querySelectorTagName("tr", ".nummer", resultaten_nummer_template)
       .cloneNode(true) as HTMLTableRowElement;
-    this.e_aantal_stemmen = gld.querySelector<HTMLTableCellElement>(
+    this.e_aantal_stemmen = gld.querySelectorTagName(
+      "td",
       ".aantal-stemmen",
       this.e_tr_uitklap,
     );
@@ -187,7 +188,7 @@ class ResultatenNummer {
    * Update het veld met het aantal stemmen op dit nummer.
    */
   private update_aantal_stemmen() {
-    this.e_aantal_stemmen.innerText = String(this.stemmen.length);
+    this.e_aantal_stemmen.textContent = String(this.stemmen.length);
   }
 
   // async verwijderen(e) {

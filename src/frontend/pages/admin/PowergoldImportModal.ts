@@ -18,10 +18,10 @@ class PowergoldImportModal {
   private readonly e_modal: HTMLDivElement;
   private readonly modal: Modal;
   private readonly e_form: HTMLFormElement;
-  private readonly e_status: HTMLDivElement;
+  private readonly e_status;
   private readonly e_submit_knop: HTMLButtonElement;
-  private readonly e_icon_ready: HTMLElement;
-  private readonly e_icon_loading: HTMLElement;
+  private readonly e_icon_ready;
+  private readonly e_icon_loading;
   /**
    * Event dat wordt geactiveerd wanneer de import is voltooid. Dit wordt geactiveerd voordat er nummers zijn
    * verwijderd.

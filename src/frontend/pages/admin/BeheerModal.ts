@@ -35,8 +35,8 @@ class BeheerModal {
   private readonly e_form_recaptcha;
   private readonly e_form_mail_stemmers;
   private readonly e_form_random_volgorde;
-  private readonly e_velden_zichtbaar_kolom: HTMLDivElement;
-  private readonly e_velden_verplicht_kolom: HTMLDivElement;
+  private readonly e_velden_zichtbaar_kolom;
+  private readonly e_velden_verplicht_kolom;
   public readonly on_lijst_gemaakt: TypedEvent<{ id: number; naam: string }>;
   public readonly on_lijst_veranderd: TypedEvent<{ id: number; naam: string }>;
   public readonly on_lijst_verwijderd: TypedEvent<{ id: number }>;

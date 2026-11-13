@@ -18,8 +18,8 @@ class ResultatenModal {
   public readonly lijst_id: number;
   private readonly e_modal: HTMLDivElement;
   private readonly modal: Modal;
-  private readonly e_totaal_aantal_stemmen: HTMLSpanElement;
-  private readonly e_totaal_aantal_stemmers: HTMLSpanElement;
+  private readonly e_totaal_aantal_stemmen;
+  private readonly e_totaal_aantal_stemmers;
   private readonly e_filter_nummers: HTMLInputElement;
   private readonly e_filter_stemmers: HTMLInputElement;
   private readonly e_filter_van: HTMLInputElement;
@@ -44,7 +44,11 @@ class ResultatenModal {
       ".totaal-aantal-stemmers",
       this.e_modal,
     );
-    this.e_filters_form = gld.querySelector("form.filters", this.e_modal);
+    this.e_filters_form = gld.querySelectorTagName(
+      "form",
+      ".filters",
+      this.e_modal,
+    );
     this.e_filters_form.addEventListener("submit", this.filter.bind(this));
     this.e_filters_form.addEventListener("reset", this.filter_reset.bind(this));
     this.e_filter_nummers = gld.querySelectorTagName(
@@ -67,8 +71,13 @@ class ResultatenModal {
       "#filter-tot",
       this.e_modal,
     );
-    this.e_exportknop = gld.querySelector("#export-resultaten", this.e_modal);
-    this.e_resultaten_tabel = gld.querySelector(
+    this.e_exportknop = gld.querySelectorTagName(
+      "button",
+      "#export-resultaten",
+      this.e_modal,
+    );
+    this.e_resultaten_tabel = gld.querySelectorTagName(
+      "tbody",
       ".resultaten-tabel",
       this.e_modal,
     );
@@ -140,7 +149,9 @@ class ResultatenModal {
 
   private add_totaal_aantal_stemmen(aantal: number) {
     this.totaal_aantal_stemmen += aantal;
-    this.e_totaal_aantal_stemmen.innerText = String(this.totaal_aantal_stemmen);
+    this.e_totaal_aantal_stemmen.textContent = String(
+      this.totaal_aantal_stemmen,
+    );
   }
 
   private async set_totaal_aantal_stemmers() {
@@ -153,7 +164,7 @@ class ResultatenModal {
     // if ( tot != null ) {
     //   request.tot = tot.toISOString();
     // }
-    this.e_totaal_aantal_stemmers.innerText = String(
+    this.e_totaal_aantal_stemmers.textContent = String(
       await api.post("get_totaal_aantal_stemmers", request),
     );
   }

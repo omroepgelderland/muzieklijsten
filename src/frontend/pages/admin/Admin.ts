@@ -31,7 +31,7 @@ class Admin {
   private readonly e_body: HTMLBodyElement;
   private readonly e_lijst_select: HTMLSelectElement;
   private readonly e_geselecteerd_lijst: HTMLTableSectionElement;
-  private readonly e_aantal_geselecteerde_nummers: HTMLSpanElement;
+  private readonly e_aantal_geselecteerde_nummers;
   private readonly e_beschikbare_nummers: HTMLTableElement;
   private readonly geselecteerde_nummers;
   private readonly tabel;
@@ -44,9 +44,8 @@ class Admin {
       "tbody",
       "#geselecteerd-lijst",
     );
-    this.e_aantal_geselecteerde_nummers = gld.querySelectorTagName(
-      "span",
-      "#aantal-geselecteerde-nummers",
+    this.e_aantal_geselecteerde_nummers = gld.getElementById(
+      "aantal-geselecteerde-nummers",
     );
     this.e_beschikbare_nummers = gld.querySelectorTagName(
       "table",
@@ -206,10 +205,7 @@ class Admin {
       }
       this.e_lijst_select.add(option);
     }
-    const e_totaal_aantal_nummers = gld.querySelectorTagName(
-      "span",
-      "#totaal-aantal-nummers",
-    );
+    const e_totaal_aantal_nummers = gld.getElementById("totaal-aantal-nummers");
     e_totaal_aantal_nummers.textContent = String(data.totaal_aantal_nummers);
     for (const e_nimbus_url of document.querySelectorAll<HTMLAnchorElement>(
       ".nimbus-url",

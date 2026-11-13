@@ -37,8 +37,8 @@ class Lijst {
 
 async function get_lijsten(): Promise<Lijst[]> {
   const data = await api.post("get_lijsten", {});
-  return data.map((item: { id: string | number; naam: string }) => {
-    return new Lijst(item.id, item.naam);
+  return data.map(({ id, naam }) => {
+    return new Lijst(id, naam);
   });
 }
 
@@ -70,7 +70,7 @@ class LosseNummersView {
     this.loginErrorMessage = gld.getElementById("login-error-message");
     this.pageContent = gld.getElementById("losse-nummers-content");
     this.listContainer = gld.getElementById("lijst-container");
-    this.rowsContainer = gld.querySelectorTagName("form", "#nummer-rows");
+    this.rowsContainer = gld.querySelectorTagName("tbody", "#nummer-rows");
     this.errorAlert = gld.getElementById("error-alert");
     this.errorMessage = gld.getElementById("error-message");
     this.eenToegevoegd = gld.getElementById("een-toegevoegd");

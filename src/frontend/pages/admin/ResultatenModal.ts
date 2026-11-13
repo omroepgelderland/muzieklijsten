@@ -20,6 +20,8 @@ class ResultatenModal {
   private readonly modal: Modal;
   private readonly e_totaal_aantal_stemmen: HTMLSpanElement;
   private readonly e_totaal_aantal_stemmers: HTMLSpanElement;
+  private readonly e_filter_nummers: HTMLInputElement;
+  private readonly e_filter_stemmers: HTMLInputElement;
   private readonly e_filter_van: HTMLInputElement;
   private readonly e_filter_tot: HTMLInputElement;
   private readonly e_filters_form: HTMLFormElement;
@@ -45,11 +47,23 @@ class ResultatenModal {
     this.e_filters_form = gld.querySelector("form.filters", this.e_modal);
     this.e_filters_form.addEventListener("submit", this.filter.bind(this));
     this.e_filters_form.addEventListener("reset", this.filter_reset.bind(this));
-    this.e_filter_van = gld.querySelector<HTMLInputElement>(
+    this.e_filter_nummers = gld.querySelectorTagName(
+      "input",
+      "#filter-nummers",
+      this.e_modal,
+    );
+    this.e_filter_stemmers = gld.querySelectorTagName(
+      "input",
+      "#filter-stemmers",
+      this.e_modal,
+    );
+    this.e_filter_van = gld.querySelectorTagName(
+      "input",
       "#filter-van",
       this.e_modal,
     );
-    this.e_filter_tot = gld.querySelector<HTMLInputElement>(
+    this.e_filter_tot = gld.querySelectorTagName(
+      "input",
       "#filter-tot",
       this.e_modal,
     );
@@ -156,15 +170,15 @@ class ResultatenModal {
 
   private filter(event: Event) {
     event.preventDefault();
-    let nummers_tekst = this.e_filter_van.value.toLowerCase();
-    let stemmers_tekst = this.e_filter_tot.value.toLowerCase();
+    let nummers_tekst = this.e_filter_nummers.value.toLowerCase();
+    let stemmers_tekst = this.e_filter_stemmers.value.toLowerCase();
     if (nummers_tekst.length < 3) {
       nummers_tekst = "";
-      this.e_filter_van.value = "";
+      this.e_filter_nummers.value = "";
     }
     if (stemmers_tekst.length < 3) {
       stemmers_tekst = "";
-      this.e_filter_tot.value = "";
+      this.e_filter_stemmers.value = "";
     }
     for (const [_nummer_id, resultaten_nummer] of Object.entries(
       this.resultaten_nummers,
@@ -180,6 +194,8 @@ class ResultatenModal {
   }
 
   private filter_reset(event: Event) {
+    this.e_filter_nummers.value = "";
+    this.e_filter_stemmers.value = "";
     this.e_filter_van.value = "";
     this.e_filter_tot.value = "";
     this.filter(event);

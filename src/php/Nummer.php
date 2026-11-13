@@ -14,7 +14,7 @@ use function gldstdlib\ns;
  *     jaar: int|null,
  *     categorie: string|null,
  *     map: string|null,
- *     is_opener: bool,
+ *     opener: bool,
  *     duur: int|null,
  *     is_vrijekeuze: int,
  *     vgl_titel: string,
@@ -88,7 +88,7 @@ class Nummer
 
     public function is_opener(): bool
     {
-        return $this->get_data()['is_opener'];
+        return $this->get_data()['opener'];
     }
 
     public function get_duur(): ?int
@@ -183,7 +183,7 @@ class Nummer
             'jaar' => $raw_db_data['jaar'] === null ? null : (int)$raw_db_data['jaar'],
             'categorie' => $raw_db_data['categorie'],
             'map' => $raw_db_data['map'],
-            'is_opener' => (bool)$raw_db_data['opener'],
+            'opener' => (bool)$raw_db_data['opener'],
             'duur' => $raw_db_data['duur'] === null ? null : (int)$raw_db_data['duur'],
             'is_vrijekeuze' => (int)$raw_db_data['is_vrijekeuze'],
             'vgl_titel' => ns($raw_db_data['vgl_titel']),

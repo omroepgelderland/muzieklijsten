@@ -477,7 +477,7 @@ class Factory
             'jaar' => $jaar,
             'categorie' => $categorie,
             'map' => $map,
-            'is_opener' => $opener,
+            'opener' => $opener,
             'duur' => $duur,
             'is_vrijekeuze' => $is_vrijekeuze,
             'vgl_artiest' => get_vgl_string($artiest, true),

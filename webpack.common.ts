@@ -24,7 +24,7 @@ const config: webpack.Configuration = {
     fbshare: path.resolve(__dirname, "src/frontend/pages/fbshare/index.ts"),
     los_toevoegen: path.resolve(
       __dirname,
-      "src/frontend/pages/los_toevoegen/index.ts",
+      "src/frontend/pages/los-toevoegen/index.ts",
     ),
     "mod-vrijekeuzes": path.resolve(
       __dirname,
@@ -68,7 +68,7 @@ const config: webpack.Configuration = {
   },
   plugins: [
     htmlPage("admin"),
-    htmlPage("los_toevoegen"),
+    htmlPage("los-toevoegen"),
     htmlPage("mod-vrijekeuzes"),
     htmlPage("muzieklijst", "index"),
   ],

@@ -15,7 +15,7 @@ Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van r
 https://web.gld.nl/muzieklijsten/admin.html
 
 Losse nummers toevoegen aan de database, buiten Powergold om
-https://web.gld.nl/muzieklijsten/los_toevoegen.html
+https://web.gld.nl/muzieklijsten/los-toevoegen.html
 
 ## Installatie
 

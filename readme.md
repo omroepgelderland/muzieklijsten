@@ -11,7 +11,7 @@ Beheer van lijsten, plaatsen van nummers op een lijst, bekijken en beheren van r
 admin.html
 
 Losse nummers toevoegen aan de database.  
-los_toevoegen.html
+los-toevoegen.html
 
 ## Installatie
 

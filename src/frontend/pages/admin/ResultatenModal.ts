@@ -214,7 +214,7 @@ class ResultatenModal {
       return;
     }
     const stem_verwijderen = target.closest(".stem-verwijderen");
-    if (stem_verwijderen instanceof HTMLInputElement) {
+    if (stem_verwijderen instanceof HTMLElement) {
       await this.stem_verwijderen_handler(stem_verwijderen);
     }
     // In- en uitklappen van stemmen op een nummer.
@@ -255,7 +255,7 @@ class ResultatenModal {
    *
    * @param elem - Knop waarop geklikt is.
    */
-  private async stem_verwijderen_handler(elem: HTMLInputElement) {
+  private async stem_verwijderen_handler(elem: HTMLElement) {
     const stemmer_id = Number.parseInt(
       elem.closest("[data-stemmer-id]")?.getAttribute("data-stemmer-id") ?? "",
     );

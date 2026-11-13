@@ -66,6 +66,7 @@ interface LijstFrontendData {
   recaptcha_sitekey: string | null;
   privacy_url: string;
   random_volgorde: boolean;
+  bedankt_tekst: string;
 }
 
 interface FrontendVeld {

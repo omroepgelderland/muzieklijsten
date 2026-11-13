@@ -254,6 +254,7 @@ class StemView {
     for (const e_privacy_url of document.querySelectorAll("a.privacy-url")) {
       e_privacy_url.setAttribute("href", this.data.privacy_url);
     }
+    gld.getElementById("bedankt-tekst").textContent = this.data.bedankt_tekst;
 
     // Toon recaptcha
     const e_captcha = gld.querySelector(".g-recaptcha");
@@ -447,9 +448,9 @@ class StemView {
       const hoogte = (stemsegment.offsetHeight ?? 100) - 100;
       const placeholder = gld.getElementById("stemsegment-placeholder");
       placeholder.style.height = `${hoogte}px`;
-      const result = gld.getElementById("result");
+      const delen_op_facebook = gld.getElementById("delen-op-facebook");
       if (typeof data === "string") {
-        result.innerHTML = data;
+        delen_op_facebook.innerHTML = data;
       }
       this.e_body.classList.add("gestemd");
     } catch (msg) {

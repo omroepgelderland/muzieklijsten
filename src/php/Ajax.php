@@ -71,6 +71,7 @@ class Ajax
      *     recaptcha_sitekey: ?string,
      *     privacy_url: string,
      *     random_volgorde: bool,
+     *     bedankt_tekst: string,
      * }
      *
      * @throws GeenLijstException
@@ -130,6 +131,7 @@ class Ajax
             'recaptcha_sitekey' => $this->config->get()['recaptcha']['sitekey'] ?? null,
             'privacy_url' => $this->config->get()['privacy_url'],
             'random_volgorde' => $lijst->is_random_volgorde(),
+            'bedankt_tekst' => $lijst->get_bedankt_tekst(),
         ];
     }
 
@@ -545,8 +547,6 @@ class Ajax
     public function stem(): string
     {
         $lijst = $this->factory->create_lijst_uit_request($this->request);
-        $bedankt_tekst = htmlspecialchars($lijst->get_bedankt_tekst());
-        $html = "<h4>{$bedankt_tekst}</h4>";
 
         if (!$lijst->is_actief()) {
             throw new GebruikersException('De stemmen zijn gesloten.');
@@ -558,7 +558,7 @@ class Ajax
             throw new GebruikersException('Captcha verkeerd.');
         }
         if ($lijst->is_max_stemmen_per_ip_bereikt()) {
-            return $html;
+            return '';
         }
 
         try {
@@ -570,17 +570,18 @@ class Ajax
                         get_developer(),
                         $stemmer->id,
                     );
-                    $fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwebdev.gld.nl%2F'
-                        . get_developer()
-                        . '%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D'
-                        . $stemmer->id . '&amp;src=sdkpreparse';
                 } else {
-                    $fbshare_url = 'https://web.omroepgelderland.nl/muzieklijsten/fbshare.php?stemmer='
-                        . $stemmer->id;
-                    $fb_url = 'https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fweb.omroepgelderland.nl'
-                    . '%2Fmuzieklijsten%2Ffbshare.php%3Fstemmer%3D' . $stemmer->id . '&amp;src=sdkpreparse';
+                    $fbshare_url = \sprintf(
+                        'https://muzieklijsten.gld.nl/fbshare.php?stemmer=%d',
+                        $stemmer->id,
+                    );
                 }
-                $html .= <<<HTML
+                $url_params = [
+                    'u' => $fbshare_url,
+                    'src' => 'sdkpreparse',
+                ];
+                $fb_url = 'https://www.facebook.com/sharer/sharer.php?' . http_build_query($url_params);
+                return <<<HTML
                 <div
                     class="fb-share-button"
                     data-href="{$fbshare_url}"
@@ -600,7 +601,7 @@ class Ajax
             }
         } catch (BlacklistException) {
         }
-        return $html;
+        return '';
     }
 
     /**

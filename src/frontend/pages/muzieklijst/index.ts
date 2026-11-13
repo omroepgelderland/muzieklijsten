@@ -492,7 +492,14 @@ class StemView {
   /**
    * Geeft aan of het nummer geselecteerd mag worden.
    */
-  private mag_nummer_geselecteerd_worden({ artiest }: DataTableRow): boolean {
+  private mag_nummer_geselecteerd_worden({
+    DT_RowId,
+    artiest,
+  }: DataTableRow): boolean {
+    if (this.geselecteerde_nummers.has(DT_RowId)) {
+      // Nummer is al geselecteerd
+      return true;
+    }
     if (this.geselecteerde_nummers.size >= this.data.maxkeuzes) {
       alert(`U kunt maximaal ${this.data.maxkeuzes} nummers selecteren.`);
       return false;
@@ -656,10 +663,7 @@ class StemView {
    * Wordt aangeroepen bij elke redraw van de DataTable (bijv. bij paginawissel).
    */
   private sync_datatable_selectie() {
-    const tbody = document.querySelector("#nummers tbody");
-    if (tbody == null) {
-      return;
-    }
+    const tbody = gld.querySelector("#nummers tbody");
 
     // Zet events tijdelijk uit om recursie te voorkomen.
     this.datatable.off("select deselect");
@@ -672,7 +676,7 @@ class StemView {
     // Herselecteer rijen die in geselecteerde_nummers staan.
     for (const nummer_id of this.geselecteerde_nummers.keys()) {
       const tr = tbody.querySelector(`#nummer-${nummer_id}`);
-      if (tr) {
+      if (tr != null) {
         this.datatable.row(tr).select();
       }
     }

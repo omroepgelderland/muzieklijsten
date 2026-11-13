@@ -133,7 +133,7 @@ function ajax(Factory $factory, DB $db, Log $log): void
 function export_resultaten_ods(Factory $factory, DB $db, Log $log): void
 {
     try {
-        $request = fs(json_decode(fs(json_encode($_POST))));
+        $request = fs(json_decode(fs(json_encode($_POST)), true));
         $ajax = $factory->create_ajax($request);
         $ajax->export_resultaten_ods();
     } catch (GebruikersException $e) {

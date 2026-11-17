@@ -14,7 +14,25 @@ fi
 
 build_dir="$(mktemp -d)"
 pack_dir="$(mktemp -d)"
-trap 'rm -rf "$build_dir" "$pack_dir"' EXIT
+
+exit_handler() {
+    exit_code=$?
+    set +e
+
+    rm -rf "$build_dir" "$pack_dir"
+
+    if [[ $exit_code -ne 0 && -n "${git_versie:-}" ]]; then
+        echo "Fout opgetreden; rollback van release-tag ${git_versie}" >&2
+
+        git push github ":refs/tags/${git_versie}" >/dev/null 2>&1 || true
+        git push origin ":refs/tags/${git_versie}" >/dev/null 2>&1 || true
+        git tag -d "${git_versie}" >/dev/null 2>&1 || true
+    fi
+
+    return "$exit_code"
+}
+
+trap exit_handler EXIT
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]]; then
@@ -98,7 +116,7 @@ composer install \
 
 # Webpack output
 npm ci
-npx webpack --config "webpack.$mode.js"
+npx webpack --config "webpack.$mode.ts"
 
 tar -czf "$archive" \
     --exclude-from=.release-exclude \

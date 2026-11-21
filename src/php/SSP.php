@@ -25,6 +25,7 @@ final class SSP
      * Kolommen die opgevraagd mogen worden.
      */
     private const COLUMN_FILTER = [
+        'id',
         'muziek_id',
         'titel',
         'artiest',
@@ -34,6 +35,12 @@ final class SSP
         'opener',
         'dir',
         'is_vrijekeuze',
+    ];
+    private const LEGACY_COLUMNS = [
+        'id',
+        'titel',
+        'artiest',
+        'jaar',
     ];
 
     /**
@@ -69,11 +76,14 @@ final class SSP
         $this->search['value'] = $this->db->escape_like($this->search['value']);
         foreach ($this->columns as $i => $column) {
             $column_data = $column['data'];
-            if (
-                !\in_array($column_data, self::COLUMN_FILTER, true)
-                && \in_array($column['name'], self::COLUMN_FILTER, true)
-            ) {
-                $column_data = $column['name'];
+            if (!\in_array($column_data, self::COLUMN_FILTER, true)) {
+                if (\in_array($column['name'], self::COLUMN_FILTER, true)) {
+                    $column_data = $column['name'];
+                } elseif (\ctype_digit($column_data) && isset(self::LEGACY_COLUMNS[(int)$column_data])) {
+                    $column_data = self::LEGACY_COLUMNS[(int)$column_data];
+                } elseif (\ctype_digit($column['name']) && isset(self::LEGACY_COLUMNS[(int)$column['name']])) {
+                    $column_data = self::LEGACY_COLUMNS[(int)$column['name']];
+                }
             }
 
             if (!\in_array($column_data, self::COLUMN_FILTER, true)) {

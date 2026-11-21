@@ -10,6 +10,8 @@ use gldstdlib\exception\SQLDataTooLongException;
 use gldstdlib\exception\SQLNoResultException;
 use Psr\Container\ContainerInterface;
 
+use function gldstdlib\fs;
+
 /**
  * @phpstan-import-type LijstData from \muzieklijsten\Lijst
  * @phpstan-import-type NummerData from \muzieklijsten\Nummer
@@ -59,10 +61,11 @@ class Factory
      */
     public function select_object(string $class, string $query): object
     {
+        $id = (int)fs(filter_var($this->db->selectSingle($query), \FILTER_VALIDATE_INT));
         return $this->factory->make(
             $class,
             [
-                'id' => $this->db->selectSingle($query),
+                'id' => $id,
             ],
         );
     }

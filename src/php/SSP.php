@@ -68,10 +68,18 @@ final class SSP
     ) {
         $this->search['value'] = $this->db->escape_like($this->search['value']);
         foreach ($this->columns as $i => $column) {
-            if (!\in_array($column['data'], self::COLUMN_FILTER, true)) {
+            $column_data = $column['data'];
+            if (
+                !\in_array($column_data, self::COLUMN_FILTER, true)
+                && \in_array($column['name'], self::COLUMN_FILTER, true)
+            ) {
+                $column_data = $column['name'];
+            }
+
+            if (!\in_array($column_data, self::COLUMN_FILTER, true)) {
                 throw new GLDException("Invalid column: {$column['data']}");
             }
-            $this->columns[$i]['data'] = "n.`{$column['data']}`";
+            $this->columns[$i]['data'] = "n.`{$column_data}`";
             $this->columns[$i]['search']['value'] = $this->db->escape_like($column['search']['value']);
         }
         if ($this->random_volgorde) {

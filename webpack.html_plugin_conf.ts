@@ -1,7 +1,7 @@
 import { env } from "process";
 
 export default {
-  hash: true,
+  hash: false,
   cache: false,
   minify: env.production
     ? {

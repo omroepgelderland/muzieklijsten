@@ -37,7 +37,8 @@ const config: webpack.Configuration = {
   },
   output: {
     path: path.resolve(__dirname, "public"),
-    filename: "js/[name].js",
+    filename: "js/[name].[contenthash:12].js",
+    chunkFilename: "js/[name].[contenthash:12].js",
     clean: {
       keep: /\.php$/i,
     },
@@ -54,14 +55,14 @@ const config: webpack.Configuration = {
         test: /\.(jpe?g|png|gif|webp|svg)$/,
         type: "asset/resource",
         generator: {
-          filename: "afbeeldingen/[name][ext][query]",
+          filename: "afbeeldingen/[name]-[contenthash:12][ext]",
         },
       },
       {
         test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
         type: "asset/resource",
         generator: {
-          filename: "fonts/[name]-[contenthash][ext][query]",
+          filename: "fonts/[name]-[contenthash:12][ext][query]",
         },
       },
     ],

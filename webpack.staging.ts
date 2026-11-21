@@ -58,8 +58,8 @@ const staging_config: webpack.Configuration = {
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: "css/[name].css",
-      chunkFilename: "[id].css",
+      filename: "css/[name].[contenthash:12].css",
+      chunkFilename: "css/[name].[contenthash:12].css",
     }),
   ],
   optimization: {

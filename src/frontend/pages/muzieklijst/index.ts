@@ -460,7 +460,9 @@ class StemView {
 
   private get_recaptcha_response(): string {
     const elem = document.getElementById("g-recaptcha-response");
-    if (!(elem instanceof HTMLInputElement)) {
+    if (!(
+      elem instanceof HTMLTextAreaElement || elem instanceof HTMLInputElement
+    )) {
       return "";
     }
     return elem.value;

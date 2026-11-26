@@ -22,7 +22,7 @@ const config: webpack.Configuration = {
   entry: {
     admin: path.resolve(__dirname, "src/frontend/pages/admin/index.ts"),
     fbshare: path.resolve(__dirname, "src/frontend/pages/fbshare/index.ts"),
-    los_toevoegen: path.resolve(
+    "los-toevoegen": path.resolve(
       __dirname,
       "src/frontend/pages/los-toevoegen/index.ts",
     ),
